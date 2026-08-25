@@ -4,124 +4,131 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aged Care Physiotherapy — Training Modules Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root{
-    --brand:#CC3300; --brand-dark:#A32900; --brand-light:#F7E4DA;
-    --blue:#336699; --blue-dark:#25507A; --blue-light:#E4ECF3;
-    --ink:#232323; --muted:#75726D; --paper:#FAF8F5; --card:#FFFFFF;
-    --line:#E7E1D8; --success:#2F7D4F; --danger:#B23A2E;
-    --gradient-brand:linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
-    --gradient-blue:linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
-    --gradient-hero:linear-gradient(120deg, var(--brand) 0%, #9c3f22 45%, var(--blue) 100%);
+    --brand:#CC3300; --brand-dark:#A32900; --brand-light:#FBEAE3;
+    --blue:#336699; --blue-dark:#25507A; --blue-light:#EAF1F7;
+    --ink:#1D1D1F; --muted:#6E6E73; --paper:#F5F5F7; --card:#FFFFFF;
+    --line:#D2D2D7; --success:#2F7D4F; --danger:#B23A2E;
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
-    background:
-      radial-gradient(circle at 15% 0%, rgba(204,51,0,0.05), transparent 40%),
-      radial-gradient(circle at 100% 20%, rgba(51,102,153,0.05), transparent 40%),
-      var(--paper);
-    color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;
+    min-height:100vh;
     -webkit-font-smoothing:antialiased;
   }
   header.top{
-    background:var(--gradient-hero);
-    color:#fff; padding:26px 20px; text-align:center;
-    box-shadow:0 10px 30px -14px rgba(43,41,37,0.4);
-    position:relative; overflow:hidden;
+    background:rgba(255,255,255,0.82);
+    -webkit-backdrop-filter:saturate(180%) blur(20px);
+    backdrop-filter:saturate(180%) blur(20px);
+    border-bottom:1px solid var(--line);
+    padding:14px 20px;
+    position:sticky; top:0; z-index:50;
   }
-  header.top::before{
-    content:""; position:absolute; inset:0;
-    background:radial-gradient(circle at 85% -10%, rgba(255,255,255,0.18), transparent 55%);
-  }
-  header.top h1{font-family:'Poppins',sans-serif;font-weight:800;font-size:23px;margin:0;letter-spacing:-0.3px;position:relative;}
-  header.top .who{font-size:12.5px;color:rgba(255,255,255,0.88);margin-top:10px;position:relative;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
-  header.top .who strong{color:#fff;}
+  .top-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  header.top img.logo{height:34px;width:auto;display:block;flex:none;}
+  header.top h1{font-size:15px;font-weight:600;margin:0;letter-spacing:-0.1px;color:var(--ink);flex:1 1 auto;}
+  header.top .who{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  header.top .who strong{color:var(--ink);}
   header.top .who button{
-    background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.35);
-    color:#fff; cursor:pointer; font-family:'Inter',sans-serif; font-weight:600;
-    font-size:12px; padding:5px 12px; border-radius:20px; transition:background .15s;
+    background:var(--paper); border:1px solid var(--line);
+    color:var(--ink); cursor:pointer; font-weight:600;
+    font-size:12px; padding:6px 14px; border-radius:980px; transition:background .15s;
   }
-  header.top .who button:hover{background:rgba(255,255,255,0.3);}
-  main{max-width:760px;margin:0 auto;padding:28px 16px 80px;}
+  header.top .who button:hover{background:#eaeaec;}
+  main{max-width:760px;margin:0 auto;padding:32px 16px 80px;}
   .card{
-    background:var(--card);border:1px solid var(--line);border-radius:18px;
-    padding:24px;margin-bottom:18px;position:relative;overflow:hidden;
-    box-shadow:0 1px 2px rgba(43,41,37,0.03),0 14px 32px -22px rgba(43,41,37,0.22);
+    background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:26px;margin-bottom:18px;
   }
-  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gradient-hero);}
-  .card h2{font-family:'Poppins',sans-serif;font-weight:700;font-size:18px;margin:0 0 4px;}
-  .card .sub{font-size:13.5px;color:var(--muted);margin:0 0 16px;line-height:1.5;}
-  label{display:block;font-size:12px;font-weight:600;letter-spacing:0.2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+  .card h2{font-size:19px;font-weight:600;margin:0 0 4px;letter-spacing:-0.2px;}
+  .card .sub{font-size:14px;color:var(--muted);margin:0 0 16px;line-height:1.5;}
+  .card-banner{
+    width:calc(100% + 52px); margin:-26px -26px 20px; display:block;
+    height:180px; object-fit:cover; border-radius:20px 20px 0 0;
+  }
+  label{display:block;font-size:12px;font-weight:600;letter-spacing:0.2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
   input[type=text],input[type=date],input[type=email],select{
-    width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;
-    font-family:'Inter',sans-serif;font-size:14.5px;background:var(--paper);color:var(--ink);
+    width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;
+    font-family:inherit;font-size:15px;background:var(--paper);color:var(--ink);
     transition:border-color .15s,box-shadow .15s;
   }
   input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-light);}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
   .btn{
-    background:var(--gradient-brand);color:#fff;border:none;padding:11px 20px;
-    font-weight:600;font-size:13px;cursor:pointer;border-radius:10px;
-    transition:filter .15s,transform .1s,box-shadow .15s;
-    box-shadow:0 4px 12px -4px rgba(204,51,0,0.45);
-    display:inline-flex;align-items:center;gap:6px;
+    background:var(--brand);color:#fff;border:none;padding:12px 22px;
+    font-weight:600;font-size:14px;cursor:pointer;border-radius:980px;
+    transition:background .15s,transform .08s;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
   }
-  .btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
-  .btn:active{transform:translateY(0) scale(0.98);}
-  .btn.blue{background:var(--gradient-blue);box-shadow:0 4px 12px -4px rgba(51,102,153,0.5);}
-  .btn.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand);box-shadow:none;}
-  .btn.ghost:hover{background:var(--brand-light);filter:none;}
+  .btn:hover{background:var(--brand-dark);}
+  .btn:active{transform:scale(0.97);}
+  .btn.blue{background:var(--blue);}
+  .btn.blue:hover{background:var(--blue-dark);}
+  .btn.ghost{background:transparent;color:var(--brand);border:1px solid var(--brand);}
+  .btn.ghost:hover{background:var(--brand-light);}
   .btn.ghost.blue{color:var(--blue);border-color:var(--blue);}
   .btn.ghost.blue:hover{background:var(--blue-light);}
-  .btn.small{padding:7px 13px;font-size:12px;}
-  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none;}
+  .btn.small{padding:8px 15px;font-size:12.5px;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
   table{width:100%;border-collapse:collapse;font-size:14px;}
-  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);border-bottom:2px solid var(--ink);padding:8px 6px;}
-  td{padding:11px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);border-bottom:1px solid var(--line);padding:10px 6px;font-weight:600;}
+  td{padding:12px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
   tbody tr:hover td{background:var(--paper);}
-  .badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11.5px;font-weight:700;}
+  .badge{display:inline-block;padding:4px 12px;border-radius:980px;font-size:11.5px;font-weight:700;}
   .badge.pass{background:#E3F1E8;color:var(--success);}
   .badge.fail{background:#F6E4E1;color:var(--danger);}
   .badge.other{background:var(--blue-light);color:var(--blue-dark);}
   .role-tag{
-    font-size:11px;font-weight:700;text-transform:uppercase;padding:3px 10px;border-radius:20px;
-    background:rgba(255,255,255,0.22);color:#fff;border:1px solid rgba(255,255,255,0.35);
+    font-size:11px;font-weight:700;text-transform:uppercase;padding:4px 11px;border-radius:980px;
+    background:var(--brand-light);color:var(--brand-dark);
   }
-  .role-tag.on-light{background:var(--blue-light);color:var(--blue-dark);border:none;}
-  .status-line{font-size:12px;color:var(--muted);margin-top:8px;min-height:14px;}
+  .role-tag.on-light{background:var(--blue-light);color:var(--blue-dark);}
+  .status-line{font-size:12.5px;color:var(--muted);margin-top:8px;min-height:14px;}
   .status-line.ok{color:var(--success);font-weight:600;}
   .status-line.err{color:var(--danger);}
-  .tabs{display:flex;gap:5px;margin-bottom:18px;flex-wrap:wrap;background:var(--card);padding:6px;border-radius:14px;border:1px solid var(--line);}
-  .tabs button{background:transparent;border:none;border-radius:10px;padding:10px 16px;font-weight:600;font-size:13px;cursor:pointer;color:var(--muted);transition:background .15s,color .15s;flex:1 1 auto;min-width:0;}
-  .tabs button:hover{background:var(--paper);color:var(--ink);}
-  .tabs button.active{background:var(--gradient-brand);color:#fff;box-shadow:0 4px 10px -4px rgba(204,51,0,0.5);}
+  .tabs{display:flex;gap:4px;margin-bottom:18px;flex-wrap:wrap;background:#EBEBED;padding:4px;border-radius:14px;}
+  .tabs button{background:transparent;border:none;border-radius:11px;padding:10px 16px;font-weight:600;font-size:13px;cursor:pointer;color:var(--muted);transition:background .15s,color .15s;flex:1 1 auto;min-width:0;}
+  .tabs button:hover{color:var(--ink);}
+  .tabs button.active{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,0.08);}
   .empty{text-align:center;padding:30px 10px;color:var(--muted);font-size:14px;}
   a.cert-link{color:var(--blue);font-weight:600;text-decoration:none;font-size:13px;}
   a.cert-link:hover{text-decoration:underline;}
   #loginScreen, #pendingScreen, #nameScreen{
-    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
-    background:var(--gradient-hero);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;
+    background:var(--paper); text-align:center;
   }
-  #loginScreen .card, #pendingScreen .card, #nameScreen .card{max-width:380px;width:100%;box-shadow:0 30px 60px -20px rgba(0,0,0,0.4);}
-  .approval-tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;}
+  .auth-logo{height:52px;width:auto;margin-bottom:22px;}
+  .auth-heading{font-size:32px;font-weight:700;letter-spacing:-0.6px;margin:0 0 8px;color:var(--ink);}
+  .auth-sub{font-size:16px;color:var(--muted);max-width:420px;margin:0 auto 32px;line-height:1.5;}
+  .auth-hero-photo{width:100%;max-width:640px;height:240px;object-fit:cover;border-radius:20px;margin:0 auto 28px;display:block;}
+  #loginScreen .card, #pendingScreen .card, #nameScreen .card{
+    max-width:380px;width:100%;text-align:left;box-shadow:0 20px 50px -20px rgba(0,0,0,0.15);
+  }
+  .approval-tag{display:inline-block;padding:4px 11px;border-radius:980px;font-size:11px;font-weight:700;text-transform:uppercase;}
   .approval-tag.pending{background:var(--brand-light);color:var(--brand-dark);}
   .approval-tag.approved{background:#E3F1E8;color:var(--success);}
   .approval-tag.rejected{background:#F6E4E1;color:var(--danger);}
   @media (max-width:480px){
-    header.top{padding:20px 14px;}
-    header.top h1{font-size:19px;}
-    main{padding:18px 10px 60px;}
-    .card{padding:16px;border-radius:14px;}
-    .card h2{font-size:16.5px;}
+    header.top{padding:12px 14px;}
+    header.top h1{font-size:13.5px;}
+    header.top img.logo{height:22px;}
+    main{padding:20px 10px 60px;}
+    .card{padding:18px;border-radius:16px;}
+    .card-banner{width:calc(100% + 36px);margin:-18px -18px 18px;height:140px;border-radius:16px 16px 0 0;}
+    .card h2{font-size:17px;}
+    .auth-heading{font-size:24px;}
+    .auth-sub{font-size:14px;}
+    .auth-hero-photo{height:160px;border-radius:16px;}
     .row{grid-template-columns:1fr;}
-    .tabs{padding:4px;gap:3px;}
+    .tabs{padding:3px;gap:3px;}
     .tabs button{font-size:11.5px;padding:9px 6px;}
     table{font-size:12.5px;}
-    th,td{padding:7px 4px;}
+    th,td{padding:8px 4px;}
     .btn{width:100%;justify-content:center;}
     .btn.small{width:auto;}
   }
@@ -132,10 +139,9 @@
       display:none !important;
     }
     body{background:#fff;}
-    header.top{background:none !important;color:#000;box-shadow:none;padding:6px 0;}
-    header.top::before{display:none;}
+    header.top{background:none !important;box-shadow:none;padding:6px 0;position:static;backdrop-filter:none;}
     .card{box-shadow:none;border:1px solid #000;border-radius:0;}
-    .card::before{display:none;}
+    .card-banner{display:none;}
     #printHeader{display:block !important;font-size:12px;color:#333;margin-bottom:10px;}
     table{font-size:11px;}
     th{color:#000;border-bottom:2px solid #000;}
@@ -146,9 +152,11 @@
 <body>
 
 <div id="loginScreen">
+  <img class="auth-logo" src="https://forms.acphysio.com.au/acplogo" alt="Aged Care Physiotherapy">
+  <h1 class="auth-heading">Training Modules Dashboard</h1>
+  <p class="auth-sub">Sign in with your email to access your training courses.</p>
+  <img class="auth-hero-photo" src="https://images.unsplash.com/photo-1664382953481-141e97ad9825?fm=jpg&amp;q=80&amp;w=1200&amp;auto=format&amp;fit=crop" alt="A trainer leading a group training session">
   <div class="card">
-    <h2>Training Modules Dashboard</h2>
-    <p class="sub">Aged Care Physiotherapy — enter your work email and we'll send you a sign-in link. No password needed.</p>
     <label for="emailInput">Work Email</label>
     <input type="email" id="emailInput" placeholder="you@acphysio.com.au">
     <div style="height:10px;"></div>
@@ -158,6 +166,7 @@
 </div>
 
 <div id="pendingScreen" style="display:none;">
+  <img class="auth-logo" src="https://forms.acphysio.com.au/acplogo" alt="Aged Care Physiotherapy">
   <div class="card">
     <h2 id="pendingHeading">Waiting for approval</h2>
     <p class="sub" id="pendingText">Your account has been created, but a manager needs to approve access before you can see any courses or completions. Check back shortly, or contact your administrator.</p>
@@ -166,6 +175,7 @@
 </div>
 
 <div id="nameScreen" style="display:none;">
+  <img class="auth-logo" src="https://forms.acphysio.com.au/acplogo" alt="Aged Care Physiotherapy">
   <div class="card">
     <h2>Welcome — what's your name?</h2>
     <p class="sub">This is how you'll appear to managers and in your training records. Use your full name.</p>
@@ -179,11 +189,14 @@
 
 <div id="appRoot" style="display:none;">
   <header class="top">
-    <h1>Aged Care Physiotherapy — Training Modules Dashboard</h1>
-    <div class="who">
-      Signed in as <strong id="whoAmI"></strong>
-      <span id="roleTag"></span>
-      <button id="signOutBtn">Sign out</button>
+    <div class="top-inner">
+      <img class="logo" src="https://forms.acphysio.com.au/acplogo" alt="ACP">
+      <h1>Training Modules Dashboard</h1>
+      <div class="who">
+        Signed in as <strong id="whoAmI"></strong>
+        <span id="roleTag"></span>
+        <button id="signOutBtn">Sign out</button>
+      </div>
     </div>
   </header>
 
@@ -200,6 +213,7 @@
     <!-- STAFF: MY COMPLETIONS -->
     <div id="panel-mine" class="panel">
       <div class="card">
+        <img class="card-banner" src="https://images.unsplash.com/photo-1664382953481-141e97ad9825?fm=jpg&amp;q=80&amp;w=900&amp;auto=format&amp;fit=crop" alt="Staff training session">
         <h2>Available Courses</h2>
         <p class="sub">Open a course to work through it. It's marked complete automatically when you finish.</p>
         <div id="coursesForStaff"><p class="empty">Loading&hellip;</p></div>
