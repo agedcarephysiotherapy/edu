@@ -102,11 +102,15 @@
   .empty{text-align:center;padding:30px 10px;color:var(--muted);font-size:14px;}
   a.cert-link{color:var(--blue);font-weight:600;text-decoration:none;font-size:13px;}
   a.cert-link:hover{text-decoration:underline;}
-  #loginScreen{
+  #loginScreen, #pendingScreen, #nameScreen{
     min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
     background:var(--gradient-hero);
   }
-  #loginScreen .card{max-width:380px;width:100%;box-shadow:0 30px 60px -20px rgba(0,0,0,0.4);}
+  #loginScreen .card, #pendingScreen .card, #nameScreen .card{max-width:380px;width:100%;box-shadow:0 30px 60px -20px rgba(0,0,0,0.4);}
+  .approval-tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;}
+  .approval-tag.pending{background:var(--brand-light);color:var(--brand-dark);}
+  .approval-tag.approved{background:#E3F1E8;color:var(--success);}
+  .approval-tag.rejected{background:#F6E4E1;color:var(--danger);}
   @media (max-width:480px){
     header.top{padding:20px 14px;}
     header.top h1{font-size:19px;}
@@ -122,7 +126,7 @@
     .btn.small{width:auto;}
   }
   @media print{
-    #loginScreen, header.top .who, .backup-row, .tabs,
+    #loginScreen, #pendingScreen, #nameScreen, header.top .who, .backup-row, .tabs,
     #panel-add, #panel-courses, #panel-roles, #panel-mine,
     #staffFilterInput, #clearFilterBtn, #printRecordsBtn, label[for="staffFilterInput"] {
       display:none !important;
@@ -153,6 +157,26 @@
   </div>
 </div>
 
+<div id="pendingScreen" style="display:none;">
+  <div class="card">
+    <h2 id="pendingHeading">Waiting for approval</h2>
+    <p class="sub" id="pendingText">Your account has been created, but a manager needs to approve access before you can see any courses or completions. Check back shortly, or contact your administrator.</p>
+    <button class="btn ghost" id="pendingSignOutBtn" style="width:100%;">Sign out</button>
+  </div>
+</div>
+
+<div id="nameScreen" style="display:none;">
+  <div class="card">
+    <h2>Welcome — what's your name?</h2>
+    <p class="sub">This is how you'll appear to managers and in your training records. Use your full name.</p>
+    <label for="nameCaptureInput">Full Name</label>
+    <input type="text" id="nameCaptureInput" placeholder="e.g. Jane Smith">
+    <div style="height:10px;"></div>
+    <button class="btn" id="nameCaptureBtn" style="width:100%;">Save and Continue</button>
+    <div class="status-line" id="nameCaptureStatus"></div>
+  </div>
+</div>
+
 <div id="appRoot" style="display:none;">
   <header class="top">
     <h1>Aged Care Physiotherapy — Training Modules Dashboard</h1>
@@ -170,7 +194,7 @@
       <button data-tab="all" class="active">All Staff</button>
       <button data-tab="add">Record Completion</button>
       <button data-tab="courses">Courses</button>
-      <button data-tab="roles">Manage Roles</button>
+      <button data-tab="roles">Manage Staff</button>
     </div>
 
     <!-- STAFF: MY COMPLETIONS -->
@@ -195,8 +219,8 @@
         <div id="printHeader" style="display:none;"></div>
         <div class="row" style="align-items:end;">
           <div>
-            <label for="staffFilterInput">Filter by Email</label>
-            <input type="text" id="staffFilterInput" placeholder="e.g. jane@acphysio.com.au">
+            <label for="staffFilterInput">Filter by Name or Email</label>
+            <input type="text" id="staffFilterInput" placeholder="e.g. Jane, or jane@acphysio.com.au">
           </div>
           <div style="display:flex;gap:8px;align-items:end;">
             <button class="btn small ghost" id="clearFilterBtn">Clear Filter</button>
@@ -273,8 +297,8 @@
     <!-- MANAGER: ROLES -->
     <div id="panel-roles" class="panel" style="display:none;">
       <div class="card">
-        <h2>Manage Roles</h2>
-        <p class="sub">Promote a staff member to manager, or step someone back down to staff. Be careful — managers can see and edit everyone's records.</p>
+        <h2>Manage Staff</h2>
+        <p class="sub">Approve new sign-ins before they can see anything, and promote a staff member to manager or step someone back down. Be careful with manager access — managers can see and edit everyone's records.</p>
         <div id="rolesTable"><p class="empty">Loading&hellip;</p></div>
       </div>
     </div>
@@ -407,11 +431,14 @@
     const wrap = document.getElementById("allTable");
     const needle = (filterText || "").toLowerCase();
     const rows = needle
-      ? allCompletionsCache.filter(c => (c.profiles?.email || "").toLowerCase().includes(needle))
+      ? allCompletionsCache.filter(c =>
+          (c.profiles?.email || "").toLowerCase().includes(needle) ||
+          (c.profiles?.full_name || "").toLowerCase().includes(needle)
+        )
       : allCompletionsCache;
 
     if(rows.length===0){
-      wrap.innerHTML = `<p class="empty">${needle ? "No completions match that email." : "No completions recorded yet."}</p>`;
+      wrap.innerHTML = `<p class="empty">${needle ? "No completions match that name or email." : "No completions recorded yet."}</p>`;
       return;
     }
     let html = `<table><thead><tr><th>Staff</th><th>Email</th><th>Course</th><th>Date</th><th>Result</th><th>Certificate</th></tr></thead><tbody>`;
@@ -433,7 +460,7 @@
 
     const printHeader = document.getElementById("printHeader");
     printHeader.innerHTML = `<strong>Aged Care Physiotherapy — Training Completion Records</strong><br>
-      ${needle ? `Filtered by email containing: "${filterText}"` : "All staff"}
+      ${needle ? `Filtered by name/email containing: "${filterText}"` : "All staff"}
       &nbsp;&middot;&nbsp; Printed ${new Date().toLocaleDateString("en-AU", {day:"numeric", month:"long", year:"numeric"})}
       &nbsp;&middot;&nbsp; ${rows.length} record${rows.length===1?"":"s"}`;
   }
@@ -613,22 +640,33 @@
 
   async function renderRoles(){
     const wrap = document.getElementById("rolesTable");
-    wrap.innerHTML = `<table><thead><tr><th>Staff</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>` +
-      allProfiles.map(p=>`
+    wrap.innerHTML = `<table><thead><tr><th>Staff</th><th>Email</th><th>Status</th><th>Role</th><th></th></tr></thead><tbody>` +
+      allProfiles.map(p=>{
+        const statusTag = `<span class="approval-tag ${p.status||'pending'}">${p.status||'pending'}</span>`;
+        const isYou = p.id === currentUser.id;
+        let actions = "";
+        if(isYou){
+          actions = '<span style="color:var(--muted);font-size:12px;">(you)</span>';
+        }else{
+          if(p.status !== "approved"){
+            actions += `<button class="btn small blue" data-approve="${p.id}">✓ Approve</button> `;
+          }
+          if(p.status !== "rejected"){
+            actions += `<button class="btn small ghost" data-reject="${p.id}">✕ Reject</button> `;
+          }
+          actions += `<button class="btn small ghost" data-toggle="${p.id}" data-role="${p.role}">
+                        ${p.role === "manager" ? "↓ Demote" : "↑ Promote"}
+                      </button>`;
+        }
+        return `
         <tr>
           <td>${p.full_name || "—"}</td>
           <td>${p.email || "—"}</td>
+          <td>${statusTag}</td>
           <td><span class="role-tag on-light">${p.role}</span></td>
-          <td>
-            ${p.id === currentUser.id
-              ? '<span style="color:var(--muted);font-size:12px;">(you)</span>'
-              : `<button class="btn small ghost" data-toggle="${p.id}" data-role="${p.role}">
-                   ${p.role === "manager" ? "↓ Demote to staff" : "↑ Promote to manager"}
-                 </button>`
-            }
-          </td>
-        </tr>
-      `).join("") + `</tbody></table>`;
+          <td>${actions}</td>
+        </tr>`;
+      }).join("") + `</tbody></table>`;
     wrap.querySelectorAll("button[data-toggle]").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
         const newRole = btn.dataset.role === "manager" ? "staff" : "manager";
@@ -638,6 +676,19 @@
           renderRoles();
           populateAddForm();
         }
+      });
+    });
+    wrap.querySelectorAll("button[data-approve]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const { error } = await sb.from("profiles").update({status: "approved"}).eq("id", btn.dataset.approve);
+        if(!error){ await loadAllProfiles(); renderRoles(); populateAddForm(); }
+      });
+    });
+    wrap.querySelectorAll("button[data-reject]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        if(!confirm("Reject this sign-in? They'll remain unable to see any courses or completions.")) return;
+        const { error } = await sb.from("profiles").update({status: "rejected"}).eq("id", btn.dataset.reject);
+        if(!error){ await loadAllProfiles(); renderRoles(); populateAddForm(); }
       });
     });
   }
@@ -658,10 +709,39 @@
     await loadMyProfile();
 
     document.getElementById("loginScreen").style.display = "none";
+
+    // First login (or anyone whose name was never captured) — get their
+    // real name before showing anything else, so managers see actual
+    // names everywhere rather than an email standing in for one.
+    const hasRealName = currentProfile?.full_name && currentProfile.full_name !== currentProfile.email;
+    if(!hasRealName){
+      document.getElementById("pendingScreen").style.display = "none";
+      document.getElementById("appRoot").style.display = "none";
+      document.getElementById("nameScreen").style.display = "flex";
+      const input = document.getElementById("nameCaptureInput");
+      if(!input.value) input.value = "";
+      return;
+    }
+    document.getElementById("nameScreen").style.display = "none";
+
+    const isManager = currentProfile?.role === "manager";
+    const isApproved = currentProfile?.status === "approved";
+
+    if(!isManager && !isApproved){
+      document.getElementById("pendingScreen").style.display = "flex";
+      document.getElementById("appRoot").style.display = "none";
+      if(currentProfile?.status === "rejected"){
+        document.getElementById("pendingHeading").textContent = "Access not approved";
+        document.getElementById("pendingText").textContent = "Your sign-in request wasn't approved. Contact your administrator if you believe this is a mistake.";
+      }
+      return;
+    }
+
+    document.getElementById("pendingScreen").style.display = "none";
     document.getElementById("appRoot").style.display = "block";
     document.getElementById("whoAmI").textContent = currentProfile?.full_name || currentUser.email;
 
-    if(currentProfile?.role === "manager"){
+    if(isManager){
       document.getElementById("roleTag").innerHTML = '<span class="role-tag">Manager</span>';
       document.getElementById("managerTabs").style.display = "flex";
       document.getElementById("panel-mine").style.display = "none";
@@ -678,6 +758,28 @@
       renderMine();
     }
   }
+
+  document.getElementById("nameCaptureBtn").addEventListener("click", async ()=>{
+    const name = document.getElementById("nameCaptureInput").value.trim();
+    if(!name){
+      setStatus("nameCaptureStatus", "Enter your name to continue.", "err");
+      return;
+    }
+    setStatus("nameCaptureStatus", "Saving...", "");
+    const { error } = await sb.from("profiles").update({ full_name: name }).eq("id", currentUser.id);
+    if(error){
+      setStatus("nameCaptureStatus", "Couldn't save — try again.", "err");
+      return;
+    }
+    currentProfile.full_name = name;
+    const { data } = await sb.auth.getSession();
+    bootApp(data.session);
+  });
+
+  document.getElementById("pendingSignOutBtn").addEventListener("click", async ()=>{
+    await sb.auth.signOut();
+    window.location.reload();
+  });
 
   sb.auth.getSession().then(({data})=>{
     if(data.session) bootApp(data.session);
