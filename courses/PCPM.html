@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aged Care Physiotherapy — Clinical Practice Manual | ACP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{
+    --red:#cc3300;
+    --red-dark:#a32900;
+    --red-tint:#fdeeea;
+    --blue:#336699;
+    --blue-dark:#264d73;
+    --blue-tint:#eaf1f7;
+    --ink:#1e2328;
+    --ink-soft:#4a5259;
+    --line:#e2e6ea;
+    --bg:#f7f8fa;
+    --white:#ffffff;
+    --amber:#b8860b;
+    --amber-tint:#fff8e6;
+    --green:#2e7d4f;
+    --green-tint:#eaf6ee;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(30,35,40,.06), 0 4px 14px rgba(30,35,40,.06);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Lexend',system-ui,-apple-system,sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    line-height:1.55;
+    font-weight:400;
+  }
+  h1,h2,h3,h4{font-family:'Lexend',sans-serif; font-weight:700; color:var(--ink); line-height:1.25;}
+  a{color:var(--blue);}
+  p{margin:.5em 0 1em;}
+
+  /* ===== Top bar ===== */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    background:linear-gradient(90deg,var(--blue) 0%,var(--blue-dark) 100%);
+    color:#fff; padding:12px 16px;
+    display:flex; align-items:center; gap:12px;
+    box-shadow:var(--shadow);
+  }
+  .topbar .menu-btn{
+    display:none; background:rgba(255,255,255,.15); border:none; color:#fff;
+    width:38px; height:38px; border-radius:8px; font-size:18px; cursor:pointer;
+    align-items:center; justify-content:center;
+  }
+  .topbar .brand{display:flex; align-items:center; gap:10px;}
+  .topbar .brand .mark{
+    width:34px;height:34px;border-radius:8px;background:var(--red);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0;
+  }
+  .topbar .brand-text{display:flex; flex-direction:column; line-height:1.15;}
+  .topbar .brand-text .t1{font-weight:700; font-size:15px;}
+  .topbar .brand-text .t2{font-weight:300; font-size:11.5px; opacity:.85; letter-spacing:.03em;}
+  .topbar .spacer{flex:1;}
+  .topbar .tag{
+    font-size:11.5px; background:rgba(255,255,255,.14); padding:5px 10px; border-radius:999px;
+    white-space:nowrap;
+  }
+
+  /* ===== Layout ===== */
+  .shell{display:flex; max-width:1400px; margin:0 auto;}
+  nav.toc{
+    width:290px; flex-shrink:0; position:sticky; top:58px;
+    height:calc(100vh - 58px); overflow-y:auto;
+    padding:22px 14px 60px; border-right:1px solid var(--line); background:var(--white);
+  }
+  nav.toc .grp-label{
+    font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--blue);
+    font-weight:600; margin:18px 6px 6px; opacity:.8;
+  }
+  nav.toc .grp-label:first-child{margin-top:2px;}
+  nav.toc .tab-link{
+    display:flex; align-items:center; justify-content:space-between; gap:6px; width:100%;
+    padding:8px 10px; border-radius:8px; font-size:13.5px; font-family:'Lexend',sans-serif;
+    color:var(--ink-soft); text-decoration:none; margin-bottom:1px;
+    background:none; border:none; cursor:pointer; text-align:left; line-height:1.35;
+    transition:background .12s ease, color .12s ease;
+  }
+  nav.toc .tab-link .tab-link-inner{display:flex; align-items:baseline; min-width:0;}
+  nav.toc .tab-link:hover{background:var(--blue-tint); color:var(--blue-dark);}
+  nav.toc a.num, nav.toc .tab-link .num{color:var(--red); font-weight:700; margin-right:7px; flex-shrink:0;}
+  nav.toc .tab-link .tick{
+    opacity:0; color:var(--green); font-size:12px; font-weight:800; flex-shrink:0; transition:opacity .15s ease;
+  }
+  nav.toc .tab-link.read{background:var(--green-tint); color:#1b5c38;}
+  nav.toc .tab-link.read .num{color:var(--green);}
+  nav.toc .tab-link.read .tick{opacity:1;}
+  nav.toc .tab-link.active{background:var(--blue); color:#fff; box-shadow:var(--shadow);}
+  nav.toc .tab-link.active .num{color:#ffd9c9;}
+  nav.toc .tab-link.active .tick{color:#c8f7d9; opacity:1;}
+  nav.toc .tab-link:focus-visible{outline:2px solid var(--blue); outline-offset:1px;}
+
+  main{flex:1; min-width:0; padding:28px 40px 80px;}
+
+  /* ===== Carousel / panel system ===== */
+  .panel{display:none;}
+  .panel.active{display:block; animation:panelIn .28s ease;}
+  @keyframes panelIn{
+    from{opacity:0; transform:translateY(8px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .carousel-controls{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background:var(--white); border:1px solid var(--line); border-radius:14px;
+    padding:12px 16px; margin:6px 0 20px; box-shadow:var(--shadow); position:sticky; bottom:14px;
+  }
+  .cc-btn{
+    display:flex; align-items:center; gap:8px; background:var(--blue-tint); color:var(--blue-dark);
+    border:none; border-radius:9px; padding:9px 16px; font-family:'Lexend',sans-serif; font-weight:600;
+    font-size:13px; cursor:pointer; transition:background .12s ease, transform .12s ease;
+  }
+  .cc-btn:hover{background:var(--blue); color:#fff;}
+  .cc-btn:disabled{opacity:.4; cursor:not-allowed; background:var(--bg); color:var(--ink-soft);}
+  .cc-btn:disabled:hover{background:var(--bg); color:var(--ink-soft);}
+  .cc-next{background:var(--red-tint); color:var(--red-dark);}
+  .cc-next:hover{background:var(--red); color:#fff;}
+  .cc-arrow{font-size:15px;}
+  .cc-counter{font-size:12.5px; color:var(--ink-soft); font-weight:600; white-space:nowrap;}
+
+  /* ===== Progress bar (topbar) ===== */
+  .progress-track{
+    position:absolute; left:0; right:0; bottom:0; height:3px; background:rgba(255,255,255,.18);
+  }
+  .progress-fill{
+    height:100%; width:0%; background:var(--green); transition:width .3s ease;
+  }
+
+  /* ===== Interactive checklist checkboxes ===== */
+  label.chk{display:flex; align-items:flex-start; gap:9px; cursor:pointer; padding:2px 0;}
+  label.chk .chk-input{
+    appearance:none; -webkit-appearance:none; width:17px; height:17px; flex-shrink:0; margin-top:1px;
+    border:1.5px solid #b9c0c6; border-radius:5px; cursor:pointer; position:relative; background:#fff;
+    transition:background .12s ease, border-color .12s ease;
+  }
+  label.chk .chk-input:checked{background:var(--green); border-color:var(--green);}
+  label.chk .chk-input:checked::after{
+    content:"\2713"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:11px; font-weight:800;
+  }
+  label.chk .chk-text{transition:color .12s ease, text-decoration-color .12s ease;}
+  label.chk .chk-input:checked ~ .chk-text{color:var(--ink-soft); text-decoration:line-through; text-decoration-color:var(--green);}
+  .hero{
+    background:linear-gradient(135deg,var(--red) 0%,#e8551f 55%, var(--red-dark) 100%);
+    color:#fff; border-radius:16px; padding:34px 36px; margin-bottom:30px;
+    box-shadow:var(--shadow);
+  }
+  .hero .eyebrow{font-size:12.5px; letter-spacing:.12em; text-transform:uppercase; opacity:.9; font-weight:600;}
+  .hero h1{color:#fff; font-size:30px; margin:8px 0 10px;}
+  .hero p{color:rgba(255,255,255,.92); max-width:720px; margin-bottom:0; font-size:14.5px;}
+  .hero .meta-row{display:flex; gap:18px; flex-wrap:wrap; margin-top:18px; font-size:12.5px; opacity:.9;}
+  .hero .meta-row span{background:rgba(255,255,255,.15); padding:5px 12px; border-radius:999px;}
+
+  section.topic{
+    background:var(--white); border:1px solid var(--line); border-radius:14px;
+    padding:30px 32px; margin-bottom:26px; scroll-margin-top:70px; box-shadow:var(--shadow);
+  }
+  section.topic > .tophead{display:flex; align-items:flex-start; gap:14px; margin-bottom:6px;}
+  section.topic > .tophead .idx{
+    flex-shrink:0; width:40px; height:40px; border-radius:10px;
+    background:var(--blue-tint); color:var(--blue-dark); font-weight:800; font-size:15px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  section.topic h2{font-size:21px; margin:0 0 3px;}
+  section.topic .subtitle{color:var(--ink-soft); font-size:13.5px; margin:0;}
+  section.topic .divider{height:3px; width:46px; background:var(--red); border-radius:3px; margin:16px 0 20px;}
+
+  h3.block-h{
+    font-size:14.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--blue-dark);
+    margin:26px 0 10px; display:flex; align-items:center; gap:8px;
+  }
+  h3.block-h:first-of-type{margin-top:4px;}
+  h3.block-h::before{content:""; width:5px; height:16px; background:var(--red); border-radius:3px; display:inline-block;}
+
+  .steps{counter-reset:step; margin:0 0 6px; padding:0; list-style:none;}
+  .steps li{
+    counter-increment:step; position:relative; padding:10px 14px 10px 46px; margin-bottom:8px;
+    background:var(--bg); border:1px solid var(--line); border-radius:10px; font-size:13.8px;
+  }
+  .steps li::before{
+    content:counter(step); position:absolute; left:12px; top:10px;
+    width:22px; height:22px; border-radius:6px; background:var(--red); color:#fff;
+    font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  }
+  .steps li b{color:var(--ink);}
+
+  ul.plain{margin:0 0 10px; padding-left:20px; font-size:13.8px;}
+  ul.plain li{margin-bottom:5px;}
+  ul.plain.tight li{margin-bottom:3px;}
+
+  table.ref{width:100%; border-collapse:collapse; font-size:13.2px; margin:6px 0 10px;}
+  table.ref th{
+    background:var(--blue); color:#fff; text-align:left; padding:9px 12px; font-weight:600;
+    font-size:12px; text-transform:uppercase; letter-spacing:.03em;
+  }
+  table.ref th:first-child{border-radius:8px 0 0 0;}
+  table.ref th:last-child{border-radius:0 8px 0 0;}
+  table.ref td{padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+  table.ref tr:nth-child(even) td{background:var(--bg);}
+  table.ref tr:last-child td{border-bottom:none;}
+
+  .flag{
+    display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:10px;
+    margin:10px 0; font-size:13.4px; border:1px solid;
+  }
+  .flag.red{background:var(--red-tint); border-color:#f3c8ba; color:#7a2400;}
+  .flag.amber{background:var(--amber-tint); border-color:#eddca0; color:#7a5c04;}
+  .flag.green{background:var(--green-tint); border-color:#bfe3cc; color:#1b5c38;}
+  .flag .ico{font-weight:800; flex-shrink:0;}
+
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  .card-mini{background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:14px 16px;}
+  .card-mini h4{font-size:13px; margin:0 0 6px; color:var(--blue-dark); text-transform:uppercase; letter-spacing:.03em;}
+
+  .doc-box{
+    border:1px dashed #c8ccd0; border-radius:10px; padding:14px 16px; background:#fbfbfc; font-size:13.4px;
+  }
+  .doc-box b{color:var(--red-dark);}
+
+  .chip-row{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 4px;}
+  .chip{background:var(--blue-tint); color:var(--blue-dark); font-size:11.8px; font-weight:600; padding:4px 10px; border-radius:999px;}
+
+  footer{
+    max-width:1400px; margin:0 auto; padding:30px 40px 70px; color:var(--ink-soft); font-size:12.5px;
+    border-top:1px solid var(--line);
+  }
+  .backtotop{
+    display:inline-block; margin-top:14px; font-size:12.5px; color:var(--blue); text-decoration:none; font-weight:600;
+  }
+
+  /* mobile */
+  .overlay{display:none;}
+  @media (max-width:980px){
+    .topbar .menu-btn{display:flex;}
+    nav.toc{
+      position:fixed; left:0; top:58px; height:calc(100vh - 58px); z-index:60;
+      transform:translateX(-105%); transition:transform .25s ease; width:82%; max-width:320px;
+      box-shadow:6px 0 24px rgba(0,0,0,.15);
+    }
+    nav.toc.open{transform:translateX(0);}
+    .overlay.open{
+      display:block; position:fixed; inset:58px 0 0 0; background:rgba(15,20,25,.42); z-index:55;
+    }
+    main{padding:20px 16px 60px;}
+    .hero{padding:24px 20px;}
+    .hero h1{font-size:23px;}
+    section.topic{padding:20px 18px;}
+    .two-col{grid-template-columns:1fr;}
+    table.ref{font-size:12px;}
+    table.ref th,table.ref td{padding:7px 8px;}
+    footer{padding:24px 16px 50px;}
+    .carousel-controls{padding:10px 12px; bottom:8px;}
+    .cc-btn{padding:8px 10px; font-size:12px;}
+    .cc-counter{font-size:11px;}
+    .tag{display:none;}
+  }
+  @media (max-width:420px){
+    .cc-label{display:none;}
+  }
+  @media print{
+    nav.toc,.topbar,.overlay,.backtotop,.carousel-controls{display:none;}
+    main{padding:0;}
+    .panel{display:block !important; animation:none !important;}
+    section.topic{box-shadow:none; border:1px solid #ccc; page-break-inside:avoid;}
+  }
+
+  /* ===== Auth gate & completion tracking (added for training tracker) ===== */
+  #authGate{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:24px; background:linear-gradient(120deg,var(--blue) 0%,var(--blue-dark) 100%);
+  }
+  #authGate .gate-card{
+    background:#fff; border-radius:var(--radius); box-shadow:0 30px 60px -20px rgba(0,0,0,.4);
+    padding:32px; max-width:400px; text-align:center;
+  }
+  #authGate h2{color:var(--blue-dark); font-size:19px; margin:0 0 10px;}
+  #authGate p{color:var(--ink-soft); font-size:14px; line-height:1.6; margin:0 0 18px;}
+  #authGate a.gate-link{
+    display:inline-block; background:var(--red); color:#fff; text-decoration:none;
+    font-weight:600; font-size:13.5px; padding:11px 22px; border-radius:999px;
+  }
+  #authGate a.gate-link:hover{background:var(--red-dark);}
+  #completionCard{margin:0 0 26px;}
+  #completionCard h3{font-size:16px; margin:0 0 6px;}
+  #completionCard p{color:var(--ink-soft); font-size:13.5px; margin:0 0 14px;}
+  .completion-status{font-size:13px; margin-top:10px; font-weight:500; color:var(--ink-soft);}
+  .completion-status.ok{color:var(--green); font-weight:700;}
+  .completion-status.err{color:var(--red-dark);}
+  .completion-status.err button{
+    background:none; border:none; color:var(--blue); text-decoration:underline;
+    cursor:pointer; font-family:inherit; font-size:13px; padding:0; margin-left:4px;
+  }
+</style>
+</head>
+<body>
+
+<div id="authGate" style="display:none;">
+  <div class="gate-card">
+    <h2>Sign in required</h2>
+    <p>You need to be signed in to the ACP Training Tracker to review this manual and have it recorded against your name.</p>
+    <a class="gate-link" href="../index.html">Go to the Training Tracker</a>
+  </div>
+</div>
+
+<div id="courseContent" style="display:none;">
+
+<div class="topbar">
+  <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+  <div class="brand">
+    <div class="mark">ACP</div>
+    <div class="brand-text">
+      <span class="t1">Aged Care Physiotherapy</span>
+      <span class="t2">Clinical Practice Manual</span>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div class="tag" id="progressTag">0 / 25 read</div>
+  <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="shell">
+<nav class="toc" id="tocNav">
+  <div class="grp-label">Orientation</div>
+  <button type="button" class="tab-link" data-target="intro"><span class="tab-link-inner"><span class="num">·</span>Role of the Aged Care Physiotherapist</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="governance"><span class="tab-link-inner"><span class="num">·</span>Clinical Governance &amp; Standards</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+
+  <div class="grp-label">Mobility &amp; Function</div>
+  <button type="button" class="tab-link" data-target="mob-assess"><span class="tab-link-inner"><span class="num">01</span>Mobility &amp; Transfer Assessment</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="mob-prescribe"><span class="tab-link-inner"><span class="num">02</span>Mobility &amp; Transfer Aid Prescription</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+
+  <div class="grp-label">Falls</div>
+  <button type="button" class="tab-link" data-target="post-fall-assess"><span class="tab-link-inner"><span class="num">03</span>Post-Fall Assessment</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="falls-risk"><span class="tab-link-inner"><span class="num">04</span>Falls Risk Assessment</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="post-fall-mgmt"><span class="tab-link-inner"><span class="num">05</span>Post-Fall Management</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="falls-prevention"><span class="tab-link-inner"><span class="num">06</span>Falls Prevention Strategies</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+
+  <div class="grp-label">Seating &amp; Skin</div>
+  <button type="button" class="tab-link" data-target="seating"><span class="tab-link-inner"><span class="num">07</span>Seating Assessment &amp; Management</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="pressure"><span class="tab-link-inner"><span class="num">08</span>Pressure Area Assessment &amp; Management</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+
+  <div class="grp-label">Symptom Management</div>
+  <button type="button" class="tab-link" data-target="pain"><span class="tab-link-inner"><span class="num">09</span>Pain Assessment &amp; Management</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="risk"><span class="tab-link-inner"><span class="num">10</span>Clinical Risk Assessment &amp; Management</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="oedema"><span class="tab-link-inner"><span class="num">11</span>Oedema Assessment &amp; Management</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+
+  <div class="grp-label">Broader Scope</div>
+  <button type="button" class="tab-link" data-target="restraint"><span class="tab-link-inner"><span class="num">12</span>Restrictive Practices &amp; Restraint Minimisation</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="respiratory"><span class="tab-link-inner"><span class="num">13</span>Respiratory Physiotherapy</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="palliative"><span class="tab-link-inner"><span class="num">14</span>Palliative &amp; End-of-Life Physiotherapy</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="cognitive"><span class="tab-link-inner"><span class="num">15</span>Cognition, Dementia &amp; BPSD</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="continence"><span class="tab-link-inner"><span class="num">16</span>Continence-Related Physiotherapy Input</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="strength"><span class="tab-link-inner"><span class="num">17</span>Strength, Balance &amp; Group Exercise</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="equipment"><span class="tab-link-inner"><span class="num">18</span>Equipment &amp; Assistive Technology Prescription</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="mdt"><span class="tab-link-inner"><span class="num">19</span>MDT Liaison, RCA &amp; Quality Activities</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="education"><span class="tab-link-inner"><span class="num">20</span>Staff, Resident &amp; Family Education</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="docs"><span class="tab-link-inner"><span class="num">21</span>Documentation, Legal &amp; AHPRA Compliance</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+  <button type="button" class="tab-link" data-target="discharge"><span class="tab-link-inner"><span class="num">22</span>Transfers of Care, Admission &amp; Discharge</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+
+  <div class="grp-label">Reference</div>
+  <button type="button" class="tab-link" data-target="checklists"><span class="tab-link-inner"><span class="num">★</span>Quick Reference Checklists</span><span class="tick" aria-hidden="true">&#10003;</span></button>
+</nav>
+
+<main>
+<div class="stage" id="stage">
+
+  <div class="hero panel active" id="intro" data-panel="intro">
+    <div class="eyebrow">Aged Care Physiotherapy Pty Ltd</div>
+    <h1>Clinical Practice Manual for Physiotherapy in Residential Aged Care</h1>
+    <p>A comprehensive, step-by-step reference for assessment, intervention, and management across the full scope of physiotherapy practice in Australian residential aged care facilities (RACFs) — aligned to the Aged Care Quality Standards, AHPRA Code of Conduct, and evidence-based clinical practice.</p>
+    <div class="meta-row">
+      <span>For use by: ACP physiotherapists &amp; supervised practitioners</span>
+      <span>Setting: Residential aged care (RACF), home &amp; community care</span>
+      <span>Review cycle: Annual</span>
+    </div>
+  </div>
+
+  <section class="topic panel" id="governance" data-panel="governance">
+    <div class="tophead">
+      <div class="idx">GOV</div>
+      <div>
+        <h2>Clinical Governance &amp; The Physiotherapist's Role in Aged Care</h2>
+        <p class="subtitle">What frames every assessment and intervention in this manual</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Regulatory &amp; Practice Framework</h3>
+    <ul class="plain">
+      <li><b>Aged Care Quality Standards (2019)</b> — particularly Standard 3 (Personal care and clinical care), Standard 5 (Organisation's service environment), and Standard 8 (Organisational governance). Physiotherapy is a core "clinical care" input assessed under Standard 3.</li>
+      <li><b>Aged Care Act &amp; Strengthened Aged Care Quality Standards (from 1 Nov 2025)</b> — reinforces rights-based, person-centred care and mandates multidisciplinary, evidence-based clinical decision-making, including allied health.</li>
+      <li><b>AHPRA Code of Conduct &amp; Physiotherapy Practice Thresholds</b> — governs scope of practice, supervision requirements for provisional/general registrants, and record-keeping standards.</li>
+      <li><b>NDIS Practice Standards</b> — apply in parallel where residents/clients are NDIS participants (e.g. younger people in residential care, home care NDIS clients).</li>
+      <li><b>Serious Incident Response Scheme (SIRS)</b> — falls resulting in serious injury and other reportable incidents trigger mandatory reporting; physiotherapy assessment findings frequently form part of the incident record.</li>
+    </ul>
+
+    <h3 class="block-h">Core Domains of Physiotherapy Contribution</h3>
+    <div class="two-col">
+      <div class="card-mini">
+        <h4>Direct clinical care</h4>
+        <ul class="plain tight">
+          <li>Mobility, transfer &amp; falls management</li>
+          <li>Seating, positioning &amp; pressure care</li>
+          <li>Pain, oedema &amp; wound-adjacent management</li>
+          <li>Respiratory, palliative &amp; post-acute rehabilitation</li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>Systems &amp; organisational contribution</h4>
+        <ul class="plain tight">
+          <li>Restraint minimisation &amp; least-restrictive practice</li>
+          <li>Root cause analysis (RCA) &amp; clinical governance meetings</li>
+          <li>Staff manual handling training &amp; competency sign-off</li>
+          <li>Quality indicator reporting (falls, pressure injuries, physical restraint)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flag amber"><span class="ico">i</span><div>This manual is a clinical reference for ACP physiotherapists. It does not replace facility-specific policies, individual clinical judgement, or AHPRA's Physiotherapy Practice Thresholds. Where facility policy is more conservative than this manual, follow facility policy and escalate the discrepancy to the ACP clinical lead.</div></div>
+  </section>
+
+  <!-- 01 MOBILITY & TRANSFER ASSESSMENT -->
+  <section class="topic panel" id="mob-assess" data-panel="mob-assess">
+    <div class="tophead">
+      <div class="idx">01</div>
+      <div>
+        <h2>Mobility &amp; Transfer Assessment</h2>
+        <p class="subtitle">Establishing a resident's current functional mobility status and safe transfer method</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">When to Assess</h3>
+    <ul class="plain">
+      <li>On admission to the facility (within first 48–72 hours, or per facility policy)</li>
+      <li>Following any fall, hospital admission, acute illness, surgery, or medication change affecting cognition/strength</li>
+      <li>On deterioration reported by care staff, family, or nursing (e.g. "not weight-bearing as well")</li>
+      <li>Scheduled review per care plan cycle (typically 3–6 monthly, or per funding/reassessment triggers)</li>
+      <li>Prior to any change in mobility aid, transfer method, or level of assistance</li>
+    </ul>
+
+    <h3 class="block-h">Step-by-Step Assessment Procedure</h3>
+    <ol class="steps">
+      <li><b>Chart and handover review.</b> Check medical history, recent falls, weight-bearing status, fracture precautions, cognitive status (dementia diagnosis, delirium screen), vision/hearing, continence needs, pain levels, and current mobility aid/transfer status recorded in the care plan.</li>
+      <li><b>Environmental and equipment check.</b> Confirm the room set-up, bed height, availability of rails, current mobility aid condition (brakes, tyres, height), and footwear appropriateness before mobilising the resident.</li>
+      <li><b>Subjective interview.</b> Ask the resident (and family/carer if present) about pre-morbid mobility, current confidence, fear of falling, pain on movement, fatigue, and any recent changes noticed.</li>
+      <li><b>Static assessment.</b> Observe sitting balance (supported/unsupported), standing balance (static and with perturbation if safe), and postural control before any dynamic testing.</li>
+      <li><b>Bed mobility.</b> Assess rolling, bridging, and supine-to-sit transitions — note the level of assistance and any use of bed rails/rope ladder.</li>
+      <li><b>Sit-to-stand transfer.</b> Assess technique, use of upper limbs, number of attempts, and level of physical assistance required (independent / supervision / stand-by assist / 1 assist / 2 assist / hoist).</li>
+      <li><b>Standing balance and gait (if applicable).</b> Assess gait pattern, step length/symmetry, use of aid, distance tolerated, fatigue, and need for rest breaks. Use a validated outcome measure (see table below).</li>
+      <li><b>Transfer-specific assessment.</b> Assess the specific transfers relevant to the resident's daily routine: bed↔chair, chair↔toilet, chair↔shower chair, wheelchair↔car (if applicable).</li>
+      <li><b>Determine and document the safe transfer status.</b> Assign a clear transfer/mobility status category (see table) and communicate this immediately to nursing/care staff — verbally and in writing — if it differs from the current status.</li>
+      <li><b>Trial equipment as needed.</b> Trial mobility aids or transfer equipment under close supervision before finalising a prescription (see Section 02).</li>
+    </ol>
+
+    <h3 class="block-h">Validated Outcome Measures</h3>
+    <table class="ref">
+      <tr><th>Tool</th><th>Use</th><th>Notes</th></tr>
+      <tr><td>Timed Up and Go (TUG)</td><td>Falls risk screening, functional mobility</td><td>&gt;13.5s associated with increased falls risk in older adults</td></tr>
+      <tr><td>Berg Balance Scale</td><td>Detailed balance assessment</td><td>Useful for rehabilitation goal-setting and progress tracking</td></tr>
+      <tr><td>Elderly Mobility Scale (EMS)</td><td>Aged-care specific mobility screen</td><td>Widely used in RACF and sub-acute settings</td></tr>
+      <tr><td>Functional Independence Measure (FIM) — mobility items</td><td>Level of physical assistance tracking</td><td>Common in rehab and complex care review</td></tr>
+      <tr><td>6-Minute Walk Test (or modified distance test)</td><td>Endurance, functional capacity</td><td>Adapt distance/route to facility corridor length</td></tr>
+      <tr><td>30-Second Sit-to-Stand</td><td>Lower limb strength/functional power</td><td>Quick, repeatable, good for group program baselines</td></tr>
+    </table>
+
+    <h3 class="block-h">Documentation Requirements</h3>
+    <div class="doc-box">Record: assessment date/reason, subjective findings, objective measures/scores used, current level of assistance for each transfer type, mobility aid in use, gait pattern description, fatigue/pain impact, comparison to previous assessment, clinical reasoning for any status change, and communication to nursing/care staff (who was informed, when, and how — verbal handover <b>and</b> written care plan/progress note update are both required).</div>
+
+    <div class="flag red"><span class="ico">!</span><div><b>Escalate immediately</b> if you identify: a resident mobilising above their documented assistance level (risk of fall/injury to staff or resident), new unexplained weakness or asymmetry (possible stroke/fracture — refer to GP/ED per facility protocol), or acute deterioration in weight-bearing status without a documented cause.</div></div>
+  </section>
+
+  <!-- 02 MOBILITY & TRANSFER AID PRESCRIPTION -->
+  <section class="topic panel" id="mob-prescribe" data-panel="mob-prescribe">
+    <div class="tophead">
+      <div class="idx">02</div>
+      <div>
+        <h2>Mobility &amp; Transfer Aid / Assist Prescription</h2>
+        <p class="subtitle">Matching the right aid and assistance level to the assessed mobility profile</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Prescription Decision Steps</h3>
+    <ol class="steps">
+      <li><b>Confirm the assessment is current</b> (Section 01) — never prescribe or change equipment from an outdated assessment or second-hand report.</li>
+      <li><b>Match aid to gait pattern and stability need.</b> Consider base of support required, upper limb strength, cognitive ability to use the aid safely (sequencing, safety awareness), and environment (room size, corridor width, outdoor terrain if applicable).</li>
+      <li><b>Trial before prescribing.</b> Trial the aid over a realistic distance/task with the resident, adjusting height and configuration (e.g. wheeled frame with brakes and seat vs standard 4-wheel walker vs pick-up frame vs single point stick).</li>
+      <li><b>Set correct aid height/fit.</b> Standard: handle height at wrist crease with arms relaxed by the side, elbow flexed ~15–20° when gripping.</li>
+      <li><b>Determine transfer assistance level</b> using a standardised assistance scale (see below) for each relevant transfer — this must be transfer-specific, not a single global rating, where the resident's ability differs by task.</li>
+      <li><b>Consider manual handling risk to staff</b> concurrently with resident safety — select equipment/technique that is safe for a single carer wherever possible, escalating to two-person or hoist assist only when clinically indicated.</li>
+      <li><b>Write the manual handling / transfer care plan</b> using ACP's structured format (header table, purpose, background, equipment check, key postures, per-transfer task table with cues, repair/maintenance contacts, sign-off).</li>
+      <li><b>Communicate and train.</b> Demonstrate the transfer technique to at least the primary care staff on shift; note this in the progress notes. Arrange follow-up training for the broader team if it's a new or changed technique.</li>
+      <li><b>Review trigger points.</b> Set a review date and clearly document what would trigger an earlier review (e.g. any fall, any new pain report, any staff safety concern).</li>
+    </ol>
+
+    <h3 class="block-h">Standard Assistance Level Terminology</h3>
+    <table class="ref">
+      <tr><th>Level</th><th>Description</th></tr>
+      <tr><td>Independent</td><td>No physical or verbal assistance required, may use aid</td></tr>
+      <tr><td>Supervision</td><td>No physical contact; staff present for safety/prompting</td></tr>
+      <tr><td>Stand-by assist (SBA)</td><td>Staff within arm's reach, contact only if needed</td></tr>
+      <tr><td>Assist of 1</td><td>One carer providing physical assistance/guidance throughout</td></tr>
+      <tr><td>Assist of 2</td><td>Two carers required for safe completion of the transfer</td></tr>
+      <tr><td>Hoist — full</td><td>Mechanical hoist, resident contributes minimal/no weight-bearing</td></tr>
+      <tr><td>Hoist — standing/sit-to-stand</td><td>Powered standing hoist, resident contributes some active effort</td></tr>
+    </table>
+
+    <h3 class="block-h">Common Aid Selection Guide</h3>
+    <table class="ref">
+      <tr><th>Presentation</th><th>Typical aid</th><th>Key consideration</th></tr>
+      <tr><td>Mild instability, good UL strength</td><td>Single point stick (avoid quad/tripod sticks unless specific indication)</td><td>4WW generally preferred over single sticks per ACP falls prevention protocol for most RACF residents</td></tr>
+      <tr><td>Reduced balance, needs wider base</td><td>4-wheel walker (4WW) with brakes and seat</td><td>Preferred default frame in RACF — allows rest breaks, better outdoor use than pick-up frames</td></tr>
+      <tr><td>Significant UL weakness or cognitive impairment affecting frame use</td><td>Pick-up frame or supervised mobilising only</td><td>Higher cognitive/sequencing demand than wheeled frames</td></tr>
+      <tr><td>Non-ambulant, high falls/fracture risk</td><td>Manual or powered wheelchair, low-low bed, crash mats</td><td>Low-low beds and crash mats reserved for non-ambulant residents per facility falls protocol</td></tr>
+      <tr><td>Unable to weight-bear/assist actively</td><td>Full body hoist with appropriately sized sling</td><td>Sling type, size and attachment points must be individually assessed and documented</td></tr>
+    </table>
+
+    <div class="doc-box">Document: aid prescribed, height/fit settings, assistance level per transfer type, trial outcome, staff training provided (names/date), review date, and equipment repair/maintenance contact if facility-owned.</div>
+  </section>
+
+  <!-- 03 POST-FALL ASSESSMENT -->
+  <section class="topic panel" id="post-fall-assess" data-panel="post-fall-assess">
+    <div class="tophead">
+      <div class="idx">03</div>
+      <div>
+        <h2>Post-Fall Assessment</h2>
+        <p class="subtitle">Immediate and short-term clinical assessment following a fall</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Immediate Response (led by nursing, physio input as available/on notification)</h3>
+    <ol class="steps">
+      <li><b>Do not move the resident</b> until a preliminary check for injury (especially head/neck/hip) has been completed by nursing staff, unless in immediate danger.</li>
+      <li><b>Check for red flags</b> before any mobilisation attempt: loss of consciousness, head strike, new neck/back pain, inability to weight-bear, visible deformity, bleeding, or anticoagulant use (raises intracranial bleed risk even with minor head strike).</li>
+      <li><b>Vital signs and neurological observations</b> as per facility post-fall protocol (typically neuro obs if head strike or unwitnessed fall, especially on anticoagulants).</li>
+      <li><b>Safe manual handling to floor-to-chair/bed</b> using appropriate equipment (hoist if any doubt about weight-bearing or fracture) — never attempt a manual lift that breaches safe manual handling limits.</li>
+    </ol>
+
+    <h3 class="block-h">Physiotherapy Post-Fall Assessment (once medically cleared to mobilise)</h3>
+    <ol class="steps">
+      <li><b>Review the incident report</b> — circumstances, time, location, activity at time of fall, witnessed/unwitnessed, and any pattern with previous falls.</li>
+      <li><b>Screen for injury impact on function</b> — pain on movement, range of motion changes, new bruising/swelling, guarding, gait deviation compared to baseline.</li>
+      <li><b>Reassess mobility and transfer status from baseline</b> (repeat relevant elements of Section 01) — do not assume pre-fall status is still accurate.</li>
+      <li><b>Assess contributing factors</b>: footwear, mobility aid condition/use at time of fall, environmental hazards (lighting, flooring, clutter, wet surfaces), medication changes (sedatives, antihypertensives, recent dose changes), continence-related urgency, and cognitive/behavioural factors.</li>
+      <li><b>Check vision, postural hypotension, and lying/sitting/standing BP</b> if not already done by nursing, where indicated by history.</li>
+      <li><b>Determine if the resident requires interim precautions</b> (e.g. increased supervision, temporary downgrade in mobility status, low-low bed/crash mat, sensor mat) pending full falls risk reassessment.</li>
+      <li><b>Communicate findings</b> to nursing/GP same-day, including any recommendation for medical review, imaging referral, or interim mobility restriction.</li>
+    </ol>
+
+    <h3 class="block-h">Red Flags Requiring Urgent Medical Review / Transfer</h3>
+    <div class="flag red"><span class="ico">!</span><div>New inability to weight-bear, suspected fracture (deformity, severe localised pain, shortening/rotation of limb), head strike with anticoagulant use or loss of consciousness, new neurological signs (facial droop, slurred speech, limb weakness — possible stroke), signs of internal injury, or any fall in a resident who cannot reliably report symptoms (advanced dementia) with any behaviour change post-fall.</div></div>
+
+    <h3 class="block-h">Documentation Requirements</h3>
+    <div class="doc-box">Complete the facility incident report cross-reference, physiotherapy progress note with objective findings, comparison to pre-fall baseline, contributing factor analysis, immediate actions/precautions put in place, communication log (GP/nursing/family notified), and a flag for inclusion in the facility's falls cluster/RCA review if part of a pattern.</div>
+  </section>
+
+  <!-- 04 FALLS RISK ASSESSMENT -->
+  <section class="topic panel" id="falls-risk" data-panel="falls-risk">
+    <div class="tophead">
+      <div class="idx">04</div>
+      <div>
+        <h2>Falls Risk Assessment</h2>
+        <p class="subtitle">Proactive, structured identification of falls risk factors</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">When to Complete</h3>
+    <ul class="plain">
+      <li>On admission</li>
+      <li>Following any fall (see Section 03)</li>
+      <li>Scheduled review per facility policy (commonly 3–6 monthly, or on any significant clinical change)</li>
+      <li>On new prescription/deprescription of high-risk medications (psychotropics, sedatives, antihypertensives)</li>
+    </ul>
+
+    <h3 class="block-h">Step-by-Step Falls Risk Assessment</h3>
+    <ol class="steps">
+      <li><b>Use a validated multifactorial tool</b> — e.g. QUT Falls Risk for Older People in Residential Aged Care (QuickScreen/FROP-Com RC), or the facility-mandated tool. A single balance test alone is insufficient — falls risk is multifactorial.</li>
+      <li><b>Review falls history</b> — number, pattern, time of day, location, and circumstances of falls in the last 6–12 months.</li>
+      <li><b>Assess intrinsic factors</b>: strength, balance, gait, vision, cognition, continence, postural hypotension, fear of falling, foot health/footwear.</li>
+      <li><b>Assess extrinsic factors</b>: environment (lighting, flooring, furniture layout, bed/chair height), mobility aid appropriateness and condition, footwear, and use of restraints/bedrails (which can themselves increase injury risk).</li>
+      <li><b>Review medications with nursing/pharmacist</b> — polypharmacy, psychotropics, sedative load, and recent dose changes are major modifiable risk factors; flag for GP/pharmacist medication review if concerning.</li>
+      <li><b>Score and categorise risk</b> (low/medium/high) per the tool used, and cross-check the score against clinical judgement — override the tool score with documented reasoning if clinical presentation suggests higher risk than the score indicates.</li>
+      <li><b>Develop an individualised falls prevention plan</b> (Section 06) addressing the specific modifiable factors identified — avoid generic, non-individualised care plans.</li>
+      <li><b>Communicate risk category and plan</b> to the full care team and family, and update the visual falls risk alert per facility system (e.g. bed signage, care plan flag).</li>
+    </ol>
+
+    <h3 class="block-h">Key Modifiable Risk Factors to Screen</h3>
+    <table class="ref">
+      <tr><th>Domain</th><th>Screen for</th></tr>
+      <tr><td>Musculoskeletal</td><td>Lower limb strength, balance, gait pattern, foot deformity/pain</td></tr>
+      <tr><td>Sensory</td><td>Vision (cataracts, recent change, glasses use), peripheral neuropathy</td></tr>
+      <tr><td>Cardiovascular</td><td>Postural/orthostatic hypotension, arrhythmia history</td></tr>
+      <tr><td>Cognitive/behavioural</td><td>Impulsivity, unsafe transfer attempts, wandering, impaired safety awareness</td></tr>
+      <tr><td>Continence</td><td>Urgency causing rushed/unsupervised toileting attempts</td></tr>
+      <tr><td>Pharmacological</td><td>Psychotropics, sedatives, antihypertensives, recent changes/polypharmacy</td></tr>
+      <tr><td>Environmental</td><td>Lighting, flooring, clutter, bed/chair height, call bell access</td></tr>
+    </table>
+
+    <div class="doc-box">Document: tool used and score, risk category, all identified modifiable factors, referrals made (GP, pharmacist, podiatry, optometry, occupational therapy), the individualised prevention plan, and date of next scheduled review.</div>
+  </section>
+
+  <!-- 05 POST-FALL MANAGEMENT -->
+  <section class="topic panel" id="post-fall-mgmt" data-panel="post-fall-mgmt">
+    <div class="tophead">
+      <div class="idx">05</div>
+      <div>
+        <h2>Post-Fall Management</h2>
+        <p class="subtitle">Ongoing management following the acute post-fall assessment</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Step-by-Step Management Pathway</h3>
+    <ol class="steps">
+      <li><b>Implement interim precautions</b> identified in the post-fall assessment (Section 03) immediately — do not wait for the full falls risk reassessment to put basic safety measures in place.</li>
+      <li><b>Monitor for delayed-onset injury</b> — bruising, swelling, or pain evolving over 24–72 hours; hip and vertebral fractures can present subtly in older adults, particularly those with cognitive impairment.</li>
+      <li><b>Reassess mobility trajectory</b> over the following days — is the resident returning to baseline, or is there a new functional deficit requiring care plan/goal revision?</li>
+      <li><b>Complete or update the full falls risk assessment</b> (Section 04) within the facility-mandated timeframe post-fall (commonly 24–48 hours).</li>
+      <li><b>Update the falls prevention plan</b> (Section 06) with any new strategies specific to this fall's contributing factors.</li>
+      <li><b>Consider short-term rehabilitation input</b> — targeted strength/balance program, gait re-education, confidence-building (graded exposure) if fear of falling has emerged.</li>
+      <li><b>Liaise with GP</b> regarding medication review, imaging, or specialist referral if indicated.</li>
+      <li><b>Feed into facility falls data/quality reporting</b> and, where the resident has had a cluster of falls or the facility has a rising falls rate, contribute to a root cause analysis (Section 19).</li>
+      <li><b>Communicate with family</b> — many facilities require documented family notification after a fall; physiotherapy findings/recommendations should be reflected in this communication where relevant.</li>
+    </ol>
+
+    <h3 class="block-h">Psychological Impact — Fear of Falling</h3>
+    <ul class="plain">
+      <li>Screen for post-fall anxiety and activity avoidance, which paradoxically increases deconditioning and future falls risk.</li>
+      <li>Use graded, confidence-building mobilisation rather than abrupt return to prior activity level or, conversely, over-restriction.</li>
+      <li>Involve care staff in consistent encouragement and reassurance messaging aligned with the resident's Dignity of Risk (DOR) preferences.</li>
+    </ul>
+
+    <div class="flag amber"><span class="ico">i</span><div>Post-fall management is iterative, not a single note. Set a clear short-interval review point (e.g. 1 week) in addition to the standard falls risk review cycle.</div></div>
+  </section>
+
+  <!-- 06 FALLS PREVENTION STRATEGIES -->
+  <section class="topic panel" id="falls-prevention" data-panel="falls-prevention">
+    <div class="tophead">
+      <div class="idx">06</div>
+      <div>
+        <h2>Falls Prevention Strategies</h2>
+        <p class="subtitle">ACP's tiered approach to individualised falls prevention</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Long-Term Strategies</h3>
+    <ul class="plain">
+      <li><b>Progressive strength and balance training</b> — the single most evidence-supported falls prevention intervention; individual or small-group programs targeting lower limb strength, balance, and gait, dosed and progressed like any other exercise prescription.</li>
+      <li><b>Ongoing mobility and gait re-education</b> as part of routine physiotherapy review cycles.</li>
+      <li><b>Foot and footwear review</b> — refer to podiatry for foot pain/deformity; educate on supportive, well-fitted, non-slip footwear.</li>
+      <li><b>Vision review</b> — encourage regular optometry review; flag uncorrected vision changes to GP.</li>
+    </ul>
+
+    <h3 class="block-h">Short-Term / Environmental &amp; Care Strategies</h3>
+    <ul class="plain">
+      <li><b>Carer assistance</b> — matched to the assessed transfer assistance level (Section 02), consistently communicated across shifts.</li>
+      <li><b>Toileting schedules</b> — proactive, individualised toileting to reduce urgency-driven unsupervised mobilisation.</li>
+      <li><b>Environmental modifications</b> — adequate lighting (including night lighting), decluttered pathways, non-slip flooring, appropriately positioned furniture, bed/chair at correct height, call bell within reach.</li>
+      <li><b>Sensor mats/alarms</b> — for residents with impaired safety awareness who attempt unsupervised mobilisation; used as a monitoring aid, not a substitute for assessment-based care planning.</li>
+      <li><b>Medication review</b> — flag to GP/pharmacist where psychotropic or sedative load, or recent medication changes, may be contributing.</li>
+      <li><b>Mobility aid selection</b> — <b>4-wheel walker (4WW) preferred over single-point sticks</b> for most RACF residents per ACP protocol, given greater stability and rest-break capacity; single sticks reserved for residents with good balance/UL strength and clear indication.</li>
+      <li><b>Low-low beds and crash mats</b> — reserved specifically for <b>non-ambulant</b> residents at risk of bed-related falls; not a default intervention for ambulant residents, and not a substitute for addressing the underlying cause of falls.</li>
+    </ul>
+
+    <h3 class="block-h">Balancing Prevention with Dignity of Risk (DOR)</h3>
+    <div class="flag green"><span class="ico">✓</span><div>Falls prevention strategies must be balanced against the resident's right to Dignity of Risk. A cognitively intact resident who understands and accepts a level of risk (e.g. declining a 4WW, wanting to mobilise independently) has the right to make that informed choice. Document the DOR discussion, the information provided, the resident's decision, and the mitigation strategies offered and accepted/declined.</div></div>
+
+    <h3 class="block-h">Documentation</h3>
+    <div class="doc-box">Individualised falls prevention plan must map each identified risk factor (Section 04) to a specific strategy — avoid generic checklist-style plans not linked to the individual's actual risk profile. Include review date and DOR considerations where relevant.</div>
+  </section>
+
+  <!-- 07 SEATING -->
+  <section class="topic panel" id="seating" data-panel="seating">
+    <div class="tophead">
+      <div class="idx">07</div>
+      <div>
+        <h2>Seating Assessment &amp; Management</h2>
+        <p class="subtitle">Postural support, pressure care, function, and comfort in seating</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Step-by-Step Seating Assessment</h3>
+    <ol class="steps">
+      <li><b>Establish assessment purpose</b> — postural support, pressure care, comfort, function (e.g. self-propulsion, transfers), or a combination.</li>
+      <li><b>Assess in the current chair first.</b> Observe posture (pelvic position, spinal alignment, head/neck position), signs of sliding/leaning, pressure redistribution, and resident-reported comfort.</li>
+      <li><b>Assess pelvic and spinal alignment</b> — pelvic obliquity, rotation, or posterior tilt; fixed vs correctable deformities (important for cushion/backrest selection).</li>
+      <li><b>Assess skin integrity</b> at all weight-bearing contact points (ischial tuberosities, sacrum/coccyx, greater trochanters, heels if footrest-dependent) — link to Section 08.</li>
+      <li><b>Assess functional needs</b> — does the resident self-propel, need to reach a table, transfer independently, or require full postural support for comfort/palliation?</li>
+      <li><b>Measure the resident</b> — seat width, seat depth (2–3 finger widths behind knee), seat-to-footrest height, backrest height, armrest height.</li>
+      <li><b>Trial appropriate cushion and backrest options</b> matched to pressure injury risk (Section 08) and postural need — foam, gel, air, or hybrid cushions as indicated; contoured or planar backrests as indicated.</li>
+      <li><b>Reassess posture and pressure redistribution with the trialled equipment in situ.</b></li>
+      <li><b>Educate care staff</b> on correct positioning technique, repositioning schedule, and any equipment-specific instructions (e.g. air cushion inflation checks).</li>
+      <li><b>Set a review date</b> — sooner if postural or skin status is unstable, standard interval otherwise.</li>
+    </ol>
+
+    <h3 class="block-h">Common Seating Issues &amp; Interventions</h3>
+    <table class="ref">
+      <tr><th>Issue</th><th>Consideration</th></tr>
+      <tr><td>Sliding/posterior pelvic tilt</td><td>Correct seat-to-back angle, contoured cushion, consider anti-thrust cushion wedge</td></tr>
+      <tr><td>Pelvic obliquity (fixed)</td><td>Accommodate rather than force correction — contoured/customised cushion</td></tr>
+      <tr><td>Lateral lean/scoliosis</td><td>Lateral trunk supports, contoured backrest</td></tr>
+      <tr><td>Heel pressure from footrest</td><td>Footrest height adjustment, heel-offloading options</td></tr>
+      <tr><td>High pressure injury risk</td><td>Refer to Section 08 for cushion selection matched to risk category</td></tr>
+    </table>
+
+    <div class="doc-box">Document: chair/cushion make and model, all measurements taken, postural findings, skin check findings, functional rationale for equipment selected, repositioning schedule communicated to staff, and review date.</div>
+  </section>
+
+  <!-- 08 PRESSURE AREA -->
+  <section class="topic panel" id="pressure" data-panel="pressure">
+    <div class="tophead">
+      <div class="idx">08</div>
+      <div>
+        <h2>Pressure Area Assessment &amp; Management</h2>
+        <p class="subtitle">Prevention and management of pressure injury as part of the MDT</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Physiotherapy's Role</h3>
+    <p>Pressure injury prevention/management is led by nursing and is a Aged Care Quality Standard 3 clinical indicator, but physiotherapy contributes significantly through positioning, seating (Section 07), mobility promotion, and repositioning education. Physiotherapists do not typically manage wound dressings directly but must assess and document skin integrity relevant to positioning and equipment prescription.</p>
+
+    <h3 class="block-h">Step-by-Step Assessment</h3>
+    <ol class="steps">
+      <li><b>Review the validated risk tool score</b> completed by nursing (e.g. Waterlow, Braden Scale) to understand the resident's baseline risk category.</li>
+      <li><b>Visually inspect skin</b> at all bony prominences relevant to the resident's positioning in bed and chair (sacrum, coccyx, ischial tuberosities, greater trochanters, heels, elbows, occiput if applicable) — with appropriate consent/chaperone per facility policy.</li>
+      <li><b>Stage any identified pressure injury</b> using the standard staging system (Stage 1–4, unstageable, suspected deep tissue injury) and immediately notify nursing/wound care lead — this is not a physiotherapy-led management decision but requires prompt escalation.</li>
+      <li><b>Assess contributing mobility factors</b> — time spent in one position, ability to self-reposition, seating/mattress surface appropriateness, moisture/friction/shear risk during transfers.</li>
+      <li><b>Assess and prescribe pressure-relieving equipment</b> — mattress overlay/replacement (in liaison with nursing), seating cushion (Section 07), heel offloading devices.</li>
+      <li><b>Set/reinforce a repositioning schedule</b> in collaboration with nursing — standard is 2-hourly in bed unless equipment/clinical status indicates otherwise, individualised to the resident's risk level and tissue tolerance.</li>
+      <li><b>Optimise mobility and activity</b> wherever clinically appropriate, as movement is the most effective pressure-relief strategy — encourage active repositioning/weight shifts if the resident is able.</li>
+      <li><b>Review and reassess</b> at a frequency matched to risk level and any active pressure injury.</li>
+    </ol>
+
+    <h3 class="block-h">Documentation</h3>
+    <div class="doc-box">Document skin inspection findings (or "no abnormality detected"), any staged pressure injury with immediate notification recorded, equipment prescribed with rationale, repositioning schedule, and communication with nursing/wound care lead. Coordinate documentation to avoid duplication/contradiction with nursing notes.</div>
+
+    <div class="flag red"><span class="ico">!</span><div>Any newly identified pressure injury, or deterioration of an existing one, must be escalated to nursing/wound care lead immediately — this is a mandatory notification, not a routine care plan update.</div></div>
+  </section>
+
+  <!-- 09 PAIN -->
+  <section class="topic panel" id="pain" data-panel="pain">
+    <div class="tophead">
+      <div class="idx">09</div>
+      <div>
+        <h2>Pain Assessment &amp; Management</h2>
+        <p class="subtitle">Especially relevant given high prevalence of undertreated pain and communication barriers in aged care</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Step-by-Step Assessment</h3>
+    <ol class="steps">
+      <li><b>Establish cognitive status first</b> — this determines whether a self-report or observational pain tool is appropriate.</li>
+      <li><b>For residents who can self-report:</b> use a numeric rating scale (0–10), verbal descriptor scale, or Faces Pain Scale; ask about location, quality, aggravating/easing factors, pattern (constant/intermittent, worse with movement), and impact on function/sleep/mood.</li>
+      <li><b>For residents with moderate-severe cognitive impairment:</b> use a validated observational tool (e.g. Abbey Pain Scale, PAINAD) assessing vocalisation, facial expression, body language, behavioural change, and physiological signs.</li>
+      <li><b>Assess pain during movement/function specifically</b> — pain at rest can differ significantly from pain on transfer, weight-bearing, or during care tasks (e.g. showering, dressing changes); this is often the most clinically relevant assessment for a physiotherapist.</li>
+      <li><b>Screen for red flags</b> — new/unexplained severe pain, pain with fever, unexplained weight loss, night pain unrelieved by position change, or new neurological symptoms accompanying pain (refer to GP promptly).</li>
+      <li><b>Correlate with musculoskeletal examination</b> — range of motion, palpation, provocative testing where tolerated and appropriate, gait/movement pattern analysis.</li>
+      <li><b>Review current analgesia and effectiveness</b> in liaison with nursing/GP — physiotherapy findings on functional pain impact are valuable input to medication review.</li>
+      <li><b>Implement physiotherapy-specific pain management strategies</b> (see below) and set a review interval to assess effectiveness.</li>
+    </ol>
+
+    <h3 class="block-h">Physiotherapy Pain Management Strategies</h3>
+    <div class="two-col">
+      <div class="card-mini">
+        <h4>Active strategies</h4>
+        <ul class="plain tight">
+          <li>Graded therapeutic exercise/mobility within tolerance</li>
+          <li>Positioning and postural correction</li>
+          <li>Gait aid reassessment to reduce joint loading</li>
+          <li>Pacing and activity modification education</li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>Passive/adjunct strategies</h4>
+        <ul class="plain tight">
+          <li>Heat/cold therapy (per facility protocol and contraindication check)</li>
+          <li>Gentle manual therapy/soft tissue techniques where indicated</li>
+          <li>TENS (where available, appropriately assessed for suitability)</li>
+          <li>Seating/equipment modification to offload painful structures</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="doc-box">Document: tool used and score, pain location/pattern/functional impact, red flag screen outcome, examination findings, strategies implemented, and effectiveness at review. For residents with cognitive impairment, document baseline behaviour for future comparison.</div>
+  </section>
+
+  <!-- 10 CLINICAL RISK -->
+  <section class="topic panel" id="risk" data-panel="risk">
+    <div class="tophead">
+      <div class="idx">10</div>
+      <div>
+        <h2>Clinical Risk Assessment &amp; Management</h2>
+        <p class="subtitle">The broader risk lens physiotherapists apply beyond falls-specific risk</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Scope</h3>
+    <p>While falls risk (Section 04) is the most common risk assessment physiotherapists complete, aged care physiotherapists also identify and manage broader clinical risks that intersect with mobility, function, and safety.</p>
+
+    <h3 class="block-h">Step-by-Step General Risk Assessment Approach</h3>
+    <ol class="steps">
+      <li><b>Identify the specific risk domain</b> — e.g. manual handling risk to staff, choking/aspiration risk affecting positioning during meals, skin integrity risk, deconditioning risk, wandering/exit-seeking risk intersecting with mobility, equipment-related risk (bed rail entrapment, ill-fitting sling).</li>
+      <li><b>Assess likelihood and consequence</b> using the facility's risk matrix, where applicable, to categorise risk level consistently with organisational risk management practice.</li>
+      <li><b>Identify modifiable vs non-modifiable contributing factors.</b></li>
+      <li><b>Determine least-restrictive, evidence-based mitigation</b> — balancing safety with Dignity of Risk and resident autonomy at every step.</li>
+      <li><b>Assign clear actions and owners</b> — not all mitigations are physiotherapy-led; identify what requires nursing, dietetics, speech pathology, or facility maintenance action, and refer/communicate accordingly.</li>
+      <li><b>Document and communicate</b> the risk, mitigation plan, and review date to the full care team.</li>
+      <li><b>Review after any incident or change in status</b>, not only on the standard schedule.</li>
+    </ol>
+
+    <h3 class="block-h">Manual Handling Risk to Staff</h3>
+    <ul class="plain">
+      <li>Every transfer/mobility prescription (Section 02) is simultaneously a staff manual handling risk assessment — consider staff safety as a co-equal factor, not an afterthought.</li>
+      <li>Where a resident's presentation increases manual handling risk (e.g. increasing weight, worsening cognition affecting cooperation, unpredictable behaviour), proactively review the transfer plan rather than waiting for a staff injury or near-miss.</li>
+      <li>Contribute physiotherapy clinical reasoning to workplace incident investigations involving manual handling injuries.</li>
+    </ul>
+
+    <div class="doc-box">Document using the facility's designated risk register/assessment format where one exists, ensuring physiotherapy input is captured in a format accessible to the full MDT, not only in physiotherapy-specific notes.</div>
+  </section>
+
+  <!-- 11 OEDEMA -->
+  <section class="topic panel" id="oedema" data-panel="oedema">
+    <div class="tophead">
+      <div class="idx">11</div>
+      <div>
+        <h2>Oedema Assessment &amp; Management</h2>
+        <p class="subtitle">Peripheral, dependent, and lymphoedema management within physiotherapy scope</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Step-by-Step Assessment</h3>
+    <ol class="steps">
+      <li><b>Establish onset and pattern</b> — acute unilateral (screen for DVT — urgent medical referral, do not proceed with compression/massage until DVT excluded), chronic bilateral dependent oedema, or lymphoedema with a known cause (post-surgical, malignancy-related, chronic venous insufficiency).</li>
+      <li><b>Screen for red flags</b> requiring urgent medical review before any physiotherapy intervention: unilateral acute swelling with pain/warmth/redness (possible DVT or cellulitis), signs of heart failure decompensation (increasing bilateral oedema with breathlessness/orthopnoea), or skin breakdown/infection over oedematous tissue.</li>
+      <li><b>Measure and grade</b> — circumferential limb measurements at consistent landmarks, pitting oedema grading (0–4+), and functional impact (footwear fit, mobility, skin integrity risk).</li>
+      <li><b>Assess skin integrity</b> over oedematous areas — fragile, weeping, or broken skin changes management approach and urgency.</li>
+      <li><b>Review contributing factors</b> — prolonged dependent positioning (chair-bound residents), medication (calcium channel blockers, NSAIDs), cardiac/renal/hepatic status, mobility level, and venous return impairment.</li>
+      <li><b>Determine appropriate management pathway</b> based on cause (see below) — do not apply compression bandaging/garments to a limb until cardiac and vascular status has been confirmed safe by medical review, and specific competency-based training is held for compression techniques.</li>
+      <li><b>Implement and monitor</b> — measure response over an appropriate interval, and escalate to GP or specialist lymphoedema service if not responding as expected.</li>
+    </ol>
+
+    <h3 class="block-h">Management by Cause</h3>
+    <table class="ref">
+      <tr><th>Cause</th><th>Physiotherapy management approach</th></tr>
+      <tr><td>Dependent oedema (immobility/chair-bound)</td><td>Elevation when seated/in bed, active ankle pumps/foot exercises, mobility promotion, footrest/leg rest positioning review</td></tr>
+      <tr><td>Chronic venous insufficiency</td><td>Graduated compression (if cardiac status confirmed safe and appropriately trained/prescribed), exercise, elevation, skin care liaison with nursing</td></tr>
+      <tr><td>Lymphoedema (post-surgical/malignancy-related)</td><td>Refer/liaise with a qualified lymphoedema therapist for manual lymphatic drainage and compression bandaging where this exceeds general physiotherapy scope; general exercise and skin care education within scope</td></tr>
+      <tr><td>Cardiac/renal origin</td><td>Medical management is primary — physiotherapy role limited to positioning, gentle mobility as tolerated, and monitoring; do not apply compression without medical clearance</td></tr>
+    </table>
+
+    <div class="flag red"><span class="ico">!</span><div>Never apply compression bandaging or garments, or perform manual lymphatic drainage-style techniques, on an acutely swollen, hot, painful, or unilaterally swollen limb without medical exclusion of DVT and infection first.</div></div>
+
+    <div class="doc-box">Document: measurements, grading, red flag screen outcome, cause/contributing factors, management implemented, referrals made, and response to treatment at review.</div>
+  </section>
+
+  <!-- 12 RESTRAINT -->
+  <section class="topic panel" id="restraint" data-panel="restraint">
+    <div class="tophead">
+      <div class="idx">12</div>
+      <div>
+        <h2>Restrictive Practices &amp; Restraint Minimisation</h2>
+        <p class="subtitle">A mandatory area of physiotherapy contribution under the Aged Care Quality Standards</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <p>Physical restraint (including some bed rail use, lap belts, chairs a resident cannot exit independently, and certain seating configurations) is a restrictive practice under the Quality Standards and requires the least-restrictive alternative to be trialled and documented first, with restraint authorised, time-limited, and regularly reviewed only where genuinely necessary.</p>
+
+    <h3 class="block-h">Physiotherapy's Role</h3>
+    <ul class="plain">
+      <li>Identify when equipment prescribed for postural/pressure/falls purposes could constitute a restrictive practice (e.g. a lap belt, a chair with a tray table the resident cannot release, bed rails preventing egress) and flag this distinction explicitly in documentation.</li>
+      <li>Actively trial and document least-restrictive alternatives before any restraint is considered — e.g. seating/postural solutions, sensor mats, environmental modification, increased supervision, addressing the underlying cause (pain, continence urgency, boredom/behavioural need) rather than restraining the response to it.</li>
+      <li>Contribute to restrictive practice authorisation documentation and regular review meetings, providing physiotherapy clinical justification and alternatives considered.</li>
+      <li>Support de-implementation — actively look for opportunities to reduce/remove existing restrictive practices as a resident's function, environment, or care approach changes.</li>
+    </ul>
+
+    <div class="flag amber"><span class="ico">i</span><div>Restrictive practice reporting is subject to regulatory scrutiny and mandatory reporting requirements. Physiotherapy documentation that clearly shows least-restrictive alternatives were genuinely trialled first is essential, not optional paperwork.</div></div>
+  </section>
+
+  <!-- 13 RESPIRATORY -->
+  <section class="topic panel" id="respiratory" data-panel="respiratory">
+    <div class="tophead">
+      <div class="idx">13</div>
+      <div>
+        <h2>Respiratory Physiotherapy</h2>
+        <p class="subtitle">Chest physiotherapy input for acute and chronic respiratory presentations</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Common Indications in Aged Care</h3>
+    <ul class="plain">
+      <li>Post-pneumonia/chest infection secretion clearance and functional recovery</li>
+      <li>Chronic conditions (COPD, bronchiectasis) — ongoing management of secretions and exercise tolerance</li>
+      <li>Post-fall/post-fracture reduced mobility leading to secretion retention/atelectasis risk</li>
+      <li>Aspiration risk management in liaison with speech pathology</li>
+      <li>End-of-life respiratory symptom management (see Section 14)</li>
+    </ul>
+
+    <h3 class="block-h">Step-by-Step Approach</h3>
+    <ol class="steps">
+      <li><b>Review medical status</b> — diagnosis, current infection markers/observations, oxygen requirements, and any precautions (e.g. fracture precautions limiting positioning options).</li>
+      <li><b>Auscultate and assess</b> respiratory rate, work of breathing, oxygen saturation, cough effectiveness, sputum colour/volume, and exercise tolerance.</li>
+      <li><b>Select techniques matched to presentation</b> — positioning for optimal ventilation/drainage, active cycle of breathing technique, huffing/coughing education, mobilisation as a primary secretion-clearance strategy where tolerated.</li>
+      <li><b>Monitor response</b> — oxygen saturation, fatigue, and tolerance during and after treatment; cease and escalate if deterioration occurs.</li>
+      <li><b>Liaise with nursing/GP</b> on overall respiratory management plan, especially any change in oxygen requirements or clinical deterioration.</li>
+      <li><b>Progress toward functional mobility goals</b> as the acute episode resolves, rather than treating respiratory status in isolation from overall function.</li>
+    </ol>
+
+    <div class="doc-box">Document: assessment findings, techniques used, resident tolerance/response, and communication with medical/nursing team regarding overall respiratory status.</div>
+  </section>
+
+  <!-- 14 PALLIATIVE -->
+  <section class="topic panel" id="palliative" data-panel="palliative">
+    <div class="tophead">
+      <div class="idx">14</div>
+      <div>
+        <h2>Palliative &amp; End-of-Life Physiotherapy</h2>
+        <p class="subtitle">Comfort-focused, function-adjacent care in the final stages of life</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Role Shift in Palliative Care</h3>
+    <p>Goals shift from rehabilitation/functional improvement to comfort, dignity, and symptom management, in line with the resident's (and family's) wishes and advance care directives.</p>
+
+    <h3 class="block-h">Key Contributions</h3>
+    <ul class="plain">
+      <li><b>Positioning for comfort</b> and pressure care, balanced against the burden of repositioning on a frail/actively dying resident.</li>
+      <li><b>Gentle passive range of motion</b> to reduce contracture-related discomfort where appropriate and tolerated.</li>
+      <li><b>Breathlessness management</b> — positioning, fan therapy, pacing/energy conservation education for the resident and family.</li>
+      <li><b>Oedema/lymphoedema comfort measures</b> (Section 11) adapted to a comfort-focused, non-curative goal.</li>
+      <li><b>Equipment for comfort and carer safety</b> — pressure-relieving mattress/cushion, appropriate transfer equipment as function declines, balanced against minimising unnecessary handling.</li>
+      <li><b>Family and staff education/support</b> around safe, gentle handling and realistic expectations of mobility decline.</li>
+    </ul>
+
+    <div class="flag green"><span class="ico">✓</span><div>Always check the resident's advance care directive/goals of care documentation before setting or continuing rehabilitation-focused goals — palliative status should actively change the physiotherapy plan, not simply pause it.</div></div>
+
+    <div class="doc-box">Document goals of care alignment, comfort-focused interventions provided, family communication, and any change in approach as the resident's condition progresses.</div>
+  </section>
+
+  <!-- 15 COGNITIVE -->
+  <section class="topic panel" id="cognitive" data-panel="cognitive">
+    <div class="tophead">
+      <div class="idx">15</div>
+      <div>
+        <h2>Cognition, Dementia &amp; BPSD Considerations</h2>
+        <p class="subtitle">Adapting physiotherapy assessment and intervention for cognitive impairment</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Assessment Adaptations</h3>
+    <ul class="plain">
+      <li>Use observational rather than self-report tools where cognition precludes reliable self-report (pain — Abbey Scale/PAINAD; behaviour — validated behavioural charting).</li>
+      <li>Time assessments to the resident's best functioning period of day where possible (many residents with dementia show diurnal variation, e.g. "sundowning").</li>
+      <li>Use simple, single-step instructions, demonstration, and physical guidance rather than complex verbal instruction.</li>
+      <li>Involve familiar staff/family in assessment to support engagement and accurate baseline understanding.</li>
+    </ul>
+
+    <h3 class="block-h">Physiotherapy Contribution to BPSD (Behavioural and Psychological Symptoms of Dementia)</h3>
+    <ul class="plain">
+      <li>Assess whether unmet physical needs (pain, discomfort, constipation, fatigue, need for movement) are driving behavioural expression — a core physiotherapy contribution to BPSD case conferences.</li>
+      <li>Provide structured physical activity/movement programs, which have a good evidence base for reducing agitation and improving sleep in dementia.</li>
+      <li>Contribute to restraint minimisation (Section 12) specifically where restrictive practices have been used in response to BPSD rather than addressing the underlying cause.</li>
+      <li>Support least-restrictive falls prevention strategies that respect wandering/purposeful walking as a need rather than purely a risk to be contained.</li>
+    </ul>
+
+    <div class="doc-box">Document cognitive status and its impact on assessment method chosen, and any behavioural observations relevant to BPSD case conferences.</div>
+  </section>
+
+  <!-- 16 CONTINENCE -->
+  <section class="topic panel" id="continence" data-panel="continence">
+    <div class="tophead">
+      <div class="idx">16</div>
+      <div>
+        <h2>Continence-Related Physiotherapy Input</h2>
+        <p class="subtitle">Where physiotherapy intersects with continence care</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <ul class="plain">
+      <li><b>Toileting-related mobility and transfers</b> — ensure safe, timely transfer capacity to the toilet is factored into continence care planning; urgency-driven unsupervised mobilisation is a major falls contributor (Section 06).</li>
+      <li><b>Pelvic floor and functional strength</b> — general lower limb/core strengthening supports functional continence; refer to a continence-specialised physiotherapist/nurse for pelvic floor-specific intervention where indicated and within scope.</li>
+      <li><b>Positioning for optimal toileting mechanics</b> — appropriate seat height, footrest/foot support for effective abdominal/pelvic floor coordination.</li>
+      <li><b>Liaison with nursing/continence advisor</b> on toileting schedules that align with the resident's mobility/transfer capacity and falls prevention plan.</li>
+    </ul>
+
+    <div class="doc-box">Document any continence-related findings relevant to mobility/transfer planning and cross-reference with the continence care plan held by nursing.</div>
+  </section>
+
+  <!-- 17 STRENGTH -->
+  <section class="topic panel" id="strength" data-panel="strength">
+    <div class="tophead">
+      <div class="idx">17</div>
+      <div>
+        <h2>Strength, Balance &amp; Group Exercise Programs</h2>
+        <p class="subtitle">Restorative and maintenance exercise programming</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Step-by-Step Program Development</h3>
+    <ol class="steps">
+      <li><b>Screen and stratify residents</b> by cognitive/physical ability into appropriate group or individual program streams (e.g. seated group, standing group, high-level balance group, 1:1 program for complex needs).</li>
+      <li><b>Set individualised, measurable goals</b> for each participant, linked to their care plan and, where relevant, funded program goals (NDIS/HCP).</li>
+      <li><b>Select evidence-based exercise content</b> — progressive resistance training principles adapted for frailty, dual-task balance exercises, functional task practice (sit-to-stand repetitions, stepping).</li>
+      <li><b>Ensure appropriate supervision ratios</b> and safe environment (adequate space, chairs with arms available, non-slip flooring).</li>
+      <li><b>Progress load/difficulty systematically</b> and reassess with outcome measures (Section 01) at scheduled intervals.</li>
+      <li><b>Track attendance and engagement</b> and follow up on non-attendance, which may itself signal a clinical change worth assessing.</li>
+      <li><b>Report outcomes</b> to the care team and, where applicable, to funding bodies/family as evidence of program value.</li>
+    </ol>
+
+    <div class="doc-box">Document individual goals, program content, attendance, progression, and outcome measure results at baseline and review.</div>
+  </section>
+
+  <!-- 18 EQUIPMENT -->
+  <section class="topic panel" id="equipment" data-panel="equipment">
+    <div class="tophead">
+      <div class="idx">18</div>
+      <div>
+        <h2>Equipment &amp; Assistive Technology Prescription</h2>
+        <p class="subtitle">Beyond mobility aids — the full range of AT physiotherapists prescribe or contribute to</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Equipment Categories</h3>
+    <table class="ref">
+      <tr><th>Category</th><th>Examples</th></tr>
+      <tr><td>Mobility</td><td>Wheelchairs (manual/powered), walkers, sticks, scooters</td></tr>
+      <tr><td>Transfer</td><td>Hoists (full/standing), slide sheets, transfer boards, slings</td></tr>
+      <tr><td>Seating/positioning</td><td>Pressure cushions, specialised seating, wedges, lateral supports</td></tr>
+      <tr><td>Bed-related</td><td>Low-low beds, pressure-relieving mattresses, bed rails/alternatives, rope ladders</td></tr>
+      <tr><td>Bathroom/toileting</td><td>Shower chairs/commodes, raised toilet seats, grab rails</td></tr>
+      <tr><td>Monitoring</td><td>Sensor mats/alarms</td></tr>
+    </table>
+
+    <h3 class="block-h">Prescription Principles</h3>
+    <ol class="steps">
+      <li><b>Base every prescription on a completed assessment</b> — never prescribe from a request alone without assessing the resident.</li>
+      <li><b>Trial before finalising</b>, wherever feasible, especially for higher-cost or complex equipment.</li>
+      <li><b>Consider funding pathway</b> — facility-funded, NDIS (for eligible younger residents/participants), Home Care Package, or private purchase — and follow the correct request/justification process for that pathway.</li>
+      <li><b>Check equipment safety and maintenance status</b> before prescribing facility stock; report any faulty equipment via the facility maintenance system immediately.</li>
+      <li><b>Train relevant staff/family</b> on correct use before the equipment is put into routine use.</li>
+      <li><b>Review fit and function</b> at appropriate intervals, and as the resident's condition changes.</li>
+    </ol>
+
+    <div class="doc-box">Document assessment findings, equipment prescribed with make/model/settings, funding source and justification, training provided, and review date.</div>
+  </section>
+
+  <!-- 19 MDT / RCA / QUALITY -->
+  <section class="topic panel" id="mdt" data-panel="mdt">
+    <div class="tophead">
+      <div class="idx">19</div>
+      <div>
+        <h2>MDT Liaison, RCA &amp; Quality Activities</h2>
+        <p class="subtitle">System-level contribution expected of the physiotherapist beyond individual clinical care</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Multidisciplinary Team (MDT) Liaison</h3>
+    <ul class="plain">
+      <li>Attend and contribute to case conferences, care planning meetings, and family meetings where mobility/function is relevant.</li>
+      <li>Communicate clearly and promptly with GPs, nursing, dietetics, speech pathology, occupational therapy, podiatry, and pharmacy — physiotherapy findings frequently inform decisions outside physiotherapy's direct scope (e.g. medication review, nutrition, swallowing).</li>
+      <li>Provide clinical handover at shift changes/team meetings for residents with recent status change.</li>
+    </ul>
+
+    <h3 class="block-h">Root Cause Analysis (RCA) &amp; Falls/Incident Cluster Review</h3>
+    <ol class="steps">
+      <li><b>Identify the trigger</b> for RCA — a cluster of falls, a serious injury, or a facility quality indicator trending adversely.</li>
+      <li><b>Gather data</b> — individual incident reports, falls risk assessments, environmental factors, staffing patterns, and equipment records for the relevant period/residents.</li>
+      <li><b>Facilitate or contribute to the RCA meeting</b>, applying a systems-thinking approach (not individual blame) to identify contributing factors across resident, staff, environment, and process domains.</li>
+      <li><b>Propose evidence-based, feasible interventions</b> — e.g. a targeted student placement program to increase supervised mobilisation capacity, environmental modification, staff education refresh.</li>
+      <li><b>Document the RCA outcome and action plan</b> with clear owners and timeframes.</li>
+      <li><b>Monitor and report on action plan implementation and outcome data</b> at an agreed follow-up interval.</li>
+    </ol>
+
+    <h3 class="block-h">Quality Indicator Contribution</h3>
+    <ul class="plain">
+      <li>Physiotherapy data directly feeds the National Aged Care Mandatory Quality Indicator Program: falls and major injury, physical restraint use, and (indirectly, via positioning/mobility input) pressure injuries.</li>
+      <li>Ensure documentation practices support accurate, timely quality indicator reporting — incomplete or inconsistent physiotherapy records can distort facility-level data.</li>
+    </ul>
+
+    <div class="doc-box">Document RCA participation, contributions made, and any resulting change to individual or facility-wide practice.</div>
+  </section>
+
+  <!-- 20 EDUCATION -->
+  <section class="topic panel" id="education" data-panel="education">
+    <div class="tophead">
+      <div class="idx">20</div>
+      <div>
+        <h2>Staff, Resident &amp; Family Education</h2>
+        <p class="subtitle">Training and communication as a core, ongoing physiotherapy function</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Staff Manual Handling &amp; Clinical Training</h3>
+    <ol class="steps">
+      <li><b>Identify training needs</b> — new staff orientation, new/changed transfer technique for a specific resident, or a facility-wide refresher following an incident trend.</li>
+      <li><b>Deliver competency-based training</b> combining theory (technique rationale, injury prevention) with supervised practical demonstration.</li>
+      <li><b>Assess and sign off competency</b> where the facility requires formal sign-off for specific equipment (e.g. hoist use) — do not assume verbal explanation alone constitutes adequate training.</li>
+      <li><b>Document training delivered</b>, including staff names, date, and content covered, for both clinical governance and staff record purposes.</li>
+      <li><b>Review effectiveness</b> through observation of practice and by monitoring related incident trends.</li>
+    </ol>
+
+    <h3 class="block-h">Resident &amp; Family Education</h3>
+    <ul class="plain">
+      <li>Explain assessment findings and recommendations in plain language, checking understanding rather than assuming it.</li>
+      <li>Support informed decision-making, particularly around Dignity of Risk discussions (Section 06).</li>
+      <li>Provide written/visual education materials where helpful (e.g. exercise sheets, positioning guides), adapted for health literacy and, where relevant, language needs.</li>
+      <li>Set realistic expectations around functional prognosis, especially where families expect a return to pre-admission function that may not be achievable.</li>
+    </ul>
+
+    <div class="doc-box">Document all education/training delivered — who, what, when, and any resulting competency sign-off or follow-up need identified.</div>
+  </section>
+
+  <!-- 21 DOCS -->
+  <section class="topic panel" id="docs" data-panel="docs">
+    <div class="tophead">
+      <div class="idx">21</div>
+      <div>
+        <h2>Documentation, Legal &amp; AHPRA Compliance</h2>
+        <p class="subtitle">The standard every entry in this manual's sections must meet</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Documentation Standards Checklist</h3>
+    <ul class="plain">
+      <li>Every entry is timely (same-day for acute findings; per facility policy for routine notes), legible/clear, and attributable (name, designation, date, time).</li>
+      <li>Objective findings are distinguished clearly from clinical reasoning/opinion.</li>
+      <li>Any deviation from a standard pathway (e.g. delayed assessment, declined intervention) is explained with clinical reasoning documented.</li>
+      <li>Communication with other disciplines/family/GP is recorded — who, what, when.</li>
+      <li>Consent (or substitute decision-maker consent, where applicable) is documented for assessments and interventions, particularly for residents lacking capacity.</li>
+      <li>Records are stored and accessed per privacy legislation (Privacy Act, My Health Records Act where relevant) and facility information governance policy.</li>
+    </ul>
+
+    <h3 class="block-h">AHPRA &amp; Scope of Practice</h3>
+    <ul class="plain">
+      <li>Provisional/supervised practitioners work within their approved scope, with supervision arrangements documented and supervisor countersigning as required.</li>
+      <li>Practise within individual competence — refer/escalate to a more experienced clinician or another discipline where a presentation exceeds current scope or competence (e.g. complex wound care, specialist lymphoedema management, specific manual therapy techniques without relevant post-graduate training).</li>
+      <li>Maintain CPD relevant to aged care practice per AHPRA registration standards.</li>
+      <li>Comply with the Physiotherapy Practice Thresholds and AHPRA Code of Conduct in all clinical decision-making and record-keeping.</li>
+    </ul>
+
+    <div class="flag amber"><span class="ico">i</span><div>Documentation is not an administrative afterthought in aged care — it is frequently the primary evidence reviewed in complaints, coronial inquiries, SIRS notifications, and accreditation audits. Write every entry as though it may be reviewed in that context.</div></div>
+  </section>
+
+  <!-- 22 DISCHARGE -->
+  <section class="topic panel" id="discharge" data-panel="discharge">
+    <div class="tophead">
+      <div class="idx">22</div>
+      <div>
+        <h2>Transfers of Care, Admission &amp; Discharge</h2>
+        <p class="subtitle">Physiotherapy's role at transition points</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <h3 class="block-h">Admission to RACF</h3>
+    <ul class="plain">
+      <li>Complete baseline mobility, falls risk, seating, and pressure area screening within the facility's mandated admission timeframe.</li>
+      <li>Obtain and review any hospital/community discharge summary, prior physiotherapy records, and pre-morbid function from family.</li>
+    </ul>
+
+    <h3 class="block-h">Hospital Transfer (RACF → Hospital)</h3>
+    <ul class="plain">
+      <li>Provide a concise functional/mobility summary for hospital handover — baseline mobility status, cognition, and relevant equipment needs — to support appropriate hospital care and safe, well-informed discharge planning back to the facility.</li>
+    </ul>
+
+    <h3 class="block-h">Return from Hospital</h3>
+    <ol class="steps">
+      <li><b>Reassess mobility/transfer status promptly</b> on return — do not assume pre-admission status still applies; hospital admissions frequently cause functional decline in older adults.</li>
+      <li><b>Review hospital discharge summary</b> for new diagnoses, precautions, medication changes, and any recommended follow-up.</li>
+      <li><b>Update equipment/care plan</b> to reflect current status, liaising with hospital allied health where a warm handover is available.</li>
+      <li><b>Set a short-term rehabilitation plan</b> where a return to prior function is a realistic goal.</li>
+    </ol>
+
+    <h3 class="block-h">End of Service / Discharge from Physiotherapy Caseload</h3>
+    <ul class="plain">
+      <li>Applies where a resident's goals are met, palliative status changes the care approach (Section 14), or the resident/family declines further input.</li>
+      <li>Document the discharge rationale, final status, and any recommendations for future re-referral triggers.</li>
+    </ul>
+
+    <div class="doc-box">Every transition point requires a documented functional status summary — this is frequently the single most valuable piece of information for receiving clinicians and is often the first document reviewed in a subsequent incident review.</div>
+  </section>
+
+  <!-- CHECKLISTS -->
+  <section class="topic panel" id="checklists" data-panel="checklists">
+    <div class="tophead">
+      <div class="idx">★</div>
+      <div>
+        <h2>Quick Reference Checklists</h2>
+        <p class="subtitle">Printable summary checklists for use at the point of care</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <div class="two-col">
+      <div class="card-mini">
+        <h4>Immediately after a fall</h4>
+        <ul class="plain tight">
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Do not move until preliminary injury check done</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Screen red flags (head strike, neuro signs, non-weight-bearing)</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Neuro obs / vitals as per protocol</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Safe manual handling off floor (hoist if any doubt)</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Reassess mobility vs baseline</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Identify contributing factors</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Implement interim precautions</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Notify GP/nursing/family same day</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Full falls risk reassessment within facility timeframe</span></label></li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>New mobility aid prescription</h4>
+        <ul class="plain tight">
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Current assessment completed (not outdated)</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Aid trialled with resident, over realistic distance</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Height/fit set correctly</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Assistance level documented per transfer type</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Staff manual handling risk considered</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Manual handling care plan written</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Staff trained/demonstrated to</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Review date and triggers set</span></label></li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>Seating review</h4>
+        <ul class="plain tight">
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Assessed in current chair first</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Pelvic/spinal alignment checked</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Skin integrity checked at all contact points</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Functional needs identified</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Measurements taken</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Cushion/backrest trialled and matched to pressure risk</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Staff educated on positioning/repositioning</span></label></li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>Oedema — before any intervention</h4>
+        <ul class="plain tight">
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Acute unilateral swelling? → exclude DVT first, urgent referral</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Hot/red/painful? → exclude infection first</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Cardiac/renal status confirmed safe for compression</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Skin integrity checked</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Measurements/grading recorded</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Appropriate scope — refer to lymphoedema specialist if indicated</span></label></li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>Restrictive practice check</h4>
+        <ul class="plain tight">
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Could this equipment/approach be a restrictive practice?</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Least-restrictive alternative trialled and documented first</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Underlying cause addressed, not just the behaviour/risk</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Time-limited authorisation and review scheduled if restraint used</span></label></li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>Documentation, every entry</h4>
+        <ul class="plain tight">
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Timely, legible, attributable</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Objective findings separated from reasoning</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Communication logged (who/what/when)</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Consent documented where applicable</span></label></li>
+          <li><label class="chk"><input type="checkbox" class="chk-input"><span class="chk-text">Would this entry stand up in an incident review?</span></label></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+<div class="carousel-controls" id="carouselControls">
+  <button type="button" id="prevBtn" class="cc-btn cc-prev" aria-label="Previous section"><span class="cc-arrow">&#8592;</span><span class="cc-label" id="prevLabel">Previous</span></button>
+  <div class="cc-counter" id="ccCounter">1 / 25</div>
+  <button type="button" id="nextBtn" class="cc-btn cc-next" aria-label="Next section"><span class="cc-label" id="nextLabel">Next</span><span class="cc-arrow">&#8594;</span></button>
+</div>
+
+<div class="card-mini" id="completionCard" style="padding:20px;">
+  <h3>Mark This Manual as Reviewed</h3>
+  <p>Unlocks once you've opened all <span id="totalSectionsLabel">25</span> sections. Progress: <span id="reviewProgressLabel">0 / 25</span>.</p>
+  <button class="cc-btn cc-next" id="markReviewedBtn" disabled>Mark as Reviewed</button>
+  <div class="completion-status" id="completionStatus"></div>
+</div>
+
+<footer>
+    <div>Aged Care Physiotherapy Pty Ltd — Internal Clinical Practice Manual. For use by ACP physiotherapists and supervised practitioners across TAAC Clayton, BSL Clifton Hill, ECH Parkville, VECH Ascot Vale, LSP, and community/NDIS caseloads. This manual is a clinical reference and does not override individual clinical judgement, facility-specific policy, or AHPRA's Physiotherapy Practice Thresholds.</div>
+    <button type="button" class="backtotop" id="backToTop">&#8593; Back to overview</button>
+  </footer>
+</main>
+</div>
+
+</div>
+
+<script>
+(function(){
+  try {
+    /* ---------------------------------------------------------
+       TRAINING TRACKER INTEGRATION
+    --------------------------------------------------------- */
+    var COURSE_ID = "1ccb8d9f-d428-4453-b160-4f9074f0872a";
+    var SUPABASE_URL = "https://unomkggpwiugvkovdjto.supabase.co";
+    var SUPABASE_ANON_KEY = "sb_publishable_rakZ0iLM1Tncok00y6HFPA_Xlls_Mwc";
+    var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    var currentAuthUser = null;
+    var alreadyRecorded = false;
+
+    function initAuthGate(){
+      sb.auth.getSession().then(function(res){
+        var session = res.data.session;
+        if(!session){
+          document.getElementById("authGate").style.display = "flex";
+          return;
+        }
+        currentAuthUser = session.user;
+        document.getElementById("courseContent").style.display = "block";
+      });
+    }
+
+    function recordCompletion(resultText){
+      var el = document.getElementById("completionStatus");
+      if(!currentAuthUser){
+        el.textContent = "Not signed in — this wasn't saved.";
+        el.className = "completion-status err";
+        return;
+      }
+      el.textContent = "Saving...";
+      el.className = "completion-status";
+      sb.from("completions").insert({
+        staff_id: currentAuthUser.id,
+        course_id: COURSE_ID,
+        completion_date: new Date().toISOString().slice(0,10),
+        result: resultText,
+        recorded_by: currentAuthUser.id
+      }).then(function(res){
+        if(res.error){
+          el.innerHTML = "Couldn't save. <button onclick=\"window.__retryPcpmSave()\">Retry</button>";
+          el.className = "completion-status err";
+          return;
+        }
+        alreadyRecorded = true;
+        el.textContent = "✓ Saved to your training record.";
+        el.className = "completion-status ok";
+        document.getElementById("markReviewedBtn").disabled = true;
+      });
+    }
+    window.__retryPcpmSave = function(){
+      var total = document.getElementById("totalSectionsLabel").textContent;
+      recordCompletion("All " + total + " sections reviewed");
+    };
+
+    var menuBtn = document.getElementById('menuBtn');
+    var toc = document.getElementById('tocNav');
+    var overlay = document.getElementById('overlay');
+    var stage = document.getElementById('stage');
+    var progressFill = document.getElementById('progressFill');
+    var progressTag = document.getElementById('progressTag');
+    var prevBtn = document.getElementById('prevBtn');
+    var nextBtn = document.getElementById('nextBtn');
+    var prevLabel = document.getElementById('prevLabel');
+    var nextLabel = document.getElementById('nextLabel');
+    var ccCounter = document.getElementById('ccCounter');
+    var backToTop = document.getElementById('backToTop');
+
+    function closeMenu(){
+      toc.classList.remove('open');
+      overlay.classList.remove('open');
+    }
+    menuBtn.addEventListener('click', function(){
+      toc.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+    overlay.addEventListener('click', closeMenu);
+
+    // Build the panel order directly from the DOM so it always matches
+    // what's actually on the page, and pair each id with its short title
+    // (used for the Prev/Next button labels).
+    var panelEls = stage.querySelectorAll('.panel');
+    var panelOrder = [];
+    var panelTitles = {};
+    for (var p = 0; p < panelEls.length; p++) {
+      var id = panelEls[p].getAttribute('data-panel');
+      panelOrder.push(id);
+      var h = panelEls[p].querySelector('h1, h2');
+      panelTitles[id] = h ? h.textContent.trim() : id;
+    }
+
+    var tabLinks = document.querySelectorAll('.tab-link');
+    var tabById = {};
+    for (var t = 0; t < tabLinks.length; t++) {
+      tabById[tabLinks[t].getAttribute('data-target')] = tabLinks[t];
+    }
+
+    var readSet = {};   // ids the user has visited -> marked green
+    var currentId = panelOrder.length ? panelOrder[0] : null;
+
+    function updateProgress(){
+      var readCount = 0;
+      for (var k in readSet) { if (readSet[k]) readCount++; }
+      var total = panelOrder.length || 1;
+      var pct = Math.round((readCount / total) * 100);
+      if (progressFill) progressFill.style.width = pct + '%';
+      if (progressTag) progressTag.textContent = readCount + ' / ' + total + ' read';
+      var reviewLabel = document.getElementById('reviewProgressLabel');
+      var totalLabel = document.getElementById('totalSectionsLabel');
+      var markBtn = document.getElementById('markReviewedBtn');
+      if (reviewLabel) reviewLabel.textContent = readCount + ' / ' + total;
+      if (totalLabel) totalLabel.textContent = total;
+      if (markBtn && !alreadyRecorded) markBtn.disabled = readCount < total;
+    }
+
+    function updateTabStates(){
+      for (var id in tabById) {
+        var el = tabById[id];
+        el.classList.toggle('active', id === currentId);
+        el.classList.toggle('read', !!readSet[id]);
+      }
+    }
+
+    function updateCarouselControls(){
+      var idx = panelOrder.indexOf(currentId);
+      if (ccCounter) ccCounter.textContent = (idx + 1) + ' / ' + panelOrder.length;
+      if (idx <= 0) {
+        prevBtn.disabled = true;
+        if (prevLabel) prevLabel.textContent = 'Previous';
+      } else {
+        prevBtn.disabled = false;
+        if (prevLabel) prevLabel.textContent = panelTitles[panelOrder[idx - 1]];
+      }
+      if (idx === -1 || idx >= panelOrder.length - 1) {
+        nextBtn.disabled = true;
+        if (nextLabel) nextLabel.textContent = 'Next';
+      } else {
+        nextBtn.disabled = false;
+        if (nextLabel) nextLabel.textContent = panelTitles[panelOrder[idx + 1]];
+      }
+    }
+
+    function showPanel(id, opts){
+      if (panelOrder.indexOf(id) === -1) return;
+      opts = opts || {};
+      for (var p2 = 0; p2 < panelEls.length; p2++) {
+        panelEls[p2].classList.remove('active');
+      }
+      var target = document.querySelector('.panel[data-panel="' + id + '"]');
+      if (target) target.classList.add('active');
+      currentId = id;
+      readSet[id] = true;
+      updateTabStates();
+      updateProgress();
+      updateCarouselControls();
+      if (!opts.silent) {
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        catch (e) { window.scrollTo(0, 0); }
+      }
+      closeMenu();
+    }
+
+    for (var t2 = 0; t2 < tabLinks.length; t2++) {
+      tabLinks[t2].addEventListener('click', function(){
+        showPanel(this.getAttribute('data-target'));
+      });
+    }
+
+    prevBtn.addEventListener('click', function(){
+      var idx = panelOrder.indexOf(currentId);
+      if (idx > 0) showPanel(panelOrder[idx - 1]);
+    });
+    nextBtn.addEventListener('click', function(){
+      var idx = panelOrder.indexOf(currentId);
+      if (idx > -1 && idx < panelOrder.length - 1) showPanel(panelOrder[idx + 1]);
+    });
+    if (backToTop) {
+      backToTop.addEventListener('click', function(){ showPanel('intro'); });
+    }
+
+    // Interactive checklist checkboxes (quick-reference section): purely
+    // visual toggle state, independent of the read-tracking above.
+    var chkInputs = document.querySelectorAll('.chk-input');
+    for (var c = 0; c < chkInputs.length; c++) {
+      chkInputs[c].addEventListener('change', function(){
+        this.closest('label.chk').classList.toggle('checked', this.checked);
+      });
+    }
+
+    // Initialise on the first panel (marks it read immediately).
+    showPanel(currentId, { silent: true });
+
+    document.getElementById('markReviewedBtn').addEventListener('click', function(){
+      var total = document.getElementById('totalSectionsLabel').textContent;
+      recordCompletion('All ' + total + ' sections reviewed');
+    });
+
+    initAuthGate();
+  } catch (err) {
+    // Fail silently in restricted preview environments rather than
+    // breaking the rest of the page's interactivity.
+    if (window.console && console.warn) console.warn('Manual init error:', err);
+  }
+})();
+</script>
+</body>
+</html>
