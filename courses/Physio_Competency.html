@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aged Care Physiotherapy — Competency Assessment | ACP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{
+    --red:#cc3300; --red-dark:#a32900; --red-tint:#fdeeea;
+    --blue:#336699; --blue-dark:#264d73; --blue-tint:#eaf1f7;
+    --ink:#1e2328; --ink-soft:#4a5259; --line:#e2e6ea; --bg:#f7f8fa; --white:#fff;
+    --amber:#b8860b; --amber-tint:#fff8e6;
+    --green:#2e7d4f; --green-tint:#eaf6ee;
+    --radius:12px; --shadow:0 1px 2px rgba(30,35,40,.06), 0 4px 14px rgba(30,35,40,.06);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Lexend',system-ui,sans-serif; color:var(--ink); background:var(--bg); line-height:1.55;}
+  h1,h2,h3,h4{font-family:'Lexend',sans-serif; font-weight:700; color:var(--ink); line-height:1.25; margin:0;}
+  p{margin:.4em 0;}
+
+  .topbar{
+    position:sticky; top:0; z-index:50; background:linear-gradient(90deg,var(--blue) 0%,var(--blue-dark) 100%);
+    color:#fff; padding:12px 16px; display:flex; align-items:center; gap:12px; box-shadow:var(--shadow);
+  }
+  .topbar .brand{display:flex; align-items:center; gap:10px;}
+  .topbar .mark{width:34px;height:34px;border-radius:8px;background:var(--red);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0;}
+  .topbar .brand-text{display:flex; flex-direction:column; line-height:1.15;}
+  .topbar .brand-text .t1{font-weight:700; font-size:15px;}
+  .topbar .brand-text .t2{font-weight:300; font-size:11.5px; opacity:.85; letter-spacing:.03em;}
+  .topbar .spacer{flex:1;}
+  .topbar .tag{font-size:11.5px; background:rgba(255,255,255,.14); padding:5px 10px; border-radius:999px; white-space:nowrap;}
+  .progress-track{position:absolute; left:0; right:0; bottom:0; height:3px; background:rgba(255,255,255,.18);}
+  .progress-fill{height:100%; width:0%; background:var(--green); transition:width .3s ease;}
+
+  main{max-width:840px; margin:0 auto; padding:32px 20px 80px;}
+  .card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:32px; box-shadow:var(--shadow); margin-bottom:22px;}
+
+  /* ---- start screen ---- */
+  .hero{background:linear-gradient(135deg,var(--red) 0%,#e8551f 55%, var(--red-dark) 100%); color:#fff; border-radius:16px; padding:32px 34px; margin-bottom:24px; box-shadow:var(--shadow);}
+  .hero .eyebrow{font-size:12.5px; letter-spacing:.12em; text-transform:uppercase; opacity:.9; font-weight:600;}
+  .hero h1{color:#fff; font-size:26px; margin:8px 0 10px;}
+  .hero p{color:rgba(255,255,255,.92); font-size:14px; max-width:640px;}
+  .domain-chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:16px;}
+  .domain-chips span{background:rgba(255,255,255,.16); font-size:11.5px; padding:5px 10px; border-radius:999px;}
+
+  label{display:block; font-size:12.5px; font-weight:600; color:var(--blue-dark); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;}
+  input[type="text"]{
+    width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:9px; font-family:'Lexend',sans-serif;
+    font-size:14.5px; color:var(--ink); margin-bottom:18px; background:var(--bg);
+  }
+  input[type="text"]:focus{outline:none; border-color:var(--blue); background:#fff;}
+  select{
+    width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:9px; font-family:'Lexend',sans-serif;
+    font-size:14.5px; color:var(--ink); margin-bottom:18px; background:var(--bg);
+  }
+
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; border:none; border-radius:10px; padding:12px 22px;
+    font-family:'Lexend',sans-serif; font-weight:600; font-size:14px; cursor:pointer; transition:transform .1s ease, background .15s ease;
+  }
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+  .btn-primary{background:var(--red); color:#fff;}
+  .btn-primary:hover:not(:disabled){background:var(--red-dark);}
+  .btn-secondary{background:var(--blue-tint); color:var(--blue-dark);}
+  .btn-secondary:hover:not(:disabled){background:var(--blue); color:#fff;}
+  .btn-ghost{background:transparent; color:var(--ink-soft); border:1.5px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--blue); color:var(--blue-dark);}
+  .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;}
+
+  /* ---- quiz ---- */
+  .quiz-meta{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px;}
+  .domain-tag{font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; font-weight:700; color:var(--blue-dark); background:var(--blue-tint); padding:5px 12px; border-radius:999px;}
+  .q-counter{font-size:12.5px; color:var(--ink-soft); font-weight:600;}
+  .q-progress-outer{height:6px; background:var(--line); border-radius:4px; overflow:hidden; margin-bottom:22px;}
+  .q-progress-inner{height:100%; background:var(--red); width:0%; transition:width .25s ease;}
+  .q-text{font-size:17px; font-weight:600; margin-bottom:20px; line-height:1.4;}
+  .options{display:flex; flex-direction:column; gap:10px;}
+  .option{
+    display:flex; align-items:flex-start; gap:12px; padding:13px 16px; border:1.5px solid var(--line); border-radius:10px;
+    cursor:pointer; font-size:13.8px; transition:background .12s ease, border-color .12s ease;
+  }
+  .option:hover{border-color:var(--blue); background:var(--blue-tint);}
+  .option .bullet{
+    width:22px; height:22px; border-radius:50%; border:1.5px solid #b9c0c6; flex-shrink:0; display:flex; align-items:center;
+    justify-content:center; font-size:11px; font-weight:800; color:transparent; margin-top:1px;
+  }
+  .option.selected .bullet{border-color:var(--blue); background:var(--blue); color:#fff;}
+  .option.selected{border-color:var(--blue); background:var(--blue-tint);}
+  .option.correct{border-color:var(--green); background:var(--green-tint);}
+  .option.correct .bullet{border-color:var(--green); background:var(--green); color:#fff;}
+  .option.incorrect{border-color:var(--red); background:var(--red-tint);}
+  .option.incorrect .bullet{border-color:var(--red); background:var(--red); color:#fff;}
+  .option.disabled{cursor:default;}
+  .feedback{
+    margin-top:16px; padding:14px 16px; border-radius:10px; font-size:13.5px; border:1px solid; display:none;
+  }
+  .feedback.show{display:block;}
+  .feedback.ok{background:var(--green-tint); border-color:#bfe3cc; color:#1b5c38;}
+  .feedback.bad{background:var(--red-tint); border-color:#f3c8ba; color:#7a2400;}
+  .feedback b{display:block; margin-bottom:3px; font-size:13px;}
+
+  /* ---- results ---- */
+  .verdict-banner{
+    border-radius:14px; padding:26px 28px; margin-bottom:22px; color:#fff; text-align:center;
+  }
+  .verdict-banner.pass{background:linear-gradient(135deg,var(--green) 0%, #1e5c38 100%);}
+  .verdict-banner.fail{background:linear-gradient(135deg,var(--red) 0%, var(--red-dark) 100%);}
+  .verdict-banner .score-big{font-size:44px; font-weight:800; margin:4px 0;}
+  .verdict-banner .verdict-label{font-size:16px; font-weight:700; letter-spacing:.02em;}
+  .verdict-banner .verdict-sub{font-size:12.5px; opacity:.9; margin-top:6px;}
+
+  table.domain-table{width:100%; border-collapse:collapse; font-size:13px;}
+  table.domain-table th{background:var(--blue); color:#fff; text-align:left; padding:9px 12px; font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em;}
+  table.domain-table th:first-child{border-radius:8px 0 0 0;}
+  table.domain-table th:last-child{border-radius:0 8px 0 0;}
+  table.domain-table td{padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  table.domain-table tr:nth-child(even) td{background:var(--bg);}
+  .badge{display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700;}
+  .badge.pass{background:var(--green-tint); color:#1b5c38;}
+  .badge.fail{background:var(--red-tint); color:#7a2400;}
+
+  /* ---- certificate preview ---- */
+  .cert-wrap{padding:14px; background:#e9ebee; border-radius:14px; margin-top:6px;}
+  .cert{
+    background:#fffdfa; border-radius:8px; padding:38px 44px; position:relative; overflow:hidden;
+    border:3px solid var(--red); box-shadow:0 8px 30px rgba(0,0,0,.12);
+  }
+  .cert::before, .cert::after{
+    content:""; position:absolute; left:14px; right:14px; height:2px; background:var(--blue);
+  }
+  .cert::before{top:12px;} .cert::after{bottom:12px;}
+  .cert-inner{text-align:center; position:relative; z-index:1;}
+  .cert-mark{
+    width:56px; height:56px; border-radius:14px; background:linear-gradient(135deg,var(--red),var(--red-dark));
+    color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:20px; margin:0 auto 14px;
+    box-shadow:0 4px 14px rgba(204,51,0,.3);
+  }
+  .cert-org{font-size:11.5px; text-transform:uppercase; letter-spacing:.14em; color:var(--blue-dark); font-weight:700;}
+  .cert-title{font-family:'Playfair Display',serif; font-weight:700; font-size:30px; color:var(--ink); margin:10px 0 4px;}
+  .cert-sub{font-size:12.5px; color:var(--ink-soft); margin-bottom:22px;}
+  .cert-presented{font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;}
+  .cert-name{font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:34px; color:var(--red-dark); margin:8px 0 18px; border-bottom:1.5px solid var(--line); display:inline-block; padding-bottom:10px; min-width:60%;}
+  .cert-body{font-size:13.5px; color:var(--ink); max-width:560px; margin:0 auto 22px; line-height:1.7;}
+  .cert-score-row{display:flex; justify-content:center; gap:34px; margin:10px 0 26px; flex-wrap:wrap;}
+  .cert-score-item{text-align:center;}
+  .cert-score-item .n{font-size:22px; font-weight:800; color:var(--blue-dark);}
+  .cert-score-item .l{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft);}
+  .cert-sign-row{display:flex; justify-content:space-between; align-items:flex-end; margin-top:30px; gap:20px; flex-wrap:wrap;}
+  .cert-sign{text-align:left; font-size:11.5px; color:var(--ink-soft);}
+  .cert-sign .line{border-top:1.5px solid var(--ink); width:190px; margin-bottom:6px; padding-top:6px; font-family:'Playfair Display',serif; font-style:italic; font-size:15px; color:var(--ink);}
+  .cert-id{font-size:10px; color:#9aa2a8; margin-top:20px; letter-spacing:.03em;}
+
+  footer{max-width:840px; margin:0 auto; padding:20px; color:var(--ink-soft); font-size:12px; text-align:center;}
+
+  .hidden{display:none !important;}
+
+  @media (max-width:600px){
+    main{padding:20px 12px 60px;}
+    .card{padding:20px;}
+    .hero{padding:22px 20px;}
+    .hero h1{font-size:21px;}
+    .cert{padding:26px 18px;}
+    .cert-name{font-size:24px;}
+    .cert-title{font-size:22px;}
+    .verdict-banner .score-big{font-size:34px;}
+    .cert-sign-row{flex-direction:column; align-items:flex-start;}
+  }
+
+  /* ===== Auth gate & completion tracking (added for training tracker) ===== */
+  #authGate{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:24px; background:linear-gradient(120deg,var(--blue) 0%,var(--blue-dark) 100%);
+  }
+  #authGate .gate-card{
+    background:#fff; border-radius:var(--radius); box-shadow:0 30px 60px -20px rgba(0,0,0,.4);
+    padding:32px; max-width:400px; text-align:center;
+  }
+  #authGate h2{color:var(--blue-dark); font-size:19px; margin:0 0 10px;}
+  #authGate p{color:var(--ink-soft); font-size:14px; line-height:1.6; margin:0 0 18px;}
+  #authGate a.gate-link{
+    display:inline-block; background:var(--red); color:#fff; text-decoration:none;
+    font-weight:600; font-size:13.5px; padding:11px 22px; border-radius:999px;
+  }
+  #authGate a.gate-link:hover{background:var(--red-dark);}
+  .completion-status{font-size:13px; margin-top:14px; font-weight:600;}
+  .completion-status.saving{color:rgba(255,255,255,.85);}
+  .completion-status.ok{color:#fff;}
+  .completion-status.err{color:#ffe2da;}
+  .completion-status.err button{
+    background:#fff; color:var(--red); border:none; padding:6px 14px; border-radius:999px;
+    font-family:inherit; font-weight:600; font-size:12px; cursor:pointer; margin-left:8px;
+  }
+</style>
+</head>
+<body>
+
+<div id="authGate" style="display:none;">
+  <div class="gate-card">
+    <h2>Sign in required</h2>
+    <p>You need to be signed in to the ACP Training Tracker to complete this assessment and have your result recorded against your name.</p>
+    <a class="gate-link" href="../index.html">Go to the Training Tracker</a>
+  </div>
+</div>
+
+<div id="courseContent" style="display:none;">
+
+<div class="topbar">
+  <div class="brand">
+    <div class="mark">ACP</div>
+    <div class="brand-text">
+      <span class="t1">Aged Care Physiotherapy</span>
+      <span class="t2">Competency Assessment</span>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div class="tag" id="topTag">22 clinical domains · 88 scenario questions</div>
+  <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="topProgressFill"></div></div>
+</div>
+
+<main>
+
+  <!-- ================= START SCREEN ================= -->
+  <section id="startScreen">
+    <div class="hero">
+      <div class="eyebrow">Physiotherapy competency check</div>
+      <h1>Aged Care Physiotherapy — Clinical Competency Assessment</h1>
+      <p>Companion assessment to the ACP Clinical Practice Manual. 88 scenario-based questions across all 22 clinical domains, 4 per domain, checking that competency is demonstrated across the <em>full</em> scope of practice — not just on average.</p>
+      <div class="domain-chips" id="domainChips"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:4px;">Before you begin</h2>
+      <p style="color:var(--ink-soft); font-size:13.5px; margin-bottom:20px;">Enter your details for the record — this will appear on your results and certificate of completion.</p>
+
+      <label for="nameInput">Full name</label>
+      <input type="text" id="nameInput" placeholder="e.g. Joe Bloggs" autocomplete="off">
+
+      <label for="roleInput">Role</label>
+      <select id="roleInput">
+        <option value="Physiotherapist">Physiotherapist</option>
+        <option value="Provisionally Registered Physiotherapist">Provisionally Registered Physiotherapist</option>
+        <option value="Supervised Practitioner">Supervised Practitioner</option>
+        <option value="Physiotherapy Student">Physiotherapy Student</option>
+      </select>
+
+      <div style="background:var(--amber-tint); border:1px solid #eddca0; border-radius:10px; padding:12px 14px; font-size:12.8px; color:#7a5c04; margin-bottom:6px;">
+        Pass standard: <b>80% overall</b>, and <b>at least 3 of 4 correct in every one of the 22 domains</b>. Falling short in even one domain, with a high overall score, will not pass — every domain must be independently demonstrated.
+      </div>
+
+      <div class="btn-row" style="margin-top:18px;">
+        <button class="btn btn-primary" id="startBtn" disabled>Begin Assessment →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= QUIZ SCREEN ================= -->
+  <section id="quizScreen" class="hidden">
+    <div class="card">
+      <div class="quiz-meta">
+        <span class="domain-tag" id="domainTag">Domain</span>
+        <span class="q-counter" id="qCounter">Question 1 / 88</span>
+      </div>
+      <div class="q-progress-outer"><div class="q-progress-inner" id="qProgressInner"></div></div>
+      <div class="q-text" id="qText">Question text</div>
+      <div class="options" id="optionsList"></div>
+      <div class="feedback" id="feedbackBox"></div>
+      <div class="btn-row" style="justify-content:flex-end; margin-top:22px;">
+        <button class="btn btn-primary" id="nextBtn" disabled>Next Question →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RESULTS SCREEN ================= -->
+  <section id="resultsScreen" class="hidden">
+    <div class="verdict-banner" id="verdictBanner">
+      <div class="verdict-label" id="verdictLabel">Result</div>
+      <div class="score-big" id="scoreBig">0%</div>
+      <div class="verdict-sub" id="verdictSub"></div>
+      <div class="completion-status" id="completionStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:14px;">Domain-by-domain breakdown</h2>
+      <table class="domain-table">
+        <thead><tr><th>Domain</th><th>Score</th><th>Status</th></tr></thead>
+        <tbody id="domainTableBody"></tbody>
+      </table>
+
+      <div class="btn-row" style="margin-top:22px;">
+        <button class="btn btn-secondary" id="printScoreBtn">Print Score Report</button>
+        <button class="btn btn-ghost" id="retakeBtn">Retake Assessment</button>
+      </div>
+    </div>
+
+    <div class="card" id="certificateCard">
+      <h2 style="margin-bottom:4px;">Certificate of Completion</h2>
+      <p style="color:var(--ink-soft); font-size:13.5px; margin-bottom:18px;" id="certIntroText"></p>
+
+      <div class="cert-wrap">
+        <div class="cert" id="certificatePreview"></div>
+      </div>
+
+      <div class="btn-row" style="margin-top:20px;">
+        <button class="btn btn-primary" id="printCertBtn">Print / Save Certificate (PDF)</button>
+        <button class="btn btn-secondary" id="downloadCertBtn">Download Certificate File</button>
+      </div>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin-top:10px;">If the print tab doesn't open (pop-up blocked), use "Download Certificate File" and open the downloaded file to print or save as PDF.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>Aged Care Physiotherapy Pty Ltd — Internal competency assessment. Results and certificates generated are session-based and not automatically stored; retain a copy for your records.</footer>
+
+</div>
+
+<script>
+(function(){
+try {
+
+/* ---------------------------------------------------------
+   TRAINING TRACKER INTEGRATION
+   Edit COURSE_ID for this specific course — copy it from the
+   Courses tab in the training tracker. SUPABASE_URL/ANON_KEY are
+   the same for every course page (same edu project as index.html).
+--------------------------------------------------------- */
+var COURSE_ID = "70486a35-67e2-42dd-ab1c-c1b61da0f365";
+var SUPABASE_URL = "https://unomkggpwiugvkovdjto.supabase.co";
+var SUPABASE_ANON_KEY = "sb_publishable_rakZ0iLM1Tncok00y6HFPA_Xlls_Mwc";
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var currentAuthUser = null;
+
+function initAuthGate(){
+  sb.auth.getSession().then(function(res){
+    var session = res.data.session;
+    if(!session){
+      document.getElementById("authGate").style.display = "flex";
+      return;
+    }
+    currentAuthUser = session.user;
+    document.getElementById("courseContent").style.display = "block";
+  });
+}
+
+function recordCompletion(resultText){
+  var el = document.getElementById("completionStatus");
+  if(!currentAuthUser){
+    el.textContent = "Not signed in — this attempt was not saved.";
+    el.className = "completion-status err";
+    return;
+  }
+  el.textContent = "Saving your result...";
+  el.className = "completion-status saving";
+  sb.from("completions").insert({
+    staff_id: currentAuthUser.id,
+    course_id: COURSE_ID,
+    completion_date: new Date().toISOString().slice(0,10),
+    result: resultText,
+    recorded_by: currentAuthUser.id
+  }).then(function(res){
+    if(res.error){
+      el.innerHTML = "Couldn't save your result. <button onclick=\"recordCompletion('" + resultText.replace(/'/g, "\\'") + "')\">Retry</button>";
+      el.className = "completion-status err";
+      return;
+    }
+    el.textContent = "✓ Saved to your training record.";
+    el.className = "completion-status ok";
+  });
+}
+
+// ===================== QUESTION BANK =====================
+// 22 domains x 3 questions each, matching the ACP Clinical Practice Manual.
+var domains = [
+  { id:"mob-assess", name:"Mobility & Transfer Assessment", questions:[
+    { q:"Mrs Nguyen, 88, was admitted to a RACF two days ago after knee replacement surgery. Care staff report she “seems less steady” today than yesterday, though no fall has occurred. What should the physiotherapist do?",
+      options:["Wait until the scheduled quarterly review is due","Ask family to monitor her instead of reassessing","Reassess her mobility and transfer status promptly, as the change may reflect a new clinical issue","Assume it is normal post-surgical fatigue and take no action"], correct:2,
+      rationale:"Any reported change in status is a trigger for reassessment, not just the scheduled review cycle." },
+    { q:"During assessment, Mr Patel is independent for bed-to-chair transfers but needs an assist of 1 for chair-to-toilet due to fatigue and urgency. How should this be documented?",
+      options:["Record a transfer-specific assistance level for each transfer type separately","Record one overall assistance level covering all transfers","Document only the transfer he needs the most help with","Leave it undocumented since it varies by task"], correct:0,
+      rationale:"A single global rating misrepresents risk when ability genuinely differs by transfer type." },
+    { q:"A physiotherapist wants a quick, repeatable measure of lower-limb functional power to track a resident's progress in the strength and balance group. Which tool is most appropriate?",
+      options:["6-Minute Walk Test","Berg Balance Scale","FIM mobility items","30-Second Sit-to-Stand"], correct:3,
+      rationale:"The 30-Second Sit-to-Stand is quick, repeatable, and well suited to group program baselines." },
+    { q:"Mrs Ahmed returned from hospital yesterday after a chest infection. Nursing notes she is “back to normal” and no formal reassessment has occurred. The physiotherapist should:",
+      options:["Accept the nursing note as sufficient evidence of unchanged mobility","Reassess mobility from baseline before relying on the nursing description, since hospital stays commonly cause functional decline","Update the care plan without reassessment, to save time","Wait for the resident's family to report any concerns"], correct:1,
+      rationale:"Hospital admissions are a well-recognised trigger for functional decline that needs direct reassessment." },
+  ]},
+  { id:"mob-prescribe", name:"Mobility & Transfer Aid Prescription", questions:[
+    { q:"Mr Ricci has used a single-point stick since admission but has had two near-falls this week. He has good balance overall and reasonable upper limb strength but occasionally reaches for furniture. What is the most appropriate immediate action?",
+      options:["Continue the current single-point stick unchanged","Reassess and trial a 4-wheel walker, which is generally preferred over single-point sticks for most RACF residents","Recommend a wheelchair for all mobilising","Take no action until the scheduled review"], correct:1,
+      rationale:"Recurrent near-falls with a single stick warrant reassessment toward a more stable, ACP-preferred aid." },
+    { q:"When fitting a new 4-wheel walker for Mrs Okafor, what is the correct handle height?",
+      options:["At the wrist crease with arms relaxed and elbows flexed approximately 15–20°","At hip level, for a more upright posture","At elbow level with the arm fully extended","Whatever height the resident finds most comfortable, regardless of biomechanics"], correct:0,
+      rationale:"Correct fitting uses wrist-crease handle height with a slight elbow flexion for stability and control." },
+    { q:"While prescribing a new transfer technique for a resident with increasing body weight and reduced cooperation, which factor should the physiotherapist weigh equally alongside resident safety?",
+      options:["The manual handling risk to the staff performing the transfer","The resident's preferred brand of equipment","The facility's equipment budget for the quarter","How quickly the transfer can be completed"], correct:0,
+      rationale:"Staff manual handling risk is a co-equal consideration in every transfer prescription." },
+    { q:"A hoist sling was prescribed for Mr Yilmaz six months ago. He has since lost significant weight, and today the sling appears loose with his hips shifting within it. The physiotherapist should:",
+      options:["Continue using the same sling since it was clinically approved previously","Ask care staff to compensate by holding him more firmly during the lift","Reassess sling size/fit against his current body dimensions and update the prescription before further use","Delay reassessment until the next scheduled equipment review"], correct:2,
+      rationale:"A loose-fitting sling is an active safety risk and requires immediate reassessment, not deferral." },
+  ]},
+  { id:"post-fall-assess", name:"Post-Fall Assessment", questions:[
+    { q:"Staff find Mr Diallo on the floor of his room, unwitnessed. He is on warfarin and appears alert, denying pain. What should happen first?",
+      options:["Complete neurological observations per protocol given the anticoagulant use and unwitnessed nature of the fall, even though he appears well","Document the fall and continue routine care since he denies pain","Wait for symptoms to develop before escalating","Only escalate if a visible injury is found"], correct:0,
+      rationale:"Anticoagulant use plus an unwitnessed fall raises intracranial bleed risk even without symptoms." },
+    { q:"Before helping Mrs Byrne up from the floor after a fall, the priority is to:",
+      options:["Check the condition of her mobility aid","Screen for red flags such as head strike, neck/back pain, or inability to weight-bear before any movement","Note the time of the fall for the incident report","Confirm whether family has been notified"], correct:1,
+      rationale:"Injury screening always precedes any attempt to move or mobilise the resident." },
+    { q:"Two days after a fall, Mr Kowalski's gait looks different from before, with new hip discomfort on weight-bearing. The physiotherapist's assessment should primarily compare his current presentation to:",
+      options:["The average mobility level of residents his age","His documented pre-fall mobility baseline","The facility's most recent falls audit","Only his mobility immediately after the fall occurred"], correct:1,
+      rationale:"Comparison against his own individual pre-fall baseline is what reveals a genuine functional change." },
+    { q:"Mrs Tran has advanced dementia and cannot reliably describe pain. She had an unwitnessed fall yesterday and today appears more withdrawn and reluctant to weight-bear on one leg. The most appropriate interpretation is:",
+      options:["This is likely just general fatigue and can be monitored without escalation","Behavioural change is unrelated to the fall and should be referred to psychology only","No action is needed since she is not verbally complaining of pain","This behavioural change may indicate an undetected injury and warrants urgent medical review, since she cannot reliably self-report pain"], correct:3,
+      rationale:"Behavioural change is often the primary pain signal in advanced dementia and must be taken seriously." },
+  ]},
+  { id:"falls-risk", name:"Falls Risk Assessment", questions:[
+    { q:"On admission, Mrs Silva's falls risk is assessed using only a single balance test, which returns a low-risk result. Is this adequate?",
+      options:["Yes — a single well-validated balance test is sufficient on its own","Yes, provided the resident has no falls history","No, but only because she is over 85 years old","No — falls risk assessment should use a validated multifactorial tool, as a single test is insufficient on its own"], correct:3,
+      rationale:"Falls risk is multifactorial, so a single balance test alone cannot capture the full picture." },
+    { q:"A validated falls risk tool scores Mr Bianchi as “low risk,” but the physiotherapist's clinical assessment reveals significant gait instability and a recent near-fall. What should occur?",
+      options:["The tool's score must be followed exactly regardless of clinical findings","The physiotherapist should override the tool's score with documented clinical reasoning","The assessment should be repeated until it matches the tool's result","Clinical judgement should be disregarded in favour of the standardised score"], correct:1,
+      rationale:"Clinical judgement can and should override a tool score, provided the reasoning is documented." },
+    { q:"During a falls risk review, the physiotherapist notes Mrs Kelly was recently started on a new sedative and antihypertensive. What is the appropriate action?",
+      options:["Flag the medication changes to the GP/pharmacist for review as a major modifiable falls risk factor","Take no action, as medication management is entirely outside physiotherapy's role","Increase her mobility aid level without addressing the medication","Wait until her next fall before raising the concern"], correct:0,
+      rationale:"Medication load is one of the most significant modifiable falls risk factors and warrants proactive liaison." },
+    { q:"Mr Zhou has no falls history but reports new dizziness on standing. His falls risk tool score remains “low” because it heavily weights falls history. The physiotherapist should:",
+      options:["Accept the low-risk score since the tool is validated and standardised","Investigate further (e.g. a postural hypotension check) and consider adjusting the risk category based on this new modifiable symptom, rather than relying on the tool score alone","Disregard the dizziness as it is not part of the formal tool","Only act if he actually experiences a fall"], correct:1,
+      rationale:"A tool score is a starting point, not a ceiling — new modifiable symptoms should still be actioned." },
+  ]},
+  { id:"post-fall-mgmt", name:"Post-Fall Management", questions:[
+    { q:"Immediately after a fall, before the full falls risk reassessment has been completed, the physiotherapist should:",
+      options:["Wait until the full falls risk reassessment is complete before doing anything","Implement interim safety precautions right away rather than waiting for the full reassessment","Only act if the resident falls again","Delegate all interim decisions to family"], correct:1,
+      rationale:"Basic safety measures shouldn't wait for the complete reassessment to be finished." },
+    { q:"Following her fall, Mrs Petrov becomes visibly anxious about mobilising and starts refusing to get out of bed. The most appropriate physiotherapy approach is:",
+      options:["Graded, confidence-building mobilisation that gradually rebuilds her activity tolerance","Complete restriction of her mobility until the anxiety resolves on its own","No change to her existing care plan","Insisting she immediately resume her full pre-fall activity level"], correct:0,
+      rationale:"Graded exposure balances safety with avoiding deconditioning from over-restriction." },
+    { q:"Three days after a fall, staff report Mr Haddad seems “fine.” The physiotherapist should still be monitoring for:",
+      options:["Nothing further, since the incident report has already been filed","Delayed-onset injury, such as evolving bruising, swelling, or pain, which can present over 24–72 hours","Only new falls, not other consequences","Only visible injuries present at the time of the fall"], correct:1,
+      rationale:"Fractures and soft tissue injury in older adults can present subtly and evolve over several days." },
+    { q:"After a fall, Mrs Costa's falls prevention plan was updated but no short-interval follow-up review was set. Three weeks later she falls again in a similar way. What was missing from the initial post-fall management?",
+      options:["A short-interval review point (e.g. one week), in addition to the standard falls risk review cycle, to check the plan was actually effective","Nothing was missing, as the standard review cycle is always sufficient","A second incident report at the time of the first fall","Immediate transfer to hospital after the first fall regardless of injury"], correct:0,
+      rationale:"Post-fall management should be iterative, with an early review to confirm the plan is actually working." },
+  ]},
+  { id:"falls-prevention", name:"Falls Prevention Strategies", questions:[
+    { q:"Mr Wallace is ambulant and mobilises independently with a 4WW. Nursing suggests a low-low bed and crash mat “just in case.” What is the correct response?",
+      options:["Agree immediately, since these devices are appropriate for every resident","Low-low beds and crash mats are reserved for non-ambulant residents at risk of bed-related falls, so this would not be an appropriate default intervention for him","Recommend it only because nursing suggested it","Recommend removing his 4WW instead"], correct:1,
+      rationale:"These devices are targeted at non-ambulant residents specifically, not used as a blanket precaution." },
+    { q:"For a resident with mild, non-progressive balance impairment and no other complex needs, which long-term intervention has the strongest evidence base for falls prevention?",
+      options:["Permanent bed rails","Sensor mats alone","Progressive strength and balance training","Restricting all independent mobility"], correct:2,
+      rationale:"Progressive strength and balance training has the strongest evidence base among falls prevention interventions." },
+    { q:"Mrs Yamamoto, who is cognitively intact, understands the falls risk associated with declining her 4WW but wishes to mobilise without it. What should the physiotherapist do?",
+      options:["Withdraw physiotherapy input entirely since she declined the recommendation","Respect her decision, documenting the Dignity of Risk discussion, her decision, and any mitigation strategies offered","Insist she use the 4WW regardless of her wishes","Avoid informing the rest of the care team of her decision"], correct:1,
+      rationale:"An informed, capable resident's decision must be respected and clearly documented." },
+    { q:"A facility asks the physiotherapist to recommend “a falls prevention strategy that works for everyone” to simplify care planning. What is the most appropriate response?",
+      options:["Agree and select the most restrictive option available for consistency","Explain that individualised strategies mapped to each resident's specific risk factors are needed — a single generic strategy is not appropriate falls prevention practice","Recommend crash mats for every resident regardless of ambulant status","Recommend the same mobility aid for all residents to standardise training"], correct:1,
+      rationale:"Effective falls prevention plans are individualised to the specific risk factors identified for each resident." },
+  ]},
+  { id:"seating", name:"Seating Assessment & Management", questions:[
+    { q:"A new pressure-relieving cushion is requested for Mrs Okonkwo without any prior seating assessment. What should the physiotherapist do first?",
+      options:["Order the requested cushion immediately based on the request","Ask nursing to select the cushion instead","Skip assessment since she has not reported discomfort","Assess her in her current chair before selecting or trialling any new seating equipment"], correct:3,
+      rationale:"Assessing the current set-up establishes the baseline before any equipment decision is made." },
+    { q:"Assessment reveals Mr Novak has a fixed pelvic obliquity that cannot be corrected. The appropriate seating approach is to:",
+      options:["Accommodate the deformity using a contoured or customised cushion","Attempt to force correction using firm postural supports","Ignore the finding since it cannot be corrected","Remove all seating supports to allow natural positioning"], correct:0,
+      rationale:"Fixed deformities are accommodated, not forced into correction." },
+    { q:"While measuring Mrs Abara for a new chair, what is the correct seat depth?",
+      options:["Approximately 2–3 finger widths behind the knee","Flush against the back of the knee","Twice the length of the thigh","Seat depth is not clinically important"], correct:0,
+      rationale:"A 2–3 finger-width gap avoids popliteal pressure while still supporting the thigh." },
+    { q:"Mr Choi's family requests a more “supportive-looking” chair for comfort, but he currently self-propels his wheelchair independently and reports no discomfort. The physiotherapist should:",
+      options:["Change the chair immediately to satisfy the family's request","Refuse to discuss the request at all","Recommend the most supportive chair available regardless of his current function","Base any seating change on a functional and postural assessment, not appearance alone, and consider how a change might affect his current independence"], correct:3,
+      rationale:"Seating decisions must be functionally justified, not driven by appearance, especially where independence could be affected." },
+  ]},
+  { id:"pressure", name:"Pressure Area Assessment & Management", questions:[
+    { q:"During a seating review, the physiotherapist notices a new Stage 2 pressure injury on Mrs Grabowski's sacrum. What is the correct immediate action?",
+      options:["Manage the wound directly within physiotherapy scope","Document it for discussion at the next scheduled care plan review","Notify nursing/the wound care lead immediately","Wait for family to notice and raise it"], correct:2,
+      rationale:"New pressure injuries require immediate escalation to the wound care lead, not routine documentation." },
+    { q:"For a resident at high risk of pressure injury who is able to actively participate, the most effective general pressure-relief strategy is:",
+      options:["Prolonged static positioning in one spot","Avoiding all mobilisation to reduce friction","Encouraging movement and active repositioning/weight shifts","Applying talcum powder to the skin"], correct:2,
+      rationale:"Movement is the most effective way to relieve sustained pressure over bony prominences." },
+    { q:"In the absence of a specific clinical indication otherwise, the standard repositioning frequency in bed is:",
+      options:["2-hourly","Every 15 minutes","Once per shift","Only when the resident requests it"], correct:0,
+      rationale:"2-hourly is the standard baseline, individualised to risk level and tissue tolerance." },
+    { q:"Mr Reyes has a Stage 1 pressure injury over his ischial tuberosity identified last week. On today's review it appears unchanged but slightly more tender. What should happen?",
+      options:["No action is needed since it hasn't visibly worsened","Wait until the next scheduled seating review in a month","Increase mobilisation intensity regardless of tolerance","Reassess and re-notify the wound care lead of the status change, since any deterioration or lack of expected improvement needs prompt follow-up"], correct:3,
+      rationale:"A change in symptoms, even without visible worsening, warrants prompt reassessment and communication." },
+  ]},
+  { id:"pain", name:"Pain Assessment & Management", questions:[
+    { q:"Mrs Fitzgerald has advanced dementia and cannot reliably self-report pain. Which assessment approach is appropriate?",
+      options:["A standard 0–10 numeric rating scale used with all residents","No formal pain assessment is possible in this situation","Relying solely on family's opinion of her pain level","A validated observational tool such as the Abbey Pain Scale or PAINAD"], correct:3,
+      rationale:"Observational tools are specifically validated for residents who cannot reliably self-report." },
+    { q:"Mr Osei reports new, severe abdominal pain accompanied by fever and unexplained weight loss over the past month. This should be treated as:",
+      options:["A routine finding to note in the next scheduled progress note","A red flag requiring prompt GP referral","An issue only relevant to nursing, not physiotherapy","Something to monitor for another month before acting"], correct:1,
+      rationale:"Severe pain with fever and weight loss suggests a possible serious underlying cause needing prompt review." },
+    { q:"A key aspect of pain assessment that is particularly relevant to physiotherapy practice, distinct from a general medical review, is:",
+      options:["Reviewing blood test results","Determining medication brand preferences","Assessing family's opinion on analgesia choice","Assessing pain specifically during movement and function, not just at rest"], correct:3,
+      rationale:"Functional, movement-related pain is often the most clinically relevant physiotherapy finding." },
+    { q:"Mrs Delacroix's pain score has been stable at “4/10” for months on a fixed analgesic regimen, but she has recently become withdrawn and is resisting all mobilisation attempts. The physiotherapist should:",
+      options:["Assume the pain score is unchanged and continue exactly as before","Increase her exercise intensity to “push through” the resistance","Consider that her functional pain presentation may have changed even though her reported score hasn't, and reassess pain during movement/function specifically given the behavioural change","Refer this solely to psychology without a physiotherapy pain reassessment"], correct:2,
+      rationale:"A behavioural change alongside a static score suggests the functional pain picture needs direct reassessment." },
+  ]},
+  { id:"risk", name:"Clinical Risk Assessment & Management", questions:[
+    { q:"Mr Fenwick's increasing body weight and worsening cognition are making his transfers harder for staff. The physiotherapist should treat this as:",
+      options:["Not a physiotherapy concern until a staff injury actually occurs","Solely a rostering/staffing issue for management to resolve","A reason to discharge him from active physiotherapy caseload","A trigger to proactively review the transfer plan, considering manual handling risk to staff as a co-equal factor alongside his safety"], correct:3,
+      rationale:"Proactive review before an injury occurs is the correct response to rising manual handling risk." },
+    { q:"When choosing how to mitigate an identified clinical risk for Mrs Ibrahim, the physiotherapist should prioritise:",
+      options:["The most restrictive option available, to eliminate risk entirely","The least-restrictive, evidence-based option that also respects her Dignity of Risk","Whichever option is fastest to implement regardless of appropriateness","Automatic referral to hospital for any identified risk"], correct:1,
+      rationale:"Least-restrictive, evidence-based mitigation balances safety with resident autonomy." },
+    { q:"A risk assessment for Mr Doyle was last reviewed three months ago per the standard schedule. He has since had a fall and a new medication change. The review should:",
+      options:["Wait until the next scheduled review date regardless of recent changes","Only be updated if the resident specifically requests it","Be delegated entirely to nursing without physiotherapy input","Occur now, as any incident or status change should trigger a review in addition to the standard schedule"], correct:3,
+      rationale:"Incidents and status changes should trigger review outside the standard cycle." },
+    { q:"During a case conference, a support worker mentions a resident “always seems to manage” a risky transfer despite it not matching his documented assistance level. What should the physiotherapist do?",
+      options:["Reassess promptly, since a resident mobilising above their documented assistance level is a risk to both resident and staff that needs formal review, not informal tolerance","Accept the informal report as sufficient evidence the care plan can be relaxed","Take no action since no incident has occurred yet","Ask the support worker to continue managing it the same way"], correct:0,
+      rationale:"Undocumented deviation from an assessed assistance level is a live risk requiring formal reassessment." },
+  ]},
+  { id:"oedema", name:"Oedema Assessment & Management", questions:[
+    { q:"Mr Andersen presents with acute, unilateral leg swelling, warmth, and pain. What is the correct first action?",
+      options:["Refer urgently to exclude DVT before any physiotherapy intervention","Apply compression bandaging immediately to reduce the swelling","Begin manual lymphatic drainage straight away","Elevate the leg and reassess again in a week"], correct:0,
+      rationale:"Acute unilateral swelling with warmth/pain requires DVT exclusion before any physiotherapy treatment." },
+    { q:"Before applying any compression garment or bandaging to Mrs Lindqvist's swollen legs, the physiotherapist must confirm:",
+      options:["That cardiac and vascular status have been assessed as safe, and that the clinician holds appropriate training/competency for the technique","That the resident has personally requested compression","That the oedema has been present for at least a month","That any oedema is present, regardless of cause"], correct:0,
+      rationale:"Compression is contraindicated without confirmed cardiac/vascular safety and relevant competency." },
+    { q:"Mr Thompson is chair-bound for most of the day and has developed dependent oedema in both lower legs. What is the most appropriate physiotherapy management?",
+      options:["Prolonged sitting without elevation, since movement isn't tolerated","Elevation when seated/in bed and active ankle pumps/mobility promotion","Strict bed rest until the swelling resolves","No intervention, as dependent oedema is considered unavoidable"], correct:1,
+      rationale:"Elevation and active movement address the dependent, immobility-related cause directly." },
+    { q:"Mrs Papadopoulos has known heart failure and shows gradually increasing bilateral leg swelling along with new breathlessness on exertion. What should the physiotherapist prioritise?",
+      options:["Escalate to medical review promptly, as this pattern may indicate cardiac decompensation rather than a purely positional/mobility-related cause","Apply firm compression bandaging to reduce the visible swelling","Increase her mobility program intensity to improve circulation","Manage this with elevation alone and no medical escalation"], correct:0,
+      rationale:"Worsening bilateral oedema with breathlessness suggests possible cardiac decompensation requiring urgent medical input." },
+  ]},
+  { id:"restraint", name:"Restrictive Practices & Restraint Minimisation", questions:[
+    { q:"A facility wants to introduce a lap belt for Mr Kaczmarek due to a recent unsafe transfer attempt. What must occur first?",
+      options:["The lap belt can be implemented immediately since staff safety is the priority","Least-restrictive alternatives must be genuinely trialled and documented before any restrictive practice is authorised","Family consent alone is sufficient without trialling alternatives","No documentation is required if the intervention seems clinically obvious"], correct:1,
+      rationale:"Genuine trial and documentation of least-restrictive alternatives is required before restraint authorisation." },
+    { q:"Bed rails are being used for Mrs Larsen to prevent her getting out of bed unsupervised at night. This should be recognised as:",
+      options:["Standard equipment requiring no special consideration","A decision physiotherapy has no involvement in","An intervention exempt from documentation requirements","A potential restrictive practice requiring authorisation and regular review, depending on how it functions for her"], correct:3,
+      rationale:"Bed rails can function as restraint depending on the individual's ability to release them, and require review accordingly." },
+    { q:"Mr Novotny has been physically restrained in his chair due to repeated attempts to stand unsupervised, which staff attribute to “difficult behaviour.” The physiotherapy contribution should focus on:",
+      options:["Investigating and addressing the underlying cause of the behaviour, such as pain, boredom, or an unmet need to move","Supporting an increase in the restraint level for consistency","Focusing solely on containing the behaviour without further investigation","Declining involvement, as this is considered a nursing-only issue"], correct:0,
+      rationale:"Restraint should address the underlying cause of the behaviour, not simply contain the resulting response." },
+    { q:"At a restrictive practice review meeting, the physiotherapist is asked to simply “sign off” on continuing an existing restraint without reviewing whether it's still needed. The appropriate response is:",
+      options:["Sign off as requested to keep the meeting efficient","Recommend increasing the restraint level “to be safe”","Actively review whether the restraint is still necessary and whether de-implementation is now possible, rather than signing off automatically","Decline to attend restrictive practice reviews in future"], correct:2,
+      rationale:"Restrictive practice reviews should actively seek opportunities to reduce or remove restraint, not rubber-stamp it." },
+  ]},
+  { id:"respiratory", name:"Respiratory Physiotherapy", questions:[
+    { q:"Mr Castellano is recovering from a chest infection and is reluctant to mobilise due to fatigue. Which strategy is considered a primary secretion-clearance approach where tolerated?",
+      options:["Strict bed rest until secretions clear on their own","Avoiding all positioning changes","Mobilisation","Withholding physiotherapy until antibiotics are complete"], correct:2,
+      rationale:"Mobilisation is one of the most effective secretion-clearance strategies where clinically tolerated." },
+    { q:"During a chest physiotherapy session, Mrs Petrova's oxygen saturation begins to drop. What should the physiotherapist do?",
+      options:["Continue the session as planned to complete the full treatment","Increase the intensity of the technique being used","Wait until the end of the session before reassessing her","Cease treatment and escalate promptly"], correct:3,
+      rationale:"Deterioration during treatment requires immediate cessation and escalation, not continuation." },
+    { q:"When selecting chest physiotherapy techniques for Mr Nakamura, the physiotherapist should base the choice primarily on:",
+      options:["A standard protocol applied identically to all residents","The facility's usual routine regardless of presentation","His individual presentation, including auscultation findings, cough effectiveness, and tolerance","The amount of time available in the shift"], correct:2,
+      rationale:"Technique selection must be matched to the individual clinical presentation, not a fixed routine." },
+    { q:"Mrs Olayinka has bronchiectasis and copes well with her usual secretion clearance routine, but today reports increased fatigue and reduced tolerance for her usual session length. The physiotherapist should:",
+      options:["Insist on completing the full usual session regardless of her fatigue","Cancel all future respiratory sessions indefinitely","Adjust the session — pacing, duration, or intensity — to match her current tolerance rather than pushing through the standard routine","Refer her immediately to hospital for any reported fatigue"], correct:2,
+      rationale:"Sessions should be adapted to the resident's tolerance on the day, not forced through a fixed routine." },
+  ]},
+  { id:"palliative", name:"Palliative & End-of-Life Physiotherapy", questions:[
+    { q:"Mr Hayes has recently transitioned to a palliative care pathway. His physiotherapy goals should shift toward:",
+      options:["Maximising rehabilitation intensity to preserve as much function as possible","Discontinuing all physiotherapy involvement immediately","Comfort, dignity, and symptom management aligned with his goals of care","Continuing his prior rehabilitation goals unchanged"], correct:2,
+      rationale:"Palliative status shifts the physiotherapy focus toward comfort and dignity, not away from involvement entirely." },
+    { q:"Before continuing a resident's existing rehabilitation-focused exercise goals, the physiotherapist should always check:",
+      options:["The resident's favourite exercises from earlier sessions","Staff availability for the coming week only","The advance care directive/goals of care documentation, in case it has changed","Nothing, since previously set goals remain valid indefinitely"], correct:2,
+      rationale:"Goals of care documentation should actively shape the plan, not be assumed unchanged over time." },
+    { q:"For a frail, actively dying resident, repositioning frequency should be:",
+      options:["Rigidly fixed at the standard 2-hourly schedule regardless of burden","Increased to hourly regardless of comfort","Balanced against the burden repositioning places on the resident, weighed against comfort benefit","Stopped altogether in all cases"], correct:2,
+      rationale:"Comfort and burden are weighed against benefit rather than applying a fixed schedule at end of life." },
+    { q:"Mrs Solheim is palliative and her family asks the physiotherapist to “keep pushing her mobility” so she doesn't “give up.” The most appropriate response is:",
+      options:["Agree to intensify rehabilitation exercises to meet the family's wishes","Refuse to discuss the matter with the family at all","Discharge her from physiotherapy immediately without discussion","Explain the shift in goals toward comfort and dignity in line with her documented goals of care, while remaining open to gentle, comfort-focused movement she tolerates"], correct:3,
+      rationale:"Family wishes are acknowledged through open communication, without abandoning the resident's documented goals of care." },
+  ]},
+  { id:"cognitive", name:"Cognition, Dementia & BPSD", questions:[
+    { q:"Mr Bekele, who has advanced dementia, becomes newly agitated during personal care. The physiotherapist should consider:",
+      options:["That behavioural symptoms in dementia are never physical in origin","That this should trigger an immediate request for physical restraint","That physiotherapy has no role in behavioural presentations","Whether an unmet physical need, such as pain, discomfort, or fatigue, may be driving the behaviour"], correct:3,
+      rationale:"Unmet physical needs are a core, often overlooked, driver of behavioural expression in dementia." },
+    { q:"For Mrs Choudhury, who has significant cognitive impairment and cannot reliably self-report, pain assessment should:",
+      options:["Always rely on self-report regardless of her cognitive capacity","Be skipped entirely since assessment isn't possible","Use an observational, validated tool designed for this situation","Be completed only by asking her family, without direct observation"], correct:2,
+      rationale:"Observational tools are used specifically where self-report cannot be relied upon." },
+    { q:"A structured physical activity program is being considered for a dementia unit. The evidence suggests this is likely to:",
+      options:["Worsen agitation and disrupt sleep patterns","Have no measurable effect on behavioural symptoms","Reduce agitation and improve sleep for residents involved","Only benefit younger residents with dementia"], correct:2,
+      rationale:"Structured movement programs have a good evidence base for reducing agitation and improving sleep in dementia." },
+    { q:"Mr Grimaldi frequently attempts to walk the corridors and is labelled by some staff as “a wanderer” who needs to be contained. The physiotherapy perspective on this should be:",
+      options:["Support increasing restraint to prevent him leaving his room","Recommend sedation to reduce his walking behaviour","Agree that containment is the only realistic option","Recognise this as potentially purposeful walking reflecting a genuine need to move, and support this safely rather than defaulting to containment"], correct:3,
+      rationale:"Purposeful walking should be safely supported rather than automatically treated as a behaviour to contain." },
+  ]},
+  { id:"continence", name:"Continence-Related Physiotherapy Input", questions:[
+    { q:"Mrs Yousef frequently attempts to get to the toilet urgently and unsupervised, resulting in near-falls. This pattern is best understood as:",
+      options:["An issue unrelated to falls risk","A significant, modifiable falls risk contributor linked to continence urgency","Something to be managed by restricting her fluid intake","A behavioural issue requiring restraint"], correct:1,
+      rationale:"Urgency-driven unsupervised toileting is a well-recognised, modifiable falls contributor." },
+    { q:"A resident is referred for pelvic floor-specific intervention beyond general strengthening. What is the appropriate action?",
+      options:["Any physiotherapist should proceed regardless of specific training","Refer to a continence-specialised physiotherapist/nurse if this exceeds the treating physiotherapist's scope","The referral should be declined entirely","Delegate the intervention to care staff without clinical oversight"], correct:1,
+      rationale:"Specialist referral is appropriate when an intervention exceeds general physiotherapy scope." },
+    { q:"When developing Mr Delgado's toileting schedule, who should the physiotherapist liaise with to align it with his mobility/transfer capacity?",
+      options:["Nursing/the continence advisor","No one — toileting schedules are outside physiotherapy relevance","Family only, without clinical staff involvement","Facility maintenance staff"], correct:0,
+      rationale:"Toileting schedules need to be coordinated with mobility/transfer capacity via nursing/the continence advisor." },
+    { q:"Mrs Whitfield's care plan includes a fixed 4-hourly toileting schedule, but she reports urgency well before that interval, prompting risky self-transfers. What should the physiotherapist highlight?",
+      options:["That she should be discouraged from reporting urgency between scheduled times","That her mobility aid alone needs upgrading, with no change to the toileting schedule","That the toileting schedule should be reviewed against her actual urgency pattern and mobility capacity, since the mismatch is contributing to unsafe self-transfers","That this is solely a behavioural issue requiring restraint"], correct:2,
+      rationale:"A toileting schedule that doesn't match actual urgency patterns is a direct, fixable falls contributor." },
+  ]},
+  { id:"strength", name:"Strength, Balance & Group Exercise", questions:[
+    { q:"A new group exercise program is being set up with residents of widely varying ability. What is the correct first step?",
+      options:["Stratify residents by cognitive/physical ability into appropriate group streams","Run one identical program for everyone regardless of ability","Group residents by room location for convenience","Group residents alphabetically by surname"], correct:0,
+      rationale:"Appropriate stratification ensures content and supervision ratios suit each participant safely." },
+    { q:"Mr Abramović has been steadily improving in the balance group over several weeks. His program should be:",
+      options:["Kept at exactly the same level indefinitely once established","Left entirely to his own preference regardless of demonstrated ability","Stopped once initial improvement is seen","Progressed systematically and reassessed with outcome measures"], correct:3,
+      rationale:"Systematic progression with outcome measure review is standard exercise prescription practice." },
+    { q:"Mrs Beaumont has missed the last three group exercise sessions without explanation. This should be:",
+      options:["Ignored, since attendance is optional","Followed up, as it may signal a clinical change worth assessing","Treated as automatic grounds for discharge from the program","Reported only at the end-of-year review"], correct:1,
+      rationale:"A change in attendance pattern can itself be a clinically meaningful signal worth investigating." },
+    { q:"A facility asks the physiotherapist to run one single group program for all residents to reduce staffing costs, regardless of ability level. The physiotherapist should:",
+      options:["Agree, since a single combined group is simplest to run","Refuse to run any group programs at all","Explain that appropriately stratified groups are needed for safety and effectiveness, and propose a stream-based model within available resourcing","Recommend cancelling group exercise entirely instead"], correct:2,
+      rationale:"Safety and effectiveness require appropriate stratification, even under resourcing pressure." },
+  ]},
+  { id:"equipment", name:"Equipment & Assistive Technology Prescription", questions:[
+    { q:"Nursing requests a specific pressure cushion for Mr Salim based on what “worked for another resident.” What is the correct approach?",
+      options:["Approve the same cushion immediately, since it worked previously for someone else","Base the prescription on a completed clinical assessment of Mr Salim specifically, not another resident's equipment choice","Order the cheapest available cushion instead","Decline any cushion request without further discussion"], correct:1,
+      rationale:"Every prescription must be grounded in an individual assessment, not another resident's outcome." },
+    { q:"Before finalising a complex, high-cost powered wheelchair prescription, the physiotherapist should:",
+      options:["Skip trialling to save assessment time","Order several models simultaneously and decide later without trial","Trial the equipment wherever feasible before finalising the prescription","Rely solely on manufacturer specifications without a trial"], correct:2,
+      rationale:"Trialling before finalising is especially important for complex or high-cost equipment." },
+    { q:"During an equipment check, the physiotherapist finds a facility hoist has a frayed strap. What should happen?",
+      options:["Report the faulty equipment via the facility maintenance system immediately","Continue using it cautiously if no alternative hoist is available","Ignore it until the next scheduled equipment check","Attempt to repair it personally before further use"], correct:0,
+      rationale:"Faulty equipment is a safety issue requiring immediate reporting, not deferral or improvisation." },
+    { q:"A family wants to privately purchase a mobility aid for their relative without any physiotherapy assessment, citing cost savings. The physiotherapist should:",
+      options:["Approve the plan without involvement, since it's privately funded","Explain that even privately funded equipment should be based on a proper assessment to ensure it is safe and appropriate for the resident's needs","Insist the facility purchase an identical item instead","Refuse to discuss the matter with the family at all"], correct:1,
+      rationale:"Funding source doesn't change the need for a proper clinical assessment before equipment use." },
+  ]},
+  { id:"mdt", name:"MDT Liaison, RCA & Quality Activities", questions:[
+    { q:"Following a cluster of falls on one unit, the facility convenes a root cause analysis meeting. What approach should this take?",
+      options:["An individual blame-focused approach targeting specific staff members","A physiotherapy-only review excluding other disciplines","An informal discussion with no documented process","A systems-thinking approach considering resident, staff, environment, and process factors together"], correct:3,
+      rationale:"RCA is systems-focused, spanning multiple contributing domains rather than assigning individual blame." },
+    { q:"Physiotherapy data on falls, restraint use, and pressure injuries feeds into which reporting mechanism?",
+      options:["A private internal database with no external reporting","No formal reporting mechanism exists","State-level road safety reporting","The National Aged Care Mandatory Quality Indicator Program"], correct:3,
+      rationale:"These indicators feed directly into the Mandatory Quality Indicator Program." },
+    { q:"An RCA meeting concludes with a set of recommended actions. What is essential for these to be effective?",
+      options:["Clear owners, timeframes, and a follow-up interval to monitor implementation","No further follow-up is needed once the meeting concludes","Verbal agreement alone, without documentation","Immediate case closure regardless of whether actions were implemented"], correct:0,
+      rationale:"Action plans need owners, timeframes, and follow-up monitoring to actually be effective." },
+    { q:"During a case conference, the physiotherapist's mobility findings suggest a resident's medication regime may be contributing to falls, but this is outside physiotherapy's direct prescribing scope. What should occur?",
+      options:["Say nothing, since medication decisions are outside physiotherapy's role entirely","Adjust the resident's mobility aid instead, without raising the medication concern","Wait for the GP to notice independently at the next visit","Communicate the findings clearly to the GP/pharmacist as part of MDT liaison, since physiotherapy findings often inform decisions outside physiotherapy's own scope"], correct:3,
+      rationale:"Physiotherapy findings frequently need to be actively communicated to inform decisions in other disciplines." },
+  ]},
+  { id:"education", name:"Staff, Resident & Family Education", questions:[
+    { q:"A new hoist has been introduced on the unit. Staff have received a verbal explanation but no supervised practice. Is this sufficient?",
+      options:["No — formal competency-based training with supervised practice and sign-off is required for equipment like this","Yes, a verbal explanation is generally sufficient for equipment training","Yes, provided staff have used a hoist before, regardless of model","No, but only because it's a new staff member's first week"], correct:0,
+      rationale:"Verbal explanation alone doesn't meet the bar for competency-based equipment training." },
+    { q:"When explaining assessment findings to Mrs Fontaine and her family, the physiotherapist should:",
+      options:["Use precise clinical terminology to ensure accuracy, regardless of the family's background","Provide information only in writing, never verbally","Only provide information if it is specifically requested in writing","Use plain language and check understanding rather than assuming it"], correct:3,
+      rationale:"Plain language with a genuine understanding check supports informed decision-making." },
+    { q:"A family expects their relative to fully return to pre-admission walking ability after a hip fracture, which is unlikely given her overall frailty. The physiotherapist should:",
+      options:["Avoid the topic to prevent upsetting the family","Agree with their expectation to keep the conversation positive","Proactively set realistic expectations about functional prognosis through clear communication","Leave this entirely to the GP to discuss"], correct:2,
+      rationale:"Unrealistic expectations are common and need to be actively and clearly managed." },
+    { q:"After delivering manual handling training to staff, the physiotherapist notices during a later shift that the technique isn't being used consistently. What should happen?",
+      options:["Assume the training was adequate since it was delivered once","Document the training as complete with no further monitoring","Review the effectiveness of the training through observation and provide follow-up coaching or refresher training as needed","Blame the staff involved without further support or follow-up"], correct:2,
+      rationale:"Training effectiveness should be checked through observation, with follow-up support where needed." },
+  ]},
+  { id:"docs", name:"Documentation, Legal & AHPRA Compliance", questions:[
+    { q:"A provisionally registered physiotherapist wants to independently manage a complex wound-adjacent seating case beyond their current scope. What should occur?",
+      options:["They should work within their approved scope, with supervision arrangements documented, and escalate as needed","They may proceed independently if they feel confident to do so","Supervision documentation is optional if the case seems straightforward","They should proceed without informing their supervisor"], correct:0,
+      rationale:"Scope of practice and documented supervision arrangements must be respected regardless of confidence level." },
+    { q:"A physiotherapist is tempted to write a brief, vague note after a busy shift. Why does this matter?",
+      options:["Documentation is frequently the primary evidence reviewed in complaints, coronial inquiries, SIRS notifications, and accreditation audits","It doesn't matter much, as verbal handover is generally sufficient","It only matters if an adverse outcome occurs","Detailed documentation is only required for new residents"], correct:0,
+      rationale:"Documentation is often the primary record reviewed in exactly these kinds of reviews." },
+    { q:"A physiotherapist encounters a presentation that exceeds their current competence. What is the correct action?",
+      options:["Proceed regardless, since experience will be gained on the job","Refer or escalate to a more experienced clinician or another discipline","Avoid documenting the limitation to prevent concern","Delegate the task to unlicensed support staff"], correct:1,
+      rationale:"Escalation beyond current competence is a core professional obligation." },
+    { q:"A resident's family requests a copy of physiotherapy notes and raises concerns about the standard of care received. What does this situation highlight about the assessments completed months earlier?",
+      options:["That documentation only needs to be thorough if a complaint is anticipated in advance","That informal notes are acceptable as long as care was actually delivered appropriately","That every entry should have been written as though it may later be reviewed in exactly this kind of situation — clear, objective, and complete","That family access to notes is unusual and can generally be declined"], correct:2,
+      rationale:"Documentation should always meet a standard that could withstand later scrutiny, not just routine review." },
+  ]},
+  { id:"discharge", name:"Transfers of Care, Admission & Discharge", questions:[
+    { q:"Mr Volkov has just returned to the facility after a five-day hospital admission for pneumonia. Nursing says he “should be back to normal soon.” What should the physiotherapist do?",
+      options:["Assume his pre-admission mobility status still applies","Wait one month before reassessing to allow full recovery","Rely solely on family's description of his function","Reassess his mobility/transfer status promptly, since hospital admissions frequently cause functional decline in older adults"], correct:3,
+      rationale:"Hospital admissions commonly cause functional decline that needs prompt, direct reassessment." },
+    { q:"At every transition point — admission, hospital transfer, or discharge — what is typically the most valuable document for receiving clinicians?",
+      options:["A photograph of the resident","The facility's general marketing brochure","A clear, documented functional status summary","A verbal-only handover with no written record"], correct:2,
+      rationale:"A current, clear functional status summary is the most valuable single handover document." },
+    { q:"Mrs Aitken's physiotherapy goals have been met and she is being discharged from active physiotherapy caseload. What should be documented?",
+      options:["Nothing further is needed once goals are met","Only the discharge date needs recording","A brief blanket statement with no clinical detail","The discharge rationale, her final functional status, and future re-referral triggers"], correct:3,
+      rationale:"A complete discharge record supports safe, informed re-referral if her needs change in future." },
+    { q:"Mr Bassey is being transferred to hospital for an unrelated medical issue. The physiotherapist is asked for input before he goes. What is the most useful contribution?",
+      options:["No input is needed, since hospital staff will reassess him regardless","A concise functional/mobility summary — baseline status, cognition, and equipment needs — to support safe hospital care and discharge planning back to the facility","A full copy of his entire clinical file with no summary","Simply confirming his admission date to the facility"], correct:1,
+      rationale:"A concise, targeted functional summary is the most useful physiotherapy contribution to hospital handover." },
+  ]},
+];
+
+
+// Flatten into a linear question list, tagging each with its domain.
+var quiz = [];
+domains.forEach(function(d){
+  d.questions.forEach(function(q){
+    quiz.push({ domainId:d.id, domainName:d.name, q:q.q, options:q.options, correct:q.correct, rationale:q.rationale });
+  });
+});
+
+var PASS_OVERALL = 0.8;      // 80% overall
+var PASS_DOMAIN_MIN = 3;     // must get at least 3 of 4 correct per domain
+
+// ===================== STATE =====================
+var currentIndex = 0;
+var answers = [];            // { chosen, correct }
+var candidateName = "";
+var candidateRole = "";
+
+// ===================== DOM refs =====================
+var startScreen = document.getElementById('startScreen');
+var quizScreen = document.getElementById('quizScreen');
+var resultsScreen = document.getElementById('resultsScreen');
+var nameInput = document.getElementById('nameInput');
+var roleInput = document.getElementById('roleInput');
+var startBtn = document.getElementById('startBtn');
+var domainChips = document.getElementById('domainChips');
+var domainTag = document.getElementById('domainTag');
+var qCounter = document.getElementById('qCounter');
+var qProgressInner = document.getElementById('qProgressInner');
+var qText = document.getElementById('qText');
+var optionsList = document.getElementById('optionsList');
+var feedbackBox = document.getElementById('feedbackBox');
+var nextBtn = document.getElementById('nextBtn');
+var topProgressFill = document.getElementById('topProgressFill');
+
+// populate domain chips on start screen
+domains.forEach(function(d){
+  var s = document.createElement('span');
+  s.textContent = d.name;
+  domainChips.appendChild(s);
+});
+
+nameInput.addEventListener('input', function(){
+  startBtn.disabled = nameInput.value.trim().length < 2;
+});
+
+startBtn.addEventListener('click', function(){
+  candidateName = nameInput.value.trim();
+  candidateRole = roleInput.value;
+  startScreen.classList.add('hidden');
+  quizScreen.classList.remove('hidden');
+  renderQuestion();
+});
+
+function renderQuestion(){
+  var item = quiz[currentIndex];
+  domainTag.textContent = item.domainName;
+  qCounter.textContent = "Question " + (currentIndex+1) + " / " + quiz.length;
+  qProgressInner.style.width = Math.round(((currentIndex) / quiz.length) * 100) + "%";
+  topProgressFill.style.width = Math.round(((currentIndex) / quiz.length) * 100) + "%";
+  qText.textContent = item.q;
+  optionsList.innerHTML = "";
+  feedbackBox.className = "feedback";
+  feedbackBox.innerHTML = "";
+  nextBtn.disabled = true;
+  nextBtn.textContent = (currentIndex === quiz.length - 1) ? "See Results →" : "Next Question →";
+
+  item.options.forEach(function(optText, idx){
+    var opt = document.createElement('div');
+    opt.className = 'option';
+    opt.innerHTML = '<span class="bullet"></span><span>' + optText + '</span>';
+    opt.addEventListener('click', function(){ selectOption(idx, opt); });
+    optionsList.appendChild(opt);
+  });
+}
+
+function selectOption(idx, el){
+  if (optionsList.classList.contains('locked')) return;
+  optionsList.classList.add('locked');
+  var item = quiz[currentIndex];
+  var isCorrect = (idx === item.correct);
+  answers[currentIndex] = { chosen: idx, correct: isCorrect };
+
+  var opts = optionsList.querySelectorAll('.option');
+  for (var i = 0; i < opts.length; i++) {
+    opts[i].classList.add('disabled');
+    if (i === item.correct) opts[i].classList.add('correct');
+    if (i === idx && i !== item.correct) opts[i].classList.add('incorrect');
+    if (i === idx) opts[i].classList.add('selected');
+  }
+
+  feedbackBox.className = 'feedback show ' + (isCorrect ? 'ok' : 'bad');
+  feedbackBox.innerHTML = '<b>' + (isCorrect ? 'Correct' : 'Not quite') + '</b>' + item.rationale;
+
+  nextBtn.disabled = false;
+}
+
+nextBtn.addEventListener('click', function(){
+  optionsList.classList.remove('locked');
+  currentIndex++;
+  if (currentIndex >= quiz.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+});
+
+// ===================== RESULTS =====================
+function showResults(){
+  quizScreen.classList.add('hidden');
+  resultsScreen.classList.remove('hidden');
+  topProgressFill.style.width = "100%";
+
+  var totalCorrect = 0;
+  answers.forEach(function(a){ if (a && a.correct) totalCorrect++; });
+  var overallPct = Math.round((totalCorrect / quiz.length) * 100);
+
+  // per-domain tally
+  var domainResults = domains.map(function(d){
+    var startIdx = null, correctCount = 0, total = d.questions.length;
+    quiz.forEach(function(item, i){
+      if (item.domainId === d.id) {
+        total = total; // unchanged
+        if (answers[i] && answers[i].correct) correctCount++;
+      }
+    });
+    var pass = correctCount >= PASS_DOMAIN_MIN;
+    return { name: d.name, correct: correctCount, total: d.questions.length, pass: pass };
+  });
+
+  var failedDomains = domainResults.filter(function(r){ return !r.pass; });
+  var overallPass = (overallPct >= PASS_OVERALL*100) && (failedDomains.length === 0);
+
+  var resultText = overallPct + "% — " + (overallPass ? "COMPETENT" : "NOT YET COMPETENT" + (failedDomains.length ? " (" + failedDomains.length + " domain" + (failedDomains.length===1?"":"s") + " flagged)" : ""));
+  recordCompletion(resultText);
+
+  // verdict banner
+  var banner = document.getElementById('verdictBanner');
+  var label = document.getElementById('verdictLabel');
+  var scoreBig = document.getElementById('scoreBig');
+  var sub = document.getElementById('verdictSub');
+  scoreBig.textContent = overallPct + "%";
+  if (overallPass) {
+    banner.className = 'verdict-banner pass';
+    label.textContent = "COMPETENT";
+    sub.textContent = "All 22 domains passed (\u22652/3) and overall score \u2265 80%. Certificate available below.";
+  } else {
+    banner.className = 'verdict-banner fail';
+    label.textContent = "NOT YET COMPETENT";
+    if (failedDomains.length > 0) {
+      sub.textContent = "Review needed in: " + failedDomains.map(function(d){return d.name;}).join(", ") + ".";
+    } else {
+      sub.textContent = "Overall score below the 80% pass mark. Review and retake when ready.";
+    }
+  }
+
+  // domain table
+  var tbody = document.getElementById('domainTableBody');
+  tbody.innerHTML = "";
+  domainResults.forEach(function(r){
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + r.name + '</td>' +
+      '<td>' + r.correct + ' / ' + r.total + '</td>' +
+      '<td><span class="badge ' + (r.pass ? 'pass' : 'fail') + '">' + (r.pass ? 'Pass' : 'Review needed') + '</span></td>';
+    tbody.appendChild(tr);
+  });
+
+  // certificate card visibility + content
+  var certCard = document.getElementById('certificateCard');
+  var certIntro = document.getElementById('certIntroText');
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('en-AU', { day:'numeric', month:'long', year:'numeric' });
+  var timeStr = now.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' });
+  var certId = 'ACP-CA-' + now.getFullYear() + '-' + Math.random().toString(36).slice(2,8).toUpperCase();
+
+  if (overallPass) {
+    certCard.classList.remove('hidden');
+    certIntro.textContent = "Generated automatically on completion. Print or download below for your records / facility file.";
+    renderCertificatePreview(candidateName, candidateRole, overallPct, domainResults.length, dateStr, timeStr, certId);
+  } else {
+    certCard.classList.add('hidden');
+  }
+
+  // wire up buttons
+  document.getElementById('retakeBtn').onclick = function(){ location.reload(); };
+  document.getElementById('printScoreBtn').onclick = function(){
+    openOrDownload(buildScoreReportHTML(candidateName, candidateRole, overallPct, domainResults, dateStr, timeStr, certId), 'ACP_Score_Report_' + safeFileName(candidateName) + '.html');
+  };
+  document.getElementById('printCertBtn').onclick = function(){
+    openOrDownload(buildCertificateHTML(candidateName, candidateRole, overallPct, domainResults.length, dateStr, timeStr, certId), 'ACP_Certificate_' + safeFileName(candidateName) + '.html');
+  };
+  document.getElementById('downloadCertBtn').onclick = function(){
+    downloadHTML(buildCertificateHTML(candidateName, candidateRole, overallPct, domainResults.length, dateStr, timeStr, certId), 'ACP_Certificate_' + safeFileName(candidateName) + '.html');
+  };
+}
+
+function safeFileName(s){
+  return (s || 'Candidate').replace(/[^a-z0-9]+/gi, '_');
+}
+
+// ===================== CERTIFICATE (inline preview) =====================
+function renderCertificatePreview(name, role, pct, domainCount, dateStr, timeStr, certId){
+  var el = document.getElementById('certificatePreview');
+  el.innerHTML =
+    '<div class="cert-inner">' +
+      '<div class="cert-mark">ACP</div>' +
+      '<div class="cert-org">Aged Care Physiotherapy Pty Ltd</div>' +
+      '<div class="cert-title">Certificate of Completion</div>' +
+      '<div class="cert-sub">Clinical Competency Assessment — Aged Care Physiotherapy Practice Manual</div>' +
+      '<div class="cert-presented">This certifies that</div>' +
+      '<div class="cert-name">' + escapeHtml(name) + '</div>' +
+      '<div class="cert-body">has successfully completed the ACP competency assessment, demonstrating clinical knowledge across all ' + domainCount + ' domains of physiotherapy practice in residential aged care, in the role of ' + escapeHtml(role) + '.</div>' +
+      '<div class="cert-score-row">' +
+        '<div class="cert-score-item"><div class="n">' + pct + '%</div><div class="l">Overall score</div></div>' +
+        '<div class="cert-score-item"><div class="n">' + domainCount + ' / ' + domainCount + '</div><div class="l">Domains passed</div></div>' +
+        '<div class="cert-score-item"><div class="n">' + dateStr + '</div><div class="l">Date completed</div></div>' +
+      '</div>' +
+      '<div class="cert-sign-row">' +
+        '<div class="cert-sign"><div class="line">Aged Care Physiotherapy</div>Clinical Director, ACP</div>' +
+        '<div class="cert-sign" style="text-align:right;"><div class="line" style="text-align:right;">' + timeStr + '</div>Time completed</div>' +
+      '</div>' +
+      '<div class="cert-id">Certificate ID: ' + certId + ' &nbsp;·&nbsp; Issued ' + dateStr + ' at ' + timeStr + '</div>' +
+    '</div>';
+}
+
+function escapeHtml(s){
+  return (s || '').replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
+
+// ===================== Standalone printable documents =====================
+// Built as a full, self-contained HTML document string so they can be
+// opened in a genuinely top-level browser tab/window. Printing directly
+// from within a nested/sandboxed preview frame is unreliable, so both the
+// certificate and the score report are generated this way rather than
+// relying on window.print() against the current page.
+function buildCertificateHTML(name, role, pct, domainCount, dateStr, timeStr, certId){
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ACP Certificate — ' + escapeHtml(name) + '</title>' +
+  '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+  '<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">' +
+  '<style>' +
+    '@page{size:A4 landscape; margin:0;}' +
+    'body{margin:0; font-family:"Lexend",sans-serif; background:#e9ebee; display:flex; align-items:center; justify-content:center; min-height:100vh;}' +
+    '.wrap{padding:26px;}' +
+    '.cert{width:900px; max-width:94vw; background:#fffdfa; border-radius:10px; padding:52px 60px; position:relative; border:4px solid #cc3300; box-shadow:0 10px 40px rgba(0,0,0,.18); box-sizing:border-box;}' +
+    '.cert::before,.cert::after{content:"";position:absolute;left:18px;right:18px;height:2px;background:#336699;}' +
+    '.cert::before{top:14px;} .cert::after{bottom:14px;}' +
+    '.inner{text-align:center; position:relative; z-index:1;}' +
+    '.mark{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#cc3300,#a32900);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;margin:0 auto 16px;}' +
+    '.org{font-size:12.5px;text-transform:uppercase;letter-spacing:.16em;color:#264d73;font-weight:700;}' +
+    '.title{font-family:"Playfair Display",serif;font-weight:700;font-size:34px;color:#1e2328;margin:12px 0 4px;}' +
+    '.sub{font-size:13px;color:#4a5259;margin-bottom:26px;}' +
+    '.presented{font-size:12.5px;color:#4a5259;text-transform:uppercase;letter-spacing:.1em;}' +
+    '.name{font-family:"Playfair Display",serif;font-style:italic;font-weight:700;font-size:38px;color:#a32900;margin:10px 0 20px;border-bottom:1.5px solid #e2e6ea;display:inline-block;padding-bottom:12px;min-width:60%;}' +
+    '.body{font-size:14.5px;color:#1e2328;max-width:600px;margin:0 auto 26px;line-height:1.7;}' +
+    '.scores{display:flex;justify-content:center;gap:44px;margin:14px 0 30px;}' +
+    '.scores .item{text-align:center;} .scores .n{font-size:24px;font-weight:800;color:#264d73;} .scores .l{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#4a5259;}' +
+    '.signrow{display:flex;justify-content:space-between;align-items:flex-end;margin-top:34px;gap:20px;}' +
+    '.sign{font-size:12.5px;color:#4a5259;text-align:left;} .sign.right{text-align:right;}' +
+    '.sign .line{border-top:1.5px solid #1e2328;width:210px;margin-bottom:6px;padding-top:6px;font-family:"Playfair Display",serif;font-style:italic;font-size:16px;color:#1e2328;}' +
+    '.sign.right .line{margin-left:auto;text-align:right;}' +
+    '.certid{font-size:10.5px;color:#9aa2a8;margin-top:24px;letter-spacing:.03em;}' +
+    '.printbar{text-align:center;margin-top:18px;}' +
+    '.printbar button{font-family:"Lexend",sans-serif;background:#cc3300;color:#fff;border:none;border-radius:9px;padding:11px 22px;font-weight:600;font-size:13.5px;cursor:pointer;}' +
+    '@media print{ body{background:#fff;} .printbar{display:none;} .wrap{padding:0;} .cert{box-shadow:none; border-width:3px;} }' +
+  '</style></head><body>' +
+  '<div class="wrap">' +
+    '<div class="cert"><div class="inner">' +
+      '<div class="mark">ACP</div>' +
+      '<div class="org">Aged Care Physiotherapy Pty Ltd</div>' +
+      '<div class="title">Certificate of Completion</div>' +
+      '<div class="sub">Clinical Competency Assessment — Aged Care Physiotherapy Practice Manual</div>' +
+      '<div class="presented">This certifies that</div>' +
+      '<div class="name">' + escapeHtml(name) + '</div>' +
+      '<div class="body">has successfully completed the ACP competency assessment, demonstrating clinical knowledge across all ' + domainCount + ' domains of physiotherapy practice in residential aged care, in the role of ' + escapeHtml(role) + '.</div>' +
+      '<div class="scores">' +
+        '<div class="item"><div class="n">' + pct + '%</div><div class="l">Overall score</div></div>' +
+        '<div class="item"><div class="n">' + domainCount + ' / ' + domainCount + '</div><div class="l">Domains passed</div></div>' +
+        '<div class="item"><div class="n">' + dateStr + '</div><div class="l">Date completed</div></div>' +
+      '</div>' +
+      '<div class="signrow">' +
+        '<div class="sign"><div class="line">Aged Care Physiotherapy</div>Clinical Director, ACP</div>' +
+        '<div class="sign right"><div class="line">' + timeStr + '</div>Time completed</div>' +
+      '</div>' +
+      '<div class="certid">Certificate ID: ' + certId + ' &middot; Issued ' + dateStr + ' at ' + timeStr + '</div>' +
+    '</div></div>' +
+    '<div class="printbar"><button onclick="window.print()">Print / Save as PDF</button></div>' +
+  '</div>' +
+  '<script>setTimeout(function(){ try{ window.focus(); }catch(e){} }, 200);<\/script>' +
+  '</body></html>';
+}
+
+function buildScoreReportHTML(name, role, pct, domainResults, dateStr, timeStr, certId){
+  var rows = domainResults.map(function(r){
+    return '<tr><td>' + escapeHtml(r.name) + '</td><td>' + r.correct + ' / ' + r.total + '</td>' +
+      '<td><span class="badge ' + (r.pass?'pass':'fail') + '">' + (r.pass?'Pass':'Review needed') + '</span></td></tr>';
+  }).join('');
+  var failCount = domainResults.filter(function(r){return !r.pass;}).length;
+  var overallPass = pct >= 80 && failCount === 0;
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ACP Score Report — ' + escapeHtml(name) + '</title>' +
+  '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+  '<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700;800&display=swap" rel="stylesheet">' +
+  '<style>' +
+    'body{font-family:"Lexend",sans-serif;color:#1e2328;max-width:760px;margin:40px auto;padding:0 24px;}' +
+    'h1{color:#cc3300;font-size:22px;margin-bottom:2px;} .org{color:#336699;font-size:12px;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:18px;}' +
+    '.meta{font-size:13px;color:#4a5259;margin-bottom:20px;} .meta b{color:#1e2328;}' +
+    '.banner{border-radius:10px;padding:16px 20px;color:#fff;margin-bottom:24px;}' +
+    '.banner.pass{background:#2e7d4f;} .banner.fail{background:#cc3300;}' +
+    '.banner .big{font-size:30px;font-weight:800;}' +
+    'table{width:100%;border-collapse:collapse;font-size:13px;}' +
+    'th{background:#336699;color:#fff;text-align:left;padding:8px 10px;font-size:11px;text-transform:uppercase;}' +
+    'td{padding:8px 10px;border-bottom:1px solid #e2e6ea;} tr:nth-child(even) td{background:#f7f8fa;}' +
+    '.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:10.5px;font-weight:700;}' +
+    '.badge.pass{background:#eaf6ee;color:#1b5c38;} .badge.fail{background:#fdeeea;color:#7a2400;}' +
+    '.printbar{margin:22px 0;} .printbar button{font-family:"Lexend",sans-serif;background:#336699;color:#fff;border:none;border-radius:9px;padding:10px 20px;font-weight:600;font-size:13px;cursor:pointer;}' +
+    '.certid{font-size:10.5px;color:#9aa2a8;margin-top:20px;}' +
+    '@media print{ .printbar{display:none;} }' +
+  '</style></head><body>' +
+    '<div class="org">Aged Care Physiotherapy Pty Ltd</div>' +
+    '<h1>Competency Assessment — Score Report</h1>' +
+    '<div class="meta"><b>' + escapeHtml(name) + '</b> &middot; ' + escapeHtml(role) + '<br>Completed ' + dateStr + ' at ' + timeStr + '</div>' +
+    '<div class="banner ' + (overallPass?'pass':'fail') + '"><div class="big">' + pct + '%</div>' + (overallPass ? 'COMPETENT — all domains passed' : 'NOT YET COMPETENT — review flagged domains') + '</div>' +
+    '<table><thead><tr><th>Domain</th><th>Score</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    '<div class="certid">Reference ID: ' + certId + '</div>' +
+    '<div class="printbar"><button onclick="window.print()">Print / Save as PDF</button></div>' +
+  '</body></html>';
+}
+
+function openOrDownload(html, filename){
+  var win = null;
+  try { win = window.open('', '_blank'); } catch(e) { win = null; }
+  if (win) {
+    try {
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      return;
+    } catch (e) { /* fall through to download */ }
+  }
+  downloadHTML(html, filename);
+  try { alert('Pop-up blocked — the file has been downloaded instead. Open it to print or save as PDF.'); } catch(e){}
+}
+
+function downloadHTML(html, filename){
+  try {
+    var blob = new Blob([html], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  } catch (e) {
+    if (window.console) console.warn('Download failed', e);
+  }
+}
+
+initAuthGate();
+
+} catch (err) {
+  if (window.console && console.warn) console.warn('Assessment init error:', err);
+}
+})();
+</script>
+</body>
+</html>
