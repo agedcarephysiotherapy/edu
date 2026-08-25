@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACP Training Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{
+    --brand:#CC3300; --brand-dark:#A32900; --brand-light:#F7E4DA;
+    --blue:#336699; --blue-dark:#25507A; --blue-light:#E4ECF3;
+    --ink:#232323; --muted:#75726D; --paper:#FAF8F5; --card:#FFFFFF;
+    --line:#E7E1D8; --success:#2F7D4F; --danger:#B23A2E;
+    --gradient-brand:linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+    --gradient-blue:linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
+    --gradient-hero:linear-gradient(120deg, var(--brand) 0%, #9c3f22 45%, var(--blue) 100%);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(204,51,0,0.05), transparent 40%),
+      radial-gradient(circle at 100% 20%, rgba(51,102,153,0.05), transparent 40%),
+      var(--paper);
+    color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  header.top{
+    background:var(--gradient-hero);
+    color:#fff; padding:26px 20px; text-align:center;
+    box-shadow:0 10px 30px -14px rgba(43,41,37,0.4);
+    position:relative; overflow:hidden;
+  }
+  header.top::before{
+    content:""; position:absolute; inset:0;
+    background:radial-gradient(circle at 85% -10%, rgba(255,255,255,0.18), transparent 55%);
+  }
+  header.top h1{font-family:'Poppins',sans-serif;font-weight:800;font-size:23px;margin:0;letter-spacing:-0.3px;position:relative;}
+  header.top .who{font-size:12.5px;color:rgba(255,255,255,0.88);margin-top:10px;position:relative;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
+  header.top .who strong{color:#fff;}
+  header.top .who button{
+    background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.35);
+    color:#fff; cursor:pointer; font-family:'Inter',sans-serif; font-weight:600;
+    font-size:12px; padding:5px 12px; border-radius:20px; transition:background .15s;
+  }
+  header.top .who button:hover{background:rgba(255,255,255,0.3);}
+  main{max-width:760px;margin:0 auto;padding:28px 16px 80px;}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:24px;margin-bottom:18px;position:relative;overflow:hidden;
+    box-shadow:0 1px 2px rgba(43,41,37,0.03),0 14px 32px -22px rgba(43,41,37,0.22);
+  }
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gradient-hero);}
+  .card h2{font-family:'Poppins',sans-serif;font-weight:700;font-size:18px;margin:0 0 4px;}
+  .card .sub{font-size:13.5px;color:var(--muted);margin:0 0 16px;line-height:1.5;}
+  label{display:block;font-size:12px;font-weight:600;letter-spacing:0.2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+  input[type=text],input[type=date],input[type=email],select{
+    width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;
+    font-family:'Inter',sans-serif;font-size:14.5px;background:var(--paper);color:var(--ink);
+    transition:border-color .15s,box-shadow .15s;
+  }
+  input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-light);}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .btn{
+    background:var(--gradient-brand);color:#fff;border:none;padding:11px 20px;
+    font-weight:600;font-size:13px;cursor:pointer;border-radius:10px;
+    transition:filter .15s,transform .1s,box-shadow .15s;
+    box-shadow:0 4px 12px -4px rgba(204,51,0,0.45);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+  .btn:active{transform:translateY(0) scale(0.98);}
+  .btn.blue{background:var(--gradient-blue);box-shadow:0 4px 12px -4px rgba(51,102,153,0.5);}
+  .btn.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand);box-shadow:none;}
+  .btn.ghost:hover{background:var(--brand-light);filter:none;}
+  .btn.ghost.blue{color:var(--blue);border-color:var(--blue);}
+  .btn.ghost.blue:hover{background:var(--blue-light);}
+  .btn.small{padding:7px 13px;font-size:12px;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);border-bottom:2px solid var(--ink);padding:8px 6px;}
+  td{padding:11px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tbody tr:hover td{background:var(--paper);}
+  .badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11.5px;font-weight:700;}
+  .badge.pass{background:#E3F1E8;color:var(--success);}
+  .badge.fail{background:#F6E4E1;color:var(--danger);}
+  .badge.other{background:var(--blue-light);color:var(--blue-dark);}
+  .role-tag{
+    font-size:11px;font-weight:700;text-transform:uppercase;padding:3px 10px;border-radius:20px;
+    background:rgba(255,255,255,0.22);color:#fff;border:1px solid rgba(255,255,255,0.35);
+  }
+  .role-tag.on-light{background:var(--blue-light);color:var(--blue-dark);border:none;}
+  .status-line{font-size:12px;color:var(--muted);margin-top:8px;min-height:14px;}
+  .status-line.ok{color:var(--success);font-weight:600;}
+  .status-line.err{color:var(--danger);}
+  .tabs{display:flex;gap:5px;margin-bottom:18px;flex-wrap:wrap;background:var(--card);padding:6px;border-radius:14px;border:1px solid var(--line);}
+  .tabs button{background:transparent;border:none;border-radius:10px;padding:10px 16px;font-weight:600;font-size:13px;cursor:pointer;color:var(--muted);transition:background .15s,color .15s;flex:1 1 auto;min-width:0;}
+  .tabs button:hover{background:var(--paper);color:var(--ink);}
+  .tabs button.active{background:var(--gradient-brand);color:#fff;box-shadow:0 4px 10px -4px rgba(204,51,0,0.5);}
+  .empty{text-align:center;padding:30px 10px;color:var(--muted);font-size:14px;}
+  a.cert-link{color:var(--blue);font-weight:600;text-decoration:none;font-size:13px;}
+  a.cert-link:hover{text-decoration:underline;}
+  #loginScreen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+    background:var(--gradient-hero);
+  }
+  #loginScreen .card{max-width:380px;width:100%;box-shadow:0 30px 60px -20px rgba(0,0,0,0.4);}
+  @media (max-width:480px){
+    header.top{padding:20px 14px;}
+    header.top h1{font-size:19px;}
+    main{padding:18px 10px 60px;}
+    .card{padding:16px;border-radius:14px;}
+    .card h2{font-size:16.5px;}
+    .row{grid-template-columns:1fr;}
+    .tabs{padding:4px;gap:3px;}
+    .tabs button{font-size:11.5px;padding:9px 6px;}
+    table{font-size:12.5px;}
+    th,td{padding:7px 4px;}
+    .btn{width:100%;justify-content:center;}
+    .btn.small{width:auto;}
+  }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="card">
+    <h2>ACP Training Tracker</h2>
+    <p class="sub">Enter your work email and we'll send you a sign-in link — no password needed.</p>
+    <label for="emailInput">Work Email</label>
+    <input type="email" id="emailInput" placeholder="you@acphysio.com.au">
+    <div style="height:10px;"></div>
+    <button class="btn" id="magicLinkBtn" style="width:100%;">Email Me a Sign-In Link</button>
+    <div class="status-line" id="loginStatus"></div>
+  </div>
+</div>
+
+<div id="appRoot" style="display:none;">
+  <header class="top">
+    <h1>ACP Training Tracker</h1>
+    <div class="who">
+      Signed in as <strong id="whoAmI"></strong>
+      <span id="roleTag"></span>
+      <button id="signOutBtn">Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="staffOnlyBanner" style="display:none;"></div>
+
+    <div class="tabs" id="managerTabs" style="display:none;">
+      <button data-tab="all" class="active">All Staff</button>
+      <button data-tab="add">Record Completion</button>
+      <button data-tab="courses">Courses</button>
+      <button data-tab="roles">Manage Roles</button>
+    </div>
+
+    <!-- STAFF: MY COMPLETIONS -->
+    <div id="panel-mine" class="panel">
+      <div class="card">
+        <h2>Available Courses</h2>
+        <p class="sub">Open a course to work through it. It's marked complete automatically when you finish.</p>
+        <div id="coursesForStaff"><p class="empty">Loading&hellip;</p></div>
+      </div>
+      <div class="card">
+        <h2>My Completions</h2>
+        <p class="sub">Training and course results recorded against your name.</p>
+        <div id="mineTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+    </div>
+
+    <!-- MANAGER: ALL STAFF -->
+    <div id="panel-all" class="panel" style="display:none;">
+      <div class="card">
+        <h2>All Staff Completions</h2>
+        <p class="sub">Every recorded course completion across the team.</p>
+        <div id="allTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+    </div>
+
+    <!-- MANAGER: ADD COMPLETION -->
+    <div id="panel-add" class="panel" style="display:none;">
+      <div class="card">
+        <h2>Record a Completion</h2>
+        <p class="sub">Staff must have logged in at least once before they appear in this list.</p>
+        <div class="row">
+          <div>
+            <label for="addStaffSelect">Staff Member</label>
+            <select id="addStaffSelect"></select>
+          </div>
+          <div>
+            <label for="addCourseSelect">Course</label>
+            <select id="addCourseSelect"></select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="addDate">Completion Date</label>
+            <input type="date" id="addDate">
+          </div>
+          <div>
+            <label for="addResult">Result</label>
+            <select id="addResult">
+              <option value="Pass">Pass</option>
+              <option value="Fail">Fail</option>
+              <option value="Attended">Attended</option>
+              <option value="In Progress">In Progress</option>
+            </select>
+          </div>
+        </div>
+        <label for="addCertFile">Certificate (optional)</label>
+        <input type="file" id="addCertFile" accept=".pdf,.jpg,.jpeg,.png">
+        <div style="height:12px;"></div>
+        <button class="btn" id="addCompletionBtn">Save Completion</button>
+        <div class="status-line" id="addStatus"></div>
+      </div>
+    </div>
+
+    <!-- MANAGER: COURSES -->
+    <div id="panel-courses" class="panel" style="display:none;">
+      <div class="card">
+        <h2>Courses</h2>
+        <p class="sub">Each course can link to its own training page hosted alongside this site. When staff finish that page, it self-reports their completion.</p>
+        <div class="row">
+          <div>
+            <label for="newCourseName">New Course Name</label>
+            <input type="text" id="newCourseName" placeholder="e.g. Manual Handling Refresher">
+          </div>
+          <div>
+            <label for="newCourseDesc">Description (optional)</label>
+            <input type="text" id="newCourseDesc" placeholder="Brief description">
+          </div>
+        </div>
+        <label for="newCoursePageUrl">Training Page URL (optional)</label>
+        <input type="text" id="newCoursePageUrl" placeholder="e.g. courses/manual-handling.html">
+        <div style="height:12px;"></div>
+        <button class="btn" id="addCourseBtn">Add Course</button>
+        <div class="status-line" id="courseStatus"></div>
+        <div style="height:16px;"></div>
+        <div id="coursesTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+    </div>
+
+    <!-- MANAGER: ROLES -->
+    <div id="panel-roles" class="panel" style="display:none;">
+      <div class="card">
+        <h2>Manage Roles</h2>
+        <p class="sub">Promote a staff member to manager, or step someone back down to staff. Be careful — managers can see and edit everyone's records.</p>
+        <div id="rolesTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================================
+     SETUP — replace these two values with your NEW Supabase project's
+     details (Project Settings > API). This must be a DIFFERENT project
+     from the footy tipping one — this app holds staff personal data and
+     needs its own database, auth, and storage.
+     ========================================================================= */
+  const SUPABASE_URL = "https://unomkggpwiugvkovdjto.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_rakZ0iLM1Tncok00y6HFPA_Xlls_Mwc";
+
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentUser = null;
+  let currentProfile = null;
+  let allProfiles = [];
+  let allCourses = [];
+
+  function setStatus(id, msg, cls){
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = "status-line" + (cls ? " "+cls : "");
+  }
+
+  function fmtDate(d){
+    if(!d) return "";
+    return new Date(d + "T00:00:00").toLocaleDateString("en-AU", {day:"numeric", month:"short", year:"numeric"});
+  }
+
+  function resultBadge(result){
+    const cls = result === "Pass" ? "pass" : result === "Fail" ? "fail" : "other";
+    return `<span class="badge ${cls}">${result || "—"}</span>`;
+  }
+
+  // ---------- AUTH ----------
+  document.getElementById("magicLinkBtn").addEventListener("click", async ()=>{
+    const email = document.getElementById("emailInput").value.trim();
+    if(!email){
+      setStatus("loginStatus", "Enter your email first.", "err");
+      return;
+    }
+    const { error } = await sb.auth.signInWithOtp({ email });
+    setStatus("loginStatus", error ? "Couldn't send the link — try again." : "Check your email for a sign-in link.", error ? "err" : "ok");
+  });
+  document.getElementById("signOutBtn").addEventListener("click", async ()=>{
+    await sb.auth.signOut();
+    window.location.reload();
+  });
+
+  // ---------- LOAD & RENDER ----------
+  async function loadMyProfile(){
+    const { data, error } = await sb.from("profiles").select("*").eq("id", currentUser.id).single();
+    if(error){
+      // Trigger may not have fired yet on very first login — retry once shortly.
+      await new Promise(r=>setTimeout(r, 1200));
+      const retry = await sb.from("profiles").select("*").eq("id", currentUser.id).single();
+      currentProfile = retry.data;
+    }else{
+      currentProfile = data;
+    }
+  }
+
+  async function loadAllProfiles(){
+    const { data } = await sb.from("profiles").select("*").order("full_name");
+    allProfiles = data || [];
+  }
+
+  async function loadAllCourses(){
+    const { data } = await sb.from("courses").select("*").order("name");
+    allCourses = data || [];
+  }
+
+  async function signedCertUrl(path){
+    if(!path) return null;
+    const { data } = await sb.storage.from("certificates").createSignedUrl(path, 300);
+    return data ? data.signedUrl : null;
+  }
+
+  async function renderMine(){
+    const wrap = document.getElementById("mineTable");
+    const { data } = await sb
+      .from("completions")
+      .select("*, courses(name)")
+      .eq("staff_id", currentUser.id)
+      .order("completion_date", {ascending:false});
+    if(!data || data.length===0){
+      wrap.innerHTML = '<p class="empty">No completions recorded yet.</p>';
+      return;
+    }
+    let html = `<table><thead><tr><th>Course</th><th>Date</th><th>Result</th><th>Certificate</th></tr></thead><tbody>`;
+    for(const c of data){
+      const certLink = c.certificate_path
+        ? `<a class="cert-link" href="#" data-path="${c.certificate_path}">View</a>`
+        : "—";
+      html += `<tr><td>${c.courses?.name || "—"}</td><td>${fmtDate(c.completion_date)}</td><td>${resultBadge(c.result)}</td><td>${certLink}</td></tr>`;
+    }
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+    wrap.querySelectorAll("a[data-path]").forEach(a=>{
+      a.addEventListener("click", async (e)=>{
+        e.preventDefault();
+        const url = await signedCertUrl(a.dataset.path);
+        if(url) window.open(url, "_blank");
+      });
+    });
+  }
+
+  async function renderAll(){
+    const wrap = document.getElementById("allTable");
+    const { data } = await sb
+      .from("completions")
+      .select("*, courses(name), profiles!completions_staff_id_fkey(full_name,email)")
+      .order("completion_date", {ascending:false});
+    if(!data || data.length===0){
+      wrap.innerHTML = '<p class="empty">No completions recorded yet.</p>';
+      return;
+    }
+    let html = `<table><thead><tr><th>Staff</th><th>Course</th><th>Date</th><th>Result</th><th>Certificate</th></tr></thead><tbody>`;
+    for(const c of data){
+      const certLink = c.certificate_path
+        ? `<a class="cert-link" href="#" data-path="${c.certificate_path}">View</a>`
+        : "—";
+      html += `<tr><td>${c.profiles?.full_name || c.profiles?.email || "—"}</td><td>${c.courses?.name || "—"}</td><td>${fmtDate(c.completion_date)}</td><td>${resultBadge(c.result)}</td><td>${certLink}</td></tr>`;
+    }
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+    wrap.querySelectorAll("a[data-path]").forEach(a=>{
+      a.addEventListener("click", async (e)=>{
+        e.preventDefault();
+        const url = await signedCertUrl(a.dataset.path);
+        if(url) window.open(url, "_blank");
+      });
+    });
+  }
+
+  function populateAddForm(){
+    const staffSel = document.getElementById("addStaffSelect");
+    staffSel.innerHTML = allProfiles.map(p=>`<option value="${p.id}">${p.full_name || p.email}</option>`).join("");
+    const courseSel = document.getElementById("addCourseSelect");
+    courseSel.innerHTML = allCourses.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
+    document.getElementById("addDate").value = new Date().toISOString().slice(0,10);
+  }
+
+  document.getElementById("addCompletionBtn").addEventListener("click", async ()=>{
+    const staffId = document.getElementById("addStaffSelect").value;
+    const courseId = document.getElementById("addCourseSelect").value;
+    const date = document.getElementById("addDate").value;
+    const result = document.getElementById("addResult").value;
+    const file = document.getElementById("addCertFile").files[0];
+    if(!staffId || !courseId || !date){
+      setStatus("addStatus", "Staff member, course and date are all required.", "err");
+      return;
+    }
+    setStatus("addStatus", "Saving...", "");
+    let certificatePath = null;
+    if(file){
+      const path = `${staffId}/${crypto.randomUUID()}-${file.name}`;
+      const { error: upErr } = await sb.storage.from("certificates").upload(path, file);
+      if(upErr){
+        setStatus("addStatus", "Couldn't upload the certificate — try again.", "err");
+        return;
+      }
+      certificatePath = path;
+    }
+    const { error } = await sb.from("completions").insert({
+      staff_id: staffId, course_id: courseId, completion_date: date,
+      result, certificate_path: certificatePath, recorded_by: currentUser.id
+    });
+    if(error){
+      setStatus("addStatus", "Couldn't save — try again.", "err");
+      return;
+    }
+    setStatus("addStatus", "Saved.", "ok");
+    document.getElementById("addCertFile").value = "";
+    renderAll();
+  });
+
+  async function renderCourses(){
+    const wrap = document.getElementById("coursesTable");
+    if(allCourses.length===0){
+      wrap.innerHTML = '<p class="empty">No courses added yet.</p>';
+      return;
+    }
+    wrap.innerHTML = `<table><thead><tr><th>Course</th><th>Page</th><th>Course ID (for the page template)</th></tr></thead><tbody>` +
+      allCourses.map(c=>`
+        <tr>
+          <td>${c.name}${c.description ? `<div style="color:var(--muted);font-size:12px;">${c.description}</div>` : ""}</td>
+          <td>${c.page_url ? `<a class="cert-link" href="${c.page_url}" target="_blank">Open ↗</a>` : "—"}</td>
+          <td>
+            <code style="font-size:11px;background:var(--paper);padding:2px 6px;border-radius:4px;">${c.id}</code>
+            <button class="btn small ghost blue" data-copy="${c.id}" style="margin-left:6px;">Copy</button>
+          </td>
+        </tr>
+      `).join("") + `</tbody></table>`;
+    wrap.querySelectorAll("button[data-copy]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        navigator.clipboard.writeText(btn.dataset.copy);
+        btn.textContent = "Copied!";
+        setTimeout(()=>{ btn.textContent = "Copy"; }, 1500);
+      });
+    });
+  }
+
+  async function renderCoursesForStaff(){
+    const wrap = document.getElementById("coursesForStaff");
+    if(allCourses.length===0){
+      wrap.innerHTML = '<p class="empty">No courses have been added yet.</p>';
+      return;
+    }
+    const { data: mine } = await sb.from("completions").select("course_id").eq("staff_id", currentUser.id);
+    const completedIds = new Set((mine||[]).map(c=>c.course_id));
+    wrap.innerHTML = `<table><thead><tr><th>Course</th><th>Status</th><th></th></tr></thead><tbody>` +
+      allCourses.map(c=>{
+        const done = completedIds.has(c.id);
+        const link = c.page_url
+          ? `<a class="btn small ${done ? 'ghost blue' : 'blue'}" href="${c.page_url}" target="_blank">${done ? "↻ Retake" : "▶ Start"}</a>`
+          : `<span style="color:var(--muted);font-size:12px;">No page linked</span>`;
+        return `<tr><td>${c.name}</td><td>${done ? '<span class="badge pass">Completed</span>' : '<span class="badge other">Not started</span>'}</td><td>${link}</td></tr>`;
+      }).join("") + `</tbody></table>`;
+  }
+
+  document.getElementById("addCourseBtn").addEventListener("click", async ()=>{
+    const name = document.getElementById("newCourseName").value.trim();
+    const desc = document.getElementById("newCourseDesc").value.trim();
+    const pageUrl = document.getElementById("newCoursePageUrl").value.trim();
+    if(!name){
+      setStatus("courseStatus", "Course name is required.", "err");
+      return;
+    }
+    const { error } = await sb.from("courses").insert({ name, description: desc || null, page_url: pageUrl || null });
+    if(error){
+      setStatus("courseStatus", "Couldn't add the course — try again.", "err");
+      return;
+    }
+    setStatus("courseStatus", "Course added — copy its Course ID below into the training page template.", "ok");
+    document.getElementById("newCourseName").value = "";
+    document.getElementById("newCourseDesc").value = "";
+    document.getElementById("newCoursePageUrl").value = "";
+    await loadAllCourses();
+    renderCourses();
+    populateAddForm();
+  });
+
+  async function renderRoles(){
+    const wrap = document.getElementById("rolesTable");
+    wrap.innerHTML = `<table><thead><tr><th>Staff</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>` +
+      allProfiles.map(p=>`
+        <tr>
+          <td>${p.full_name || "—"}</td>
+          <td>${p.email || "—"}</td>
+          <td><span class="role-tag on-light">${p.role}</span></td>
+          <td>
+            ${p.id === currentUser.id
+              ? '<span style="color:var(--muted);font-size:12px;">(you)</span>'
+              : `<button class="btn small ghost" data-toggle="${p.id}" data-role="${p.role}">
+                   ${p.role === "manager" ? "↓ Demote to staff" : "↑ Promote to manager"}
+                 </button>`
+            }
+          </td>
+        </tr>
+      `).join("") + `</tbody></table>`;
+    wrap.querySelectorAll("button[data-toggle]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const newRole = btn.dataset.role === "manager" ? "staff" : "manager";
+        const { error } = await sb.from("profiles").update({role: newRole}).eq("id", btn.dataset.toggle);
+        if(!error){
+          await loadAllProfiles();
+          renderRoles();
+          populateAddForm();
+        }
+      });
+    });
+  }
+
+  // ---------- TABS (manager view) ----------
+  const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles"};
+  document.getElementById("managerTabs").addEventListener("click", (e)=>{
+    const btn = e.target.closest("button[data-tab]");
+    if(!btn) return;
+    document.querySelectorAll("#managerTabs button").forEach(b=>b.classList.toggle("active", b===btn));
+    Object.values(tabToPanel).forEach(id=>document.getElementById(id).style.display = "none");
+    document.getElementById(tabToPanel[btn.dataset.tab]).style.display = "block";
+  });
+
+  // ---------- BOOT ----------
+  async function bootApp(session){
+    currentUser = session.user;
+    await loadMyProfile();
+
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("appRoot").style.display = "block";
+    document.getElementById("whoAmI").textContent = currentProfile?.full_name || currentUser.email;
+
+    if(currentProfile?.role === "manager"){
+      document.getElementById("roleTag").innerHTML = '<span class="role-tag">Manager</span>';
+      document.getElementById("managerTabs").style.display = "flex";
+      document.getElementById("panel-mine").style.display = "none";
+      document.getElementById("panel-all").style.display = "block";
+      await Promise.all([loadAllProfiles(), loadAllCourses()]);
+      renderAll();
+      renderCourses();
+      renderRoles();
+      populateAddForm();
+    }else{
+      document.getElementById("panel-mine").style.display = "block";
+      await loadAllCourses();
+      renderCoursesForStaff();
+      renderMine();
+    }
+  }
+
+  sb.auth.getSession().then(({data})=>{
+    if(data.session) bootApp(data.session);
+  });
+  sb.auth.onAuthStateChange((event, session)=>{
+    if(event === "SIGNED_IN" && session) bootApp(session);
+  });
+
+})();
+</script>
+
+</body>
+</html>
