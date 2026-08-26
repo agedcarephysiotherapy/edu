@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACP | Pressure Injury Prevention, Management &amp; Staging</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{
+    --acp-blue:#336699;
+    --acp-blue-dark:#264d73;
+    --acp-blue-tint:#eaf1f8;
+    --acp-red:#cc3300;
+    --acp-red-tint:#fdece5;
+    --ink:#1f2937;
+    --ink-soft:#516072;
+    --paper:#ffffff;
+    --bg:#f4f7fa;
+    --line:#dde5ee;
+    --good:#2f7d4f;
+    --good-tint:#e8f5ec;
+    --warn:#b8860b;
+    --warn-tint:#fdf3dd;
+    --bad:#b3261e;
+    --bad-tint:#fbe7e5;
+    --purple:#6b4c9a;
+    --purple-tint:#f0ecf7;
+    --radius:16px;
+    --shadow:0 1px 2px rgba(31,41,55,.04), 0 10px 28px -8px rgba(38,77,115,.16);
+    --figure:#8a9bb0;
+    --figure-dark:#5c7085;
+    --skin:#e9c6a0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Lexend',system-ui,sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--acp-blue);}
+
+  /* ===== Header ===== */
+  header.site{
+    background:
+      radial-gradient(720px 420px at 88% -10%, rgba(204,51,0,.30), transparent 60%),
+      linear-gradient(120deg,var(--acp-blue) 0%,var(--acp-blue-dark) 100%);
+    color:#fff;
+    padding:0;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 12px 32px -14px rgba(20,40,64,.55);
+  }
+  .header-inner{max-width:1120px;margin:0 auto;padding:38px 28px 32px;position:relative;z-index:2;}
+  .brandrow{display:flex;align-items:center;gap:14px;margin-bottom:22px;}
+  .brandmark{
+    height:40px;width:auto;object-fit:contain;display:block;flex-shrink:0;
+    background:#fff;border-radius:10px;padding:4px 8px;
+    box-shadow:0 3px 12px rgba(0,0,0,.18);
+  }
+  .brandtext{font-size:14px;letter-spacing:.14em;text-transform:uppercase;opacity:.92;font-weight:500;}
+  .brandtext b{font-weight:700;}
+  h1{font-size:clamp(24px,3.4vw,38px);line-height:1.15;margin:0 0 10px;font-weight:700;max-width:840px;}
+  .subtitle{font-size:16.5px;opacity:.92;max-width:720px;font-weight:300;margin:0 0 22px;}
+  .meta-pills{display:flex;flex-wrap:wrap;gap:10px;}
+  .pill{
+    background:rgba(255,255,255,.14);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.28);
+    padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:500;
+    display:flex;align-items:center;gap:6px;
+    transition:background .2s ease,border-color .2s ease;
+  }
+  .pill:hover{background:rgba(255,255,255,.20);border-color:rgba(255,255,255,.4);}
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:#ffd166;}
+  .deco-swirl{
+    position:absolute;right:-60px;top:-60px;width:340px;height:340px;
+    border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.10),transparent 65%);
+    z-index:1;
+  }
+  .deco-swirl::after{
+    content:"";position:absolute;left:-260px;bottom:-180px;width:280px;height:280px;
+    border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06),transparent 68%);
+  }
+
+  /* ===== Progress bar ===== */
+  .progress-wrap{
+    background:rgba(255,255,255,.86);
+    backdrop-filter:blur(10px) saturate(140%);-webkit-backdrop-filter:blur(10px) saturate(140%);
+    border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;
+    box-shadow:0 2px 10px rgba(31,41,55,.05);
+  }
+  .progress-inner{max-width:1120px;margin:0 auto;padding:0 28px;}
+  .progress-track{height:4px;background:var(--line);border-radius:2px;overflow:hidden;}
+  .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--acp-red),var(--acp-blue));transition:width .4s ease;}
+  nav.tabs{display:flex;gap:2px;overflow-x:auto;padding:10px 0 0;scrollbar-width:none;}
+  nav.tabs::-webkit-scrollbar{display:none;}
+  .tab-btn{
+    flex:0 0 auto;background:none;border:none;font-family:inherit;font-size:13.5px;font-weight:500;
+    color:var(--ink-soft);padding:10px 16px 12px;cursor:pointer;border-bottom:3px solid transparent;
+    white-space:nowrap;border-radius:8px 8px 0 0;
+    transition:color .18s ease,background .18s ease,border-color .18s ease;
+  }
+  .tab-btn:hover{color:var(--acp-blue);background:var(--acp-blue-tint);}
+  .tab-btn.active{color:var(--acp-blue);border-bottom-color:var(--acp-red);font-weight:600;}
+  .tab-num{
+    display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;
+    background:var(--line);color:var(--ink-soft);font-size:10.5px;font-weight:700;margin-right:6px;
+    transition:background .18s ease,color .18s ease;
+  }
+  .tab-btn.active .tab-num{background:var(--acp-red);color:#fff;}
+  .tab-btn.done .tab-num{background:var(--good);color:#fff;}
+
+  /* ===== Main ===== */
+  main{max-width:1120px;margin:0 auto;padding:34px 28px 90px;}
+  section.panel{display:none;animation:fadeIn .35s ease;}
+  section.panel.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .section-head{margin-bottom:22px;}
+  .eyebrow{color:var(--acp-red);text-transform:uppercase;font-size:12px;letter-spacing:.12em;font-weight:700;margin-bottom:6px;}
+  h2{font-size:26px;font-weight:700;margin:0 0 8px;color:var(--acp-blue-dark);}
+  .lede{color:var(--ink-soft);font-size:15.5px;max-width:780px;}
+
+  .card{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px 24px;box-shadow:var(--shadow);margin-bottom:18px;
+    transition:box-shadow .2s ease,transform .2s ease;
+  }
+  .card:hover{box-shadow:0 2px 4px rgba(31,41,55,.05), 0 16px 34px -10px rgba(38,77,115,.20);transform:translateY(-1px);}
+  .card h3{margin:0 0 10px;font-size:17px;color:var(--acp-blue-dark);display:flex;align-items:center;gap:8px;}
+  .card p{margin:0 0 10px;font-size:14.5px;color:var(--ink);}
+  .card ul{margin:0;padding-left:20px;font-size:14.5px;}
+  .card li{margin-bottom:6px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:6px;text-transform:uppercase;}
+  .tag.evidence{background:var(--acp-blue-tint);color:var(--acp-blue-dark);}
+  .tag.scope{background:var(--acp-red-tint);color:var(--acp-red);}
+
+  .callout{border-radius:14px;padding:16px 18px;margin:16px 0;font-size:14.5px;border:1px solid transparent;}
+  .callout.warn{background:var(--warn-tint);border-color:#f1dca0;}
+  .callout.bad{background:var(--bad-tint);border-color:#f0c2be;}
+  .callout.good{background:var(--good-tint);border-color:#bfe3cb;}
+  .callout.scope{background:var(--purple-tint);border-color:#d7cbe9;}
+  .callout b{display:block;margin-bottom:4px;}
+
+  /* ===== Interactive: position / stage selectors (shared "sim" chrome) ===== */
+  .sim{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin:20px 0;}
+  .sim-controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+  .sim-btn{
+    font-family:inherit;font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:999px;
+    border:1.5px solid var(--acp-blue);background:#fff;color:var(--acp-blue);cursor:pointer;
+    transition:background .18s ease,color .18s ease,box-shadow .18s ease,transform .12s ease;
+  }
+  .sim-btn:hover{background:var(--acp-blue-tint);transform:translateY(-1px);}
+  .sim-btn:active{transform:translateY(0);}
+  .sim-btn.active{
+    background:linear-gradient(120deg,var(--acp-blue) 0%,var(--acp-blue-dark) 100%);
+    color:#fff;border-color:transparent;box-shadow:0 4px 14px -4px rgba(38,77,115,.5);
+  }
+  .sim-stage{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:center;}
+  @media(max-width:760px){.sim-stage{grid-template-columns:1fr;}}
+  .sim-visual{background:var(--bg);border-radius:12px;padding:14px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;min-height:240px;}
+  .sim-readout h4{margin:0 0 8px;font-size:16px;color:var(--acp-blue-dark);}
+  .sim-readout p{font-size:14.5px;margin:0 0 8px;}
+  .sim-readout ul{font-size:14.5px;margin:0 0 8px;padding-left:20px;}
+  .status-badge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:10px;}
+  .status-badge.safe{background:var(--good-tint);color:var(--good);}
+  .status-badge.risk{background:var(--bad-tint);color:var(--bad);}
+  .status-badge.caution{background:var(--warn-tint);color:var(--warn);}
+
+  /* stage cards (staging system + escalation triage) */
+  .stage-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;}
+  @media(max-width:820px){.stage-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:560px){.stage-grid{grid-template-columns:1fr;}}
+  .stage-card{
+    border:1.5px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;background:#fff;text-align:left;
+    transition:border-color .18s ease,background .18s ease,box-shadow .18s ease,transform .12s ease;
+  }
+  .stage-card:hover{border-color:var(--acp-blue);box-shadow:0 8px 20px -10px rgba(38,77,115,.35);transform:translateY(-1px);}
+  .stage-card.selected{border-color:var(--acp-red);background:var(--acp-red-tint);}
+  .stage-card .chip{
+    display:inline-block;font-size:11px;font-weight:800;letter-spacing:.03em;padding:3px 9px;border-radius:999px;
+    color:#fff;margin-bottom:8px;
+  }
+  .stage-card h4{margin:0 0 6px;font-size:14.5px;color:var(--acp-blue-dark);}
+  .stage-card p{margin:0;font-size:12.5px;color:var(--ink-soft);}
+  .stage-detail{margin-top:16px;background:var(--acp-blue-tint);border-radius:12px;padding:16px 18px;font-size:14px;display:none;}
+  .stage-detail.show{display:block;}
+  .stage-detail b{color:var(--acp-blue-dark);}
+
+  /* checklist */
+  .checklist{list-style:none;margin:0;padding:0;}
+  .checklist li{
+    display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:12px;
+    margin-bottom:8px;background:#fff;cursor:pointer;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease;
+  }
+  .checklist li:hover{border-color:var(--acp-blue);box-shadow:0 6px 16px -10px rgba(38,77,115,.4);}
+  .checklist li.checked{background:var(--good-tint);border-color:#bfe3cb;}
+  .checklist .box{
+    width:20px;height:20px;border-radius:6px;border:2px solid var(--acp-blue);flex:0 0 20px;
+    display:flex;align-items:center;justify-content:center;margin-top:1px;
+    transition:background .18s ease,border-color .18s ease;
+  }
+  .checklist li.checked .box{background:var(--good);border-color:var(--good);}
+  .checklist .box svg{opacity:0;width:12px;height:12px;}
+  .checklist li.checked .box svg{opacity:1;}
+  .checklist .txt b{display:block;font-size:14px;}
+  .checklist .txt span{font-size:12.5px;color:var(--ink-soft);}
+  .checklist-progress{display:flex;align-items:center;gap:12px;margin:16px 0;font-size:13.5px;font-weight:600;color:var(--acp-blue-dark);}
+  .checklist-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .checklist-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--acp-red),var(--acp-blue));transition:width .3s ease;}
+
+  /* quiz */
+  .quiz-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px;margin-bottom:16px;}
+  .quiz-q{font-size:15.5px;font-weight:600;margin-bottom:12px;}
+  .quiz-opts{display:flex;flex-direction:column;gap:8px;}
+  .quiz-opt{
+    text-align:left;font-family:inherit;font-size:14px;padding:11px 14px;border-radius:10px;border:1.5px solid var(--line);
+    background:#fff;cursor:pointer;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease,transform .12s ease;
+  }
+  .quiz-opt:hover{border-color:var(--acp-blue);box-shadow:0 6px 16px -10px rgba(38,77,115,.4);transform:translateY(-1px);}
+  .quiz-opt.correct{background:var(--good-tint);border-color:var(--good);color:var(--good);font-weight:600;}
+  .quiz-opt.incorrect{background:var(--bad-tint);border-color:var(--bad);color:var(--bad);font-weight:600;}
+  .quiz-opt[disabled]{cursor:default;}
+  .quiz-opt[disabled]:hover{transform:none;}
+  .quiz-explain{font-size:13.5px;margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--acp-blue-tint);display:none;}
+  .quiz-explain.show{display:block;}
+  .quiz-score{
+    text-align:center;padding:26px;border-radius:var(--radius);
+    background:linear-gradient(135deg,var(--acp-blue) 0%,var(--acp-blue-dark) 100%);color:#fff;
+    box-shadow:0 16px 34px -14px rgba(38,77,115,.55);display:none;
+  }
+  .quiz-score.show{display:block;}
+  .quiz-score .num{font-size:44px;font-weight:800;}
+  .quiz-reset{
+    margin-top:14px;background:#fff;color:var(--acp-blue);border:none;padding:9px 18px;border-radius:999px;
+    font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;
+    transition:background .18s ease,box-shadow .18s ease,transform .12s ease;
+  }
+  .quiz-reset:hover{box-shadow:0 6px 16px -6px rgba(0,0,0,.3);transform:translateY(-1px);}
+
+  /* nav footer */
+  .panel-nav{display:flex;justify-content:space-between;margin-top:30px;}
+  .nav-btn{
+    font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;padding:11px 20px;border-radius:999px;
+    border:1.5px solid var(--acp-blue);background:#fff;color:var(--acp-blue);display:flex;align-items:center;gap:6px;
+    transition:background .18s ease,color .18s ease,box-shadow .18s ease,transform .12s ease,border-color .18s ease;
+  }
+  .nav-btn.primary{
+    background:linear-gradient(120deg,var(--acp-blue) 0%,var(--acp-blue-dark) 100%);
+    color:#fff;border-color:transparent;box-shadow:0 6px 16px -6px rgba(38,77,115,.5);
+  }
+  .nav-btn:hover{box-shadow:0 8px 20px -8px rgba(38,77,115,.45);transform:translateY(-1px);}
+  .nav-btn:active{transform:translateY(0);box-shadow:0 3px 10px -6px rgba(38,77,115,.4);}
+
+  table.reftable{width:100%;border-collapse:collapse;font-size:13.5px;}
+  table.reftable th,table.reftable td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.reftable th{color:var(--acp-blue-dark);font-size:12px;text-transform:uppercase;letter-spacing:.05em;}
+  table.reftable td.col-iad{color:var(--purple);}
+  table.reftable td.col-pi{color:var(--acp-red);}
+
+  footer.site{background:var(--acp-blue-dark);color:#fff;padding:26px 28px;text-align:center;font-size:12.5px;opacity:.85;}
+  footer.site a{color:#cfe0f0;}
+
+  button, .checklist li, .tab-btn, .stage-card{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+
+  /* ===== Accessible focus states ===== */
+  .tab-btn:focus-visible, .sim-btn:focus-visible, .nav-btn:focus-visible, .quiz-opt:focus-visible,
+  .quiz-reset:focus-visible, .stage-card:focus-visible, .checklist li:focus-visible{
+    outline:3px solid #ffb703;outline-offset:2px;
+  }
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} section.panel{animation:none;} }
+
+  /* ===== Mobile ===== */
+  @media(max-width:640px){
+    .header-inner{padding:24px 18px 26px;}
+    .brandrow{gap:10px;margin-bottom:16px;}
+    .brandmark{height:28px;padding:3px 6px;border-radius:7px;}
+    .brandtext{font-size:11px;letter-spacing:.10em;}
+    h1{font-size:22px;line-height:1.22;}
+    .subtitle{font-size:14.5px;margin-bottom:16px;}
+    .meta-pills{gap:8px;}
+    .pill{font-size:11.5px;padding:6px 11px;}
+    .deco-swirl{width:220px;height:220px;right:-90px;top:-90px;}
+    .progress-inner{padding:0 14px;}
+    nav.tabs{gap:0;padding-top:8px;-webkit-overflow-scrolling:touch;}
+    .tab-btn{font-size:12.5px;padding:9px 12px 11px;}
+    .tab-num{width:16px;height:16px;font-size:9.5px;margin-right:5px;}
+    main{padding:22px 16px 70px;}
+    .section-head{margin-bottom:16px;}
+    .eyebrow{font-size:11px;}
+    h2{font-size:21px;}
+    .lede{font-size:14.5px;}
+    .card{padding:17px 16px;border-radius:12px;margin-bottom:14px;}
+    .card h3{font-size:15.5px;}
+    .card p, .card ul{font-size:14px;}
+    .grid2,.grid3{gap:12px;}
+    .sim{padding:16px;border-radius:12px;margin:16px 0;}
+    .sim-controls{gap:8px;margin-bottom:14px;}
+    .sim-btn{font-size:12.5px;padding:9px 13px;flex:1 1 auto;text-align:center;}
+    .sim-stage{gap:16px;}
+    .sim-visual{min-height:170px;padding:10px;}
+    .stage-grid{gap:10px;margin-top:14px;}
+    .stage-card{padding:13px;}
+    .checklist li{padding:12px;gap:10px;}
+    .checklist .box{width:22px;height:22px;flex:0 0 22px;}
+    .quiz-card{padding:16px;border-radius:12px;}
+    .quiz-q{font-size:14.5px;}
+    .quiz-opt{font-size:13.5px;padding:11px 13px;}
+    .quiz-score{padding:20px;}
+    .quiz-score .num{font-size:34px;}
+    .panel-nav{margin-top:22px;}
+    .nav-btn{font-size:12.5px;padding:10px 16px;}
+    .callout{padding:14px 15px;font-size:13.5px;}
+    footer.site{padding:20px 16px;font-size:11.5px;}
+    table.reftable{font-size:12.5px;}
+  }
+  @media(max-width:400px){
+    h1{font-size:19px;}
+    .sim-btn{font-size:11.5px;padding:8px 10px;}
+    .nav-btn{flex:1;justify-content:center;}
+    .panel-nav{gap:8px;}
+    .quiz-score .num{font-size:28px;}
+  }
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+
+  /* ===== Auth gate & completion tracking ===== */
+  #authGate{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:linear-gradient(120deg,var(--acp-blue) 0%,var(--acp-blue-dark) 100%);
+  }
+  #authGate .gate-card{background:#fff;border-radius:var(--radius);box-shadow:0 30px 60px -20px rgba(0,0,0,.4);padding:32px;max-width:400px;text-align:center;}
+  #authGate h2{color:var(--acp-blue-dark);font-size:19px;margin:0 0 10px;}
+  #authGate p{color:var(--ink-soft);font-size:14px;line-height:1.6;margin:0 0 18px;}
+  #authGate a.gate-link{
+    display:inline-block;background:linear-gradient(120deg,var(--acp-blue) 0%,var(--acp-blue-dark) 100%);
+    color:#fff;text-decoration:none;font-weight:600;font-size:13.5px;padding:11px 22px;border-radius:999px;
+    box-shadow:0 6px 16px -6px rgba(38,77,115,.5);transition:box-shadow .18s ease,transform .12s ease;
+  }
+  #authGate a.gate-link:hover{box-shadow:0 8px 20px -6px rgba(38,77,115,.55);transform:translateY(-1px);}
+  .completion-status{font-size:13.5px;margin-top:14px;min-height:16px;font-weight:500;}
+  .completion-status.saving{color:rgba(255,255,255,.85);}
+  .completion-status.ok{color:#bff0d2;font-weight:700;}
+  .completion-status.err{color:#ffd0c9;}
+  .completion-status.err button{
+    background:#fff;color:var(--acp-red);border:none;padding:6px 14px;border-radius:999px;
+    font-family:inherit;font-weight:600;font-size:12.5px;cursor:pointer;margin-top:8px;
+  }
+</style>
+</head>
+<body>
+
+<div id="authGate" style="display:none;">
+  <div class="gate-card">
+    <h2>Sign in required</h2>
+    <p>You need to be signed in to the ACP Training Tracker to complete this course and have it recorded against your name.</p>
+    <a class="gate-link" href="../index.html">Go to the Training Tracker</a>
+  </div>
+</div>
+
+<div id="courseContent" style="display:none;">
+
+<header class="site">
+  <div class="deco-swirl"></div>
+  <div class="header-inner">
+    <div class="brandrow">
+      <img class="brandmark" src="https://forms.acphysio.com.au/acplogo" alt="Aged Care Physiotherapy">
+      <div class="brandtext"><b>Aged Care Physiotherapy</b> &nbsp;·&nbsp; Clinical Education Series</div>
+    </div>
+    <h1>Pressure Injury Prevention, Management &amp; Staging in Aged &amp; Community Care</h1>
+    <p class="subtitle">An allied health module on why and how pressure injuries develop, recognising and staging them, the equipment used to manage risk, the effect of incontinence on skin, and when and how to escalate. Wound dressing and wound bed management are outside allied health scope and are not covered here.</p>
+    <div class="meta-pills">
+      <div class="pill"><span class="dot"></span> Aged Care &amp; Community Practice</div>
+      <div class="pill">Estimated time: 25–30 min</div>
+      <div class="pill">Includes competency check</div>
+    </div>
+  </div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-inner">
+    <nav class="tabs" id="tabNav"></nav>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</div>
+
+<main id="main"></main>
+
+<footer class="site">
+  Aged Care Physiotherapy Pty Ltd — Internal clinical education resource for allied health staff. This module covers prevention, recognition, staging, equipment and escalation; wound bed management and dressing selection remain the responsibility of the nursing/wound care team. &nbsp;|&nbsp; Review as part of ACP clinical governance.
+</footer>
+
+</div>
+
+<script>
+/* ---------------------------------------------------------
+   TRAINING TRACKER INTEGRATION
+   COURSE_ID below is a PLACEHOLDER — replace it with the real
+   Course ID from the Courses tab in index.html before this page
+   goes live (Add Course there first, using this file's path as
+   the Training Page URL, then paste the generated Course ID in).
+   SUPABASE_URL/ANON_KEY are the same for every course page.
+--------------------------------------------------------- */
+const COURSE_ID = "b77a2927-c8b5-459a-ae1e-970b056e8a79";
+const SUPABASE_URL = "https://unomkggpwiugvkovdjto.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_rakZ0iLM1Tncok00y6HFPA_Xlls_Mwc";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentAuthUser = null;
+
+async function initAuthGate(){
+  const { data } = await sb.auth.getSession();
+  if(!data.session){
+    document.getElementById("authGate").style.display = "flex";
+    return false;
+  }
+  currentAuthUser = data.session.user;
+  document.getElementById("courseContent").style.display = "block";
+  return true;
+}
+
+async function recordCompletion(resultText){
+  const el = document.getElementById("completionStatus");
+  if(!currentAuthUser){
+    el.textContent = "Not signed in — this attempt was not saved.";
+    el.className = "completion-status err";
+    return;
+  }
+  el.textContent = "Saving your completion...";
+  el.className = "completion-status saving";
+  const { error } = await sb.from("completions").insert({
+    staff_id: currentAuthUser.id,
+    course_id: COURSE_ID,
+    completion_date: new Date().toISOString().slice(0,10),
+    result: resultText,
+    recorded_by: currentAuthUser.id
+  });
+  if(error){
+    el.innerHTML = `Couldn't save your completion. <br><button onclick="recordCompletion('${resultText}')">Retry</button>`;
+    el.className = "completion-status err";
+    return;
+  }
+  el.textContent = "✓ Saved to your training record.";
+  el.className = "completion-status ok";
+}
+
+/* ---------------------------------------------------------
+   DATA
+--------------------------------------------------------- */
+const sections = [
+  {id:"why", label:"Why &amp; How It Happens"},
+  {id:"when", label:"When It Happens"},
+  {id:"sites", label:"Common Sites"},
+  {id:"staging", label:"Recognising &amp; Staging"},
+  {id:"incontinence", label:"Incontinence &amp; IAD"},
+  {id:"repositioning", label:"Repositioning"},
+  {id:"equipment", label:"Aids &amp; Equipment"},
+  {id:"escalate", label:"Escalation &amp; Referral"},
+  {id:"checklist", label:"Session Checklist"},
+  {id:"quiz", label:"Check Your Knowledge"}
+];
+
+/* ---------------------------------------------------------
+   TAB NAV BUILD
+--------------------------------------------------------- */
+const tabNav = document.getElementById("tabNav");
+sections.forEach((s,i)=>{
+  const btn = document.createElement("button");
+  btn.className = "tab-btn" + (i===0?" active":"");
+  btn.dataset.target = s.id;
+  btn.innerHTML = `<span class="tab-num">${i+1}</span>${s.label}`;
+  btn.addEventListener("click", ()=>showSection(s.id));
+  tabNav.appendChild(btn);
+});
+
+function updateProgress(){
+  const activeIdx = sections.findIndex(s=>s.id===currentId);
+  const pct = ((activeIdx+1)/sections.length)*100;
+  document.getElementById("progressFill").style.width = pct+"%";
+}
+
+let currentId = "why";
+function showSection(id){
+  currentId = id;
+  document.querySelectorAll("section.panel").forEach(p=>p.classList.toggle("active", p.id===id));
+  document.querySelectorAll(".tab-btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.target===id);
+    if (sections.findIndex(s=>s.id===b.dataset.target) < sections.findIndex(s=>s.id===id)) {
+      b.classList.add("done");
+    }
+  });
+  updateProgress();
+  document.getElementById("main").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function panelNav(prevId, nextLabel, nextId){
+  let html = `<div class="panel-nav">`;
+  html += prevId ? `<button class="nav-btn" onclick="showSection('${prevId}')">&larr; Back</button>` : `<span></span>`;
+  html += nextId ? `<button class="nav-btn primary" onclick="showSection('${nextId}')">${nextLabel} &rarr;</button>` : `<span></span>`;
+  html += `</div>`;
+  return html;
+}
+
+/* ---------------------------------------------------------
+   MAIN CONTENT
+--------------------------------------------------------- */
+const main = document.getElementById("main");
+main.innerHTML = `
+
+<section class="panel active" id="why">
+  <div class="section-head">
+    <div class="eyebrow">Section 1 · Foundations</div>
+    <h2>Why and how pressure injuries develop</h2>
+    <p class="lede">A pressure injury is localised damage to the skin and/or underlying soft tissue, usually over a bony prominence, resulting from sustained pressure or pressure combined with shear. Understanding the mechanism is what makes prevention advice make sense, rather than feeling like an arbitrary rule.</p>
+  </div>
+
+  <div class="card">
+    <h3>🩸 The core mechanism: pressure → ischaemia → tissue death</h3>
+    <p>When soft tissue is compressed between a bony prominence and an external surface (a mattress, cushion, footplate, or even a medical device), the small blood vessels running through that tissue are squeezed shut. Blood flow stops, and the tissue is deprived of oxygen and nutrients — this is <b>ischaemia</b>. If pressure isn't relieved in time, cells begin to die and the tissue breaks down.</p>
+    <p>Deep tissue can be damaged before anything is visible at the skin surface — this is why a wound can appear to develop or "declare itself" within hours of a single episode of unrelieved pressure, and why what's visible at the skin doesn't always reflect the full extent of the damage underneath.</p>
+  </div>
+
+  <div class="grid3">
+    <div class="card">
+      <h3>⬇️ Pressure</h3>
+      <p>A perpendicular force compressing tissue against underlying bone. Higher pressure, or pressure sustained for longer, increases risk — but the two trade off: high pressure for a short time and lower pressure for a long time can both cause damage.</p>
+    </div>
+    <div class="card">
+      <h3>↔️ Shear</h3>
+      <p>Occurs when the skin stays fixed against a surface while the deeper tissue and bone move — classically when a resident slides down in bed or a chair. This distorts and kinks blood vessels at an angle, causing tissue damage even at relatively low pressure. Shear is a major contributor to sacral injuries specifically.</p>
+    </div>
+    <div class="card">
+      <h3>〰️ Friction</h3>
+      <p>A surface force from skin dragging across a surface (e.g. being pulled rather than lifted during a transfer). Friction alone mainly damages the superficial skin layers, but it commonly acts together with shear during poor transfer technique, compounding the injury.</p>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <b>Moisture multiplies the effect</b>
+    Moisture isn't a mechanical force, but it lowers the skin's tolerance to pressure, shear and friction by softening and weakening it. This is why incontinence is one of the most consistently identified independent risk factors for pressure injury — covered in detail in Incontinence &amp; IAD.
+  </div>
+
+  <div class="card">
+    <h3>⚠️ Risk factors to screen for</h3>
+    <div class="grid2">
+      <ul>
+        <li><b>Reduced mobility</b> — can't independently reposition or shift weight.</li>
+        <li><b>Reduced sensory perception</b> — neuropathy, sedation, cognitive impairment, spinal cord injury; the resident doesn't feel the discomfort that would normally prompt a shift.</li>
+        <li><b>Poor nutrition/hydration</b> — low protein/energy intake and dehydration reduce tissue resilience.</li>
+        <li><b>Ageing skin</b> — thinner epidermis/dermis, less elasticity, less protective fat padding over bony prominences.</li>
+      </ul>
+      <ul>
+        <li><b>Vascular compromise</b> — peripheral vascular disease, diabetes; tissue tolerates pressure less well with reduced perfusion.</li>
+        <li><b>Incontinence/moisture exposure</b> — see Incontinence &amp; IAD.</li>
+        <li><b>Acute illness, fever, hypotension</b> — reduce tissue perfusion generally.</li>
+        <li><b>Medical devices</b> — tubing, splints, oxygen masks, ill-fitting footwear can cause device-related pressure injuries at the contact point.</li>
+      </ul>
+    </div>
+  </div>
+
+  ${panelNav(null, "When It Happens", "when")}
+</section>
+
+<section class="panel" id="when">
+  <div class="section-head">
+    <div class="eyebrow">Section 2 · Timing and high-risk periods</div>
+    <h2>When it happens — faster than most people expect</h2>
+    <p class="lede">Pressure injury risk isn't evenly spread across a resident's day or their admission — recognising the higher-risk windows is part of prevention.</p>
+  </div>
+
+  <div class="card">
+    <h3>⏱️ How quickly damage can start</h3>
+    <p>In a high-risk individual, tissue changes from sustained unrelieved pressure can begin within as little as one to two hours, and a visible area of non-blanchable redness (Stage 1) can appear within a few hours of a single prolonged episode — for example, a long theatre case, an extended wait on a hard trolley, or a period lying unattended. This is why "they were only left for a bit" is not reassurance in a high-risk resident.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>📈 Higher-risk periods</h3>
+      <ul>
+        <li>Prolonged surgery or time on a theatre table or trolley</li>
+        <li>New acute hospital admission with reduced mobility, before a prevention plan is in place</li>
+        <li>Extended sitting after a transfer, especially in a chair/wheelchair not yet assessed for fit</li>
+        <li>Periods with reduced repositioning — overnight, or during understaffed shifts</li>
+        <li>End-of-life/palliative phase — reduced tissue perfusion combined with reduced ability to reposition</li>
+        <li>Acute illness with reduced consciousness or heavy sedation</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>📋 Ongoing risk assessment</h3>
+      <p>Validated tools such as the Braden Scale or the Waterlow Score are typically completed by nursing on admission and at set intervals to flag risk level and trigger a documented prevention plan.</p>
+      <p><b>For allied health:</b> you don't need to complete the formal scale, but pressure injury risk factors — mobility, sensation, positioning tolerance, equipment fit — should be part of every functional, seating, and manual handling assessment you do. If you identify a risk that isn't reflected in the current plan, flag it (see Escalation &amp; Referral).</p>
+    </div>
+  </div>
+
+  ${panelNav("why", "Common Sites", "sites")}
+</section>
+
+<section class="panel" id="sites">
+  <div class="section-head">
+    <div class="eyebrow">Section 3 · Anatomy</div>
+    <h2>Common sites — it depends on position</h2>
+    <p class="lede">Pressure injuries develop over bony prominences that bear load in a given position. Select a position below to see its typical high-risk sites.</p>
+  </div>
+
+  <div class="sim">
+    <div class="sim-controls" id="siteControls">
+      <button class="sim-btn active" data-pos="supine">🛏️ Supine (on back)</button>
+      <button class="sim-btn" data-pos="side">↩️ Side-lying</button>
+      <button class="sim-btn" data-pos="seated">🪑 Seated / wheelchair</button>
+    </div>
+    <div class="sim-stage">
+      <div class="sim-visual" id="siteVisual"></div>
+      <div class="sim-readout" id="siteReadout"></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <b>Also check under any medical device</b>
+    Nasal cannula tubing, urinary catheter tubing, splints, TED/compression stockings, oxygen masks and ill-fitting footwear can all cause a device-related pressure injury at the contact point, independent of the resident's lying/sitting position.
+  </div>
+
+  ${panelNav("when", "Recognising & Staging", "staging")}
+</section>
+
+<section class="panel" id="staging">
+  <div class="section-head">
+    <div class="eyebrow">Section 4 · Recognition — not treatment</div>
+    <h2>Recognising and staging a pressure injury</h2>
+    <p class="lede">Staging describes what's found on visual/tactile assessment — it is not a wound management plan. Select a stage below for its defining features.</p>
+  </div>
+
+  <div class="callout scope">
+    <b>Scope note for allied health</b>
+    Recognising and correctly describing a pressure injury is core to every discipline's role — it's how you know when and to whom to escalate. Selecting a dressing and managing the wound bed is nursing/wound care team scope and is not covered in this module.
+  </div>
+
+  <div class="stage-grid" id="stageGrid"></div>
+  <div class="stage-detail" id="stageDetail"></div>
+
+  <div class="callout warn" style="margin-top:20px;">
+    <b>Darker skin tones</b>
+    Non-blanchable erythema can be much harder to see in darkly pigmented skin. Instead of relying on visible redness alone, compare the area to adjacent skin for differences in temperature (warmer or cooler), firmness/texture (boggy or indurated), and the resident's report of pain or discomfort at the site.
+  </div>
+
+  ${panelNav("sites", "Incontinence & IAD", "incontinence")}
+</section>
+
+<section class="panel" id="incontinence">
+  <div class="section-head">
+    <div class="eyebrow">Section 5 · Moisture-related skin damage</div>
+    <h2>How incontinence affects pressure injury risk</h2>
+    <p class="lede">Incontinence-associated dermatitis (IAD) is a distinct condition from a pressure injury, but the two interact and are frequently confused — telling them apart correctly changes what happens next.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💧 Why moisture increases pressure injury risk</h3>
+      <p>Prolonged or repeated contact with urine or faeces macerates the outer skin layer (stratum corneum), weakening its structure and mechanical strength. Combined with chemical irritation from urea, ammonia and digestive enzymes in stool — and the added friction of continence pads and frequent cleaning — the skin tolerates far less pressure and shear before it breaks down. Incontinence is consistently identified as an independent risk factor for pressure injury, separate from immobility.</p>
+    </div>
+    <div class="card">
+      <h3>🔥 What is IAD?</h3>
+      <p>Incontinence-associated dermatitis is inflammation and skin damage caused by prolonged or repeated exposure to urine and/or faeces (a type of moisture-associated skin damage). It presents as redness, sometimes with erosion, most often across the perineum, buttocks, groin and skin folds — the areas actually exposed to moisture, not necessarily the areas that bear body weight.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🔍 Differentiating IAD from a pressure injury</h3>
+    <div style="overflow-x:auto;">
+      <table class="reftable">
+        <thead><tr><th>Feature</th><th>Incontinence-associated dermatitis (IAD)</th><th>Pressure injury (PI)</th></tr></thead>
+        <tbody>
+          <tr><td>Location</td><td class="col-iad">Perineum, perianal area, buttocks, groin, skin folds — follows the moisture contact pattern</td><td class="col-pi">Over a bony prominence — sacrum, heels, ischial tuberosities, trochanter, etc.</td></tr>
+          <tr><td>Shape / edges</td><td class="col-iad">Diffuse, irregular, poorly defined edges; may appear as patches, or matching "kissing" lesions where skin folds touch</td><td class="col-pi">Edges usually well-defined, often matching the shape of the point of pressure or device</td></tr>
+          <tr><td>Depth</td><td class="col-iad">Usually superficial — erythema through to partial-thickness skin loss</td><td class="col-pi">Ranges from non-blanchable intact skin (Stage 1) to full-thickness loss (Stage 3/4)</td></tr>
+          <tr><td>Associated features</td><td class="col-iad">Maceration, denuded skin, possible satellite lesions if secondary candida infection; correlates with continence pad use and toileting frequency</td><td class="col-pi">Correlates with mobility, positioning duration and support surface</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin:12px 0 0;">The two conditions can <b>coexist</b> — moisture damage over an area that is also under sustained pressure (e.g. the sacrum in an incontinent, immobile resident) is common and makes differentiation harder. When you're not confident which is present, document what you see factually and escalate rather than labelling it — see Escalation &amp; Referral.</p>
+  </div>
+
+  ${panelNav("staging", "Repositioning", "repositioning")}
+</section>
+
+<section class="panel" id="repositioning">
+  <div class="section-head">
+    <div class="eyebrow">Section 6 · The single most effective prevention strategy</div>
+    <h2>Repositioning: why, how, and how often</h2>
+    <p class="lede">Regular repositioning relieves sustained pressure before the ischaemic threshold is reached, restoring blood flow and redistributing load to different tissue before damage accumulates.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>✅ How to reposition well</h3>
+      <ul>
+        <li>Use a <b>30° tilt</b> for side-lying rather than a full 90° position, which concentrates pressure directly onto the trochanter.</li>
+        <li>Use slide sheets or a mechanical aid to reposition — never drag a resident across a surface, which creates the shear and friction repositioning is meant to prevent.</li>
+        <li><b>Float the heels</b> completely off the bed surface using a pillow or foam wedge placed under the calves — not under the heel itself, which just relocates the pressure.</li>
+        <li>For seated residents, encourage or assist small, frequent weight shifts between full repositions.</li>
+        <li>Never reposition a resident directly back onto an area that's already reddened — offload it and check it again before returning to that position.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>⏰ How often</h3>
+      <p>There is no single frequency that suits everyone. Current guidance favours an <b>individualised repositioning schedule</b> based on the resident's risk level, skin response, mobility, and the support surface in use — not a blanket "turn everyone every 2 hours" rule.</p>
+      <ul>
+        <li><b>In bed:</b> a starting reference of every 2–4 hours on a standard/reactive foam mattress for an at-risk resident; potentially longer intervals on a high-specification pressure-redistributing or alternating-air surface — but still individualised and skin-checked, not assumed.</li>
+        <li><b>In a chair/wheelchair:</b> reposition or weight-shift at least hourly; residents able to self-manage should be prompted to shift their own weight every 15–30 minutes.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout good">
+    <b>Let the skin set the schedule</b>
+    Check the previous pressure point at every repositioning. If non-blanchable redness is present there, the interval was too long for that individual — shorten it, and document and communicate the change on the care plan rather than continuing the same schedule.
+  </div>
+
+  ${panelNav("incontinence", "Aids & Equipment", "equipment")}
+</section>
+
+<section class="panel" id="equipment">
+  <div class="section-head">
+    <div class="eyebrow">Section 7 · Selecting the right support surface</div>
+    <h2>Aids and equipment for pressure injury management</h2>
+    <p class="lede">Equipment is matched to risk level and setting, not chosen from "whatever's available." The categories below reflect the current Aidacare pressure-care range as a practical reference point for what's out there — always check current product availability and get an individual seating/mattress assessment for higher-risk residents.</p>
+  </div>
+
+  <div class="grid3">
+    <div class="card">
+      <h3>🛏️ Bed</h3>
+      <div style="overflow-x:auto;">
+        <table class="reftable">
+          <thead><tr><th>Risk level</th><th>Equipment</th></tr></thead>
+          <tbody>
+            <tr><td>Low</td><td>Pressure-reducing foam mattress (e.g. Aspire Lifecomfort range)</td></tr>
+            <tr><td>Moderate</td><td>Pressure-relieving mattress or overlay (e.g. convoluted foam overlay, sheepskin overlay)</td></tr>
+            <tr><td>High / very high</td><td>Alternating-air mattress — as an overlay, or a full replacement used with a foam safety underlay to reduce the risk of "bottoming out"</td></tr>
+            <tr><td>Heels</td><td>Heel elevator / suspension device — floats heels off the mattress entirely</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">Example products: Aspire Lifecomfort Pressure Safety Underlay, Aspire Active Air 5/8 mattress, Aspire Lifecomfort Premier Acute Care Mattress, Alternating Air Mattress Overlays/Replacements, ROHO Mattress Sections, Bed Heel Elevator.</p>
+    </div>
+    <div class="card">
+      <h3>🪑 Chair</h3>
+      <div style="overflow-x:auto;">
+        <table class="reftable">
+          <thead><tr><th>Risk level</th><th>Equipment</th></tr></thead>
+          <tbody>
+            <tr><td>Low</td><td>Foam pressure-relieving cushion</td></tr>
+            <tr><td>Moderate</td><td>Gel cushion, or a modular foam cushion for postural support</td></tr>
+            <tr><td>High risk seating</td><td>Air cushion (single or multi-compartment) — e.g. ROHO, Kineris</td></tr>
+            <tr><td>Combined postural + pressure need</td><td>JAY or EquaGel cushion range, with positioning inserts where indicated</td></tr>
+            <tr><td>Recliner-based care</td><td>Pressure-reducing lift-recline day chair (e.g. Aspire Adjustable Pressure Reducing Day Chair, Aspire PostureFit Lift Recline Chair)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">Example products: ROHO single/multi-compartment and high-profile air cushions, JAY Basic/Lite/Zip, EquaGel General/Protector/Adjustable Protector, Kineris air cushions, bariatric and paediatric pressure-care cushions.</p>
+    </div>
+    <div class="card">
+      <h3>♿ Wheelchair</h3>
+      <div style="overflow-x:auto;">
+        <table class="reftable">
+          <thead><tr><th>Risk level</th><th>Equipment</th></tr></thead>
+          <tbody>
+            <tr><td>Low</td><td>Foam pressure-relieving wheelchair cushion, correctly sized</td></tr>
+            <tr><td>Moderate/high</td><td>Air or gel cushion matched to the resident's weight, posture and transfer ability</td></tr>
+            <tr><td>Postural collapse / sliding</td><td>Cushion with postural inserts (JAY, EquaGel) plus review of backrest and tilt-in-space to reduce sliding-related shear</td></tr>
+            <tr><td>Feet</td><td>Footplates set to correct height so feet are fully supported, not dangling or dragging</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">Sling seats and sling backs encourage posterior pelvic tilt and sliding over a long sitting time — for a resident who spends significant time in a wheelchair, request a dedicated seating assessment rather than repeatedly correcting position by hand.</p>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <b>Equipment prescription is allied health scope</b>
+    Matching equipment to a resident's pressure-injury risk, mobility, posture and transfer needs is core physiotherapy/OT work — request or complete a seating/mattress assessment rather than defaulting to whatever cushion or mattress happens to be on hand. See the current Aidacare pressure-care and circulation range at <a href="https://www.aidacare.com.au/products/pressure-care-circulation" target="_blank" rel="noopener">aidacare.com.au</a> for up-to-date product options and specifications.
+  </div>
+
+  ${panelNav("repositioning", "Escalation & Referral", "escalate")}
+</section>
+
+<section class="panel" id="escalate">
+  <div class="section-head">
+    <div class="eyebrow">Section 8 · Knowing when it's not yours to manage alone</div>
+    <h2>Escalation and referral pathways</h2>
+    <p class="lede">Recognising a pressure injury or IAD is only useful if it triggers the right next step. As allied health, your role is prevention, positioning, equipment and early recognition — escalate promptly once skin has changed or broken down.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>🚩 Escalate when you see</h3>
+      <ul>
+        <li>Any new non-blanchable redness or unusual skin discoloration</li>
+        <li>Any break in the skin, blistering, or suspected deep tissue injury</li>
+        <li>A previously identified wound that looks worse, larger, more painful, or has a change in odour or discharge</li>
+        <li>Signs of possible infection — increased redness/warmth/swelling, purulent discharge, fever, increased pain</li>
+        <li>Uncertainty differentiating IAD from a pressure injury</li>
+        <li>A resident who can't be adequately offloaded with the equipment currently available to them</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>📞 Who to refer to</h3>
+      <ul>
+        <li><b>RN / wound care nurse or clinical nurse specialist</b> — the primary destination for any skin breakdown; dressing selection and wound bed management sit with them, not allied health.</li>
+        <li><b>GP / medical officer</b> — especially with signs of infection, systemic illness, or where the underlying medical cause (e.g. vascular disease, diabetes) needs review.</li>
+        <li><b>Dietitian</b> — nutrition and hydration review; protein, energy and micronutrient status affect both risk and healing.</li>
+        <li><b>Continence nurse/advisor</b> — IAD, continence management plan, and product selection.</li>
+        <li><b>Podiatrist</b> — heel- and foot-specific pressure injuries, footwear.</li>
+        <li><b>Social work / family (community clients)</b> — equipment funding pathways and home environment barriers.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout bad">
+    <b>Document and communicate every time</b>
+    Follow your facility's skin integrity/incident reporting process, photograph per policy, update the resident's positioning and equipment plan, and communicate the finding at handover — a verbal mention that isn't documented is easily lost.
+  </div>
+
+  ${panelNav("escalate", "Session Checklist", "checklist")}
+</section>
+
+<section class="panel" id="checklist">
+  <div class="section-head">
+    <div class="eyebrow">Section 9 · Bedside tool</div>
+    <h2>Pressure-care session checklist</h2>
+    <p class="lede">Work through this during any session involving positioning, seating, transfers or mobility with an at-risk resident. Tap each item as it's confirmed.</p>
+  </div>
+
+  <div class="checklist-progress">
+    <span id="checklistCount">0 / 8 confirmed</span>
+    <div class="checklist-track"><div class="checklist-fill" id="checklistFill"></div></div>
+  </div>
+
+  <ul class="checklist" id="checklistItems"></ul>
+
+  <div class="callout good" id="checklistDone" style="display:none;">
+    <b>Session checks complete</b>
+    All items confirmed. Re-check skin and positioning again if the resident's session, seating time or transfer plan changes significantly.
+  </div>
+
+  ${panelNav("checklist", "Check Your Knowledge", "quiz")}
+</section>
+
+<section class="panel" id="quiz">
+  <div class="section-head">
+    <div class="eyebrow">Section 10 · Competency check</div>
+    <h2>Check your knowledge</h2>
+    <p class="lede">Six questions covering the key decisions from this module.</p>
+  </div>
+
+  <div id="quizArea"></div>
+  <div class="quiz-score" id="quizScore">
+    <div class="num" id="quizScoreNum">0/6</div>
+    <div id="quizScoreMsg"></div>
+    <div class="completion-status" id="completionStatus"></div>
+    <button class="quiz-reset" onclick="resetQuiz()">Try again</button>
+  </div>
+
+  ${panelNav("checklist", "", null)}
+</section>
+`;
+
+/* ---------------------------------------------------------
+   COMMON SITES BY POSITION
+--------------------------------------------------------- */
+const siteData = {
+  supine:{
+    status:"risk",
+    title:"Supine (lying on the back)",
+    sites:["Sacrum &amp; coccyx","Heels","Occiput (back of head)","Scapulae (shoulder blades)","Elbows"],
+    svg:`<svg width="200" height="220" viewBox="0 0 200 220" role="img" aria-label="Body lying on back with pressure points marked at head, shoulder blades, sacrum, elbows and heels">
+      <line x1="20" y1="200" x2="180" y2="200" stroke="#c7d2df" stroke-width="8" stroke-linecap="round"/>
+      <line x1="60" y1="196" x2="140" y2="196" stroke="var(--figure)" stroke-width="16" stroke-linecap="round"/>
+      <line x1="70" y1="196" x2="70" y2="196" stroke="var(--figure)" stroke-width="1"/>
+      <circle cx="55" cy="196" r="14" fill="var(--skin)"/>
+      <circle cx="55" cy="196" r="6" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="80" cy="196" r="5" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="110" cy="196" r="5" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="65" cy="196" r="4" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="145" cy="196" r="5" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <text x="55" y="176" font-size="10" fill="var(--acp-blue-dark)" font-family="Lexend, sans-serif" text-anchor="middle" font-weight="600">Occiput</text>
+      <text x="80" y="216" font-size="9.5" fill="var(--acp-blue-dark)" font-family="Lexend, sans-serif" text-anchor="middle">Scapulae</text>
+      <text x="110" y="216" font-size="9.5" fill="var(--acp-blue-dark)" font-family="Lexend, sans-serif" text-anchor="middle">Sacrum</text>
+      <text x="145" y="216" font-size="9.5" fill="var(--acp-blue-dark)" font-family="Lexend, sans-serif" text-anchor="middle">Heels</text>
+    </svg>`
+  },
+  side:{
+    status:"risk",
+    title:"Side-lying",
+    sites:["Greater trochanter (hip)","Lateral malleolus (ankle)","Knees (medial/lateral)","Ear","Shoulder / acromion"],
+    svg:`<svg width="200" height="220" viewBox="0 0 200 220" role="img" aria-label="Body lying on its side with pressure points marked at ear, shoulder, hip, knees and ankle">
+      <line x1="20" y1="200" x2="180" y2="200" stroke="#c7d2df" stroke-width="8" stroke-linecap="round"/>
+      <path d="M60 190 Q100 185 150 195" stroke="var(--figure)" stroke-width="16" stroke-linecap="round" fill="none"/>
+      <circle cx="50" cy="185" r="14" fill="var(--skin)"/>
+      <circle cx="46" cy="188" r="5" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="66" cy="192" r="5" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="108" cy="196" r="6" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="140" cy="197" r="5" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="152" cy="198" r="4" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <text x="46" y="168" font-size="9.5" fill="var(--acp-blue-dark)" font-family="Lexend, sans-serif" text-anchor="middle">Ear</text>
+      <text x="66" y="176" font-size="9.5" fill="var(--acp-blue-dark)" font-family="Lexend, sans-serif" text-anchor="middle">Shoulder</text>
+      <text x="108" y="216" font-size="9.5" fill="var(--acp-blue-dark)" font-family="Lexend, sans-serif" text-anchor="middle" font-weight="600">Trochanter</text>
+      <text x="146" y="216" font-size="9.5" fill="var(--acp-blue-dark)" font-family="Lexend, sans-serif" text-anchor="middle">Knee / ankle</text>
+    </svg>`
+  },
+  seated:{
+    status:"risk",
+    title:"Seated / wheelchair",
+    sites:["Ischial tuberosities (highest risk when seated)","Sacrum &amp; coccyx (if slumped)","Heels (if unsupported or dragging)","Elbows (on armrests)","Shoulder blades (if reclined against a hard backrest)"],
+    svg:`<svg width="200" height="220" viewBox="0 0 200 220" role="img" aria-label="Seated figure with pressure points marked at ischial tuberosities, sacrum, elbows and heels">
+      <line x1="24" y1="30" x2="24" y2="170" stroke="#c7d2df" stroke-width="8" stroke-linecap="round"/>
+      <line x1="24" y1="168" x2="140" y2="168" stroke="#c7d2df" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="60" cy="44" r="15" fill="var(--skin)"/>
+      <line x1="60" y1="59" x2="60" y2="120" stroke="var(--figure)" stroke-width="14" stroke-linecap="round"/>
+      <line x1="60" y1="80" x2="90" y2="98" stroke="var(--figure)" stroke-width="9" stroke-linecap="round"/>
+      <line x1="60" y1="120" x2="60" y2="160" stroke="var(--figure)" stroke-width="12" stroke-linecap="round"/>
+      <line x1="60" y1="160" x2="100" y2="200" stroke="var(--figure)" stroke-width="12" stroke-linecap="round"/>
+      <circle cx="60" cy="120" r="7" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="60" cy="24" r="5" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="90" cy="98" r="5" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="100" cy="200" r="6" fill="var(--acp-red)" stroke="#fff" stroke-width="1.5"/>
+      <text x="60" y="140" font-size="9.5" fill="var(--acp-blue-dark)" font-family="Lexend, sans-serif" text-anchor="middle" font-weight="600">Ischial</text>
+      <text x="100" y="216" font-size="9.5" fill="var(--acp-blue-dark)" font-family="Lexend, sans-serif" text-anchor="middle">Heels</text>
+    </svg>`
+  }
+};
+function renderSite(key){
+  const d = siteData[key];
+  document.querySelectorAll("#siteControls .sim-btn").forEach(b=>b.classList.toggle("active", b.dataset.pos===key));
+  document.getElementById("siteVisual").innerHTML = d.svg;
+  document.getElementById("siteReadout").innerHTML = `
+    <span class="status-badge risk">⚠️ High-risk sites</span>
+    <h4>${d.title}</h4>
+    <ul>${d.sites.map(s=>`<li>${s}</li>`).join("")}</ul>`;
+}
+document.getElementById("siteControls").addEventListener("click", e=>{
+  const btn = e.target.closest(".sim-btn");
+  if(!btn) return;
+  renderSite(btn.dataset.pos);
+});
+renderSite("supine");
+
+/* ---------------------------------------------------------
+   STAGING CARDS
+--------------------------------------------------------- */
+const stageOptions = [
+  {
+    id:"stage1", label:"Stage 1", color:"var(--warn)",
+    blurb:"Intact skin, non-blanchable redness",
+    detail:"Intact skin with non-blanchable erythema (redness that doesn't turn white when pressed) over a bony prominence. The area may feel warmer or cooler, firmer or softer than surrounding skin. In darkly pigmented skin the redness itself may not be visible — compare temperature, texture and the resident's report of discomfort against adjacent skin instead."
+  },
+  {
+    id:"stage2", label:"Stage 2", color:"var(--acp-red)",
+    blurb:"Partial-thickness skin loss",
+    detail:"Partial-thickness skin loss with exposed dermis. The wound bed is pink or red and moist, and may present as an intact or ruptured blister. This stage should not be used to describe moisture-associated skin damage, incontinence-associated dermatitis, or a skin tear — those are different conditions with different causes."
+  },
+  {
+    id:"stage3", label:"Stage 3", color:"#a32900",
+    blurb:"Full-thickness skin loss",
+    detail:"Full-thickness skin loss — subcutaneous fat may be visible, and granulation tissue and rolled wound edges (epibole) are often present. Slough and/or eschar may be present without obscuring the depth. Depth varies by location — shallower where there's little subcutaneous tissue, such as the bridge of the nose or the ear."
+  },
+  {
+    id:"stage4", label:"Stage 4", color:"#7a1f00",
+    blurb:"Full-thickness tissue loss",
+    detail:"Full-thickness skin AND tissue loss with exposed or directly palpable fascia, muscle, tendon, ligament, cartilage or bone. Slough and/or eschar may be present. This is the most severe staged category."
+  },
+  {
+    id:"unstageable", label:"Unstageable", color:"var(--ink-soft)",
+    blurb:"Depth obscured by slough/eschar",
+    detail:"Full-thickness skin and tissue loss in which the true extent of damage can't be confirmed because the wound base is obscured by slough or eschar. The actual stage remains unknown until enough of the covering tissue is removed (by the wound care team) to expose the wound bed."
+  },
+  {
+    id:"dti", label:"Deep Tissue Injury", color:"var(--purple)",
+    blurb:"Deep discoloration, intact or non-intact skin",
+    detail:"Intact or non-intact skin with a localised area of persistent non-blanchable deep red, maroon or purple discoloration, or a blood-filled blister — reflecting damage to the underlying soft tissue from pressure and/or shear. A DTI can evolve rapidly to reveal the true extent of injury (sometimes to Stage 3 or 4), or may resolve without further tissue loss. Treat any suspected DTI as urgent for escalation."
+  }
+];
+const stageGrid = document.getElementById("stageGrid");
+stageOptions.forEach(opt=>{
+  const div = document.createElement("div");
+  div.className = "stage-card";
+  div.dataset.id = opt.id;
+  div.tabIndex = 0;
+  div.setAttribute("role","button");
+  div.innerHTML = `<span class="chip" style="background:${opt.color};">${opt.label}</span><h4>${opt.blurb}</h4>`;
+  div.addEventListener("click", ()=>selectStage(opt.id));
+  div.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); selectStage(opt.id); } });
+  stageGrid.appendChild(div);
+});
+function selectStage(id){
+  document.querySelectorAll(".stage-card").forEach(c=>c.classList.toggle("selected", c.dataset.id===id));
+  const opt = stageOptions.find(o=>o.id===id);
+  const detail = document.getElementById("stageDetail");
+  detail.innerHTML = `<b>${opt.label}:</b> ${opt.detail}`;
+  detail.classList.add("show");
+}
+selectStage("stage1");
+
+/* ---------------------------------------------------------
+   CHECKLIST
+--------------------------------------------------------- */
+const checklistData = [
+  {t:"Skin over bony prominences checked", d:"Visually checked, or confirmed with nursing/carer, before and after the session."},
+  {t:"Repositioning schedule reviewed", d:"Current schedule matches this resident's risk level and skin response — not a generic default."},
+  {t:"Equipment matches current risk", d:"Mattress/cushion/chair appropriate for risk level, not just whatever was available."},
+  {t:"Heels fully offloaded in bed", d:"Floated on a pillow/wedge under the calves, not resting on the mattress."},
+  {t:"No sliding or shear during transfers", d:"Slide sheet or appropriate technique used — resident lifted, not dragged."},
+  {t:"Continence status considered", d:"Skin protected/cleaned appropriately if relevant; IAD risk flagged if present."},
+  {t:"Any new redness or skin change escalated", d:"Reported through the correct pathway — not just noted and left."},
+  {t:"Findings documented and communicated", d:"Recorded per facility process and handed over to the care team."}
+];
+const checklistEl = document.getElementById("checklistItems");
+checklistData.forEach((item,i)=>{
+  const li = document.createElement("li");
+  li.dataset.i = i;
+  li.tabIndex = 0;
+  li.setAttribute("role","checkbox");
+  li.setAttribute("aria-checked","false");
+  li.innerHTML = `<div class="box"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="txt"><b>${item.t}</b><span>${item.d}</span></div>`;
+  const toggle = ()=>{
+    li.classList.toggle("checked");
+    li.setAttribute("aria-checked", li.classList.contains("checked") ? "true" : "false");
+    updateChecklistProgress();
+  };
+  li.addEventListener("click", toggle);
+  li.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(); } });
+  checklistEl.appendChild(li);
+});
+function updateChecklistProgress(){
+  const total = checklistData.length;
+  const done = document.querySelectorAll("#checklistItems li.checked").length;
+  document.getElementById("checklistCount").textContent = `${done} / ${total} confirmed`;
+  document.getElementById("checklistFill").style.width = (done/total*100)+"%";
+  document.getElementById("checklistDone").style.display = done===total ? "block" : "none";
+}
+
+/* ---------------------------------------------------------
+   QUIZ
+--------------------------------------------------------- */
+const quizData = [
+  {
+    q:"What is the core mechanism by which a pressure injury develops?",
+    opts:["Sustained pressure over a bony prominence compresses blood vessels, causing ischaemia and tissue death","Skin simply wears thin from repeated washing","It only occurs from a single traumatic knock","Pressure injuries are caused exclusively by poor nutrition"],
+    correct:0,
+    explain:"Sustained pressure compresses the small blood vessels between the skin and underlying bone, cutting off blood flow (ischaemia). If unrelieved, the tissue is deprived of oxygen and nutrients and breaks down."
+  },
+  {
+    q:"A resident slides down in bed while their skin stays fixed against the sheet. Which mechanical force does this describe?",
+    opts:["Pressure only","Shear","Friction only","Moisture"],
+    correct:1,
+    explain:"Shear occurs when the skin stays fixed against a surface while deeper tissue and bone move — this distorts blood vessels at an angle and is a major contributor to sacral injuries specifically."
+  },
+  {
+    q:"What distinguishes a Stage 2 pressure injury from a Stage 1?",
+    opts:["Stage 2 is just a darker version of Stage 1 redness","Stage 2 involves partial-thickness skin loss with exposed dermis, while Stage 1 is intact skin with non-blanchable redness","Stage 2 always requires surgery","There is no meaningful difference"],
+    correct:1,
+    explain:"Stage 1 is intact skin with non-blanchable erythema. Stage 2 has progressed to partial-thickness skin loss, exposing the dermis, and may present as an intact or ruptured blister."
+  },
+  {
+    q:"What is the single most useful clue for telling incontinence-associated dermatitis (IAD) apart from a pressure injury?",
+    opts:["IAD is always more painful","Location — IAD follows the moisture-exposed areas (perineum, groin, skin folds), while pressure injuries occur over bony prominences","Colour alone is always definitive","IAD only ever occurs in men"],
+    correct:1,
+    explain:"Location is the key differentiator: IAD follows where moisture actually contacts the skin (perineum, perianal area, groin, skin folds), while pressure injuries occur over bony prominences that bear load in a given position."
+  },
+  {
+    q:"What does current guidance recommend for repositioning frequency?",
+    opts:["Exactly every 2 hours for every resident, with no exceptions","An individualised schedule based on the resident's risk, skin response and support surface","Only when the resident complains of discomfort","Once per shift is sufficient for everyone"],
+    correct:1,
+    explain:"There's no single frequency that suits everyone — the schedule should be individualised to risk level, skin response and the support surface in use, and adjusted if non-blanchable redness appears at the previous pressure point."
+  },
+  {
+    q:"A resident develops a break in the skin over their sacrum. Who is primarily responsible for selecting the wound dressing and managing the wound bed?",
+    opts:["The physiotherapist or OT involved in their care","The resident's family","The RN / wound care nurse or clinical nurse specialist","No one — it will resolve on its own"],
+    correct:2,
+    explain:"Dressing selection and wound bed management sit with the nursing/wound care team, not allied health. Allied health's role is prevention, positioning, equipment and early recognition — escalate promptly once skin has broken down."
+  }
+];
+let quizScore = 0;
+let quizAnswered = 0;
+function renderQuiz(){
+  quizScore = 0; quizAnswered = 0;
+  const area = document.getElementById("quizArea");
+  area.innerHTML = "";
+  document.getElementById("quizScore").classList.remove("show");
+  quizData.forEach((q,qi)=>{
+    const card = document.createElement("div");
+    card.className = "quiz-card";
+    card.innerHTML = `<div class="quiz-q">${qi+1}. ${q.q}</div>
+      <div class="quiz-opts">${q.opts.map((o,oi)=>`<button class="quiz-opt" data-q="${qi}" data-o="${oi}">${o}</button>`).join("")}</div>
+      <div class="quiz-explain" id="explain-${qi}">${q.explain}</div>`;
+    area.appendChild(card);
+  });
+  area.querySelectorAll(".quiz-opt").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const qi = Number(btn.dataset.q), oi = Number(btn.dataset.o);
+      const opts = area.querySelectorAll(`.quiz-opt[data-q="${qi}"]`);
+      if (opts[0].disabled) return;
+      opts.forEach(b=>b.disabled = true);
+      const correct = quizData[qi].correct;
+      opts[correct].classList.add("correct");
+      if (oi !== correct) opts[oi].classList.add("incorrect");
+      else quizScore++;
+      quizAnswered++;
+      document.getElementById(`explain-${qi}`).classList.add("show");
+      if (quizAnswered === quizData.length) showQuizScore();
+    });
+  });
+}
+function showQuizScore(){
+  const box = document.getElementById("quizScore");
+  document.getElementById("quizScoreNum").textContent = `${quizScore}/${quizData.length}`;
+  let msg = "";
+  if (quizScore === quizData.length) msg = "Excellent — full marks. Ready to apply this at the bedside.";
+  else if (quizScore >= quizData.length - 1) msg = "Strong result — review the missed item above before applying at the bedside.";
+  else msg = "Worth revisiting the relevant sections above before applying this independently.";
+  document.getElementById("quizScoreMsg").textContent = msg;
+  box.classList.add("show");
+  recordCompletion(`${quizScore}/${quizData.length} correct`);
+}
+function resetQuiz(){
+  document.getElementById("completionStatus").textContent = "";
+  document.getElementById("completionStatus").className = "completion-status";
+  renderQuiz();
+}
+renderQuiz();
+
+updateProgress();
+
+initAuthGate();
+</script>
+</body>
+</html>
