@@ -358,7 +358,11 @@ const sections = [
   {id:"cardiac", label:"BP &amp; Heart Meds"},
   {id:"bleeding", label:"Anticoagulants &amp; Bleeding Risk"},
   {id:"psychotropics", label:"Psychotropics &amp; BPSD Meds"},
+  {id:"painmeds", label:"Pain Medications"},
   {id:"opioids", label:"Opioids &amp; Diabetes Meds"},
+  {id:"dementia", label:"Dementia Meds"},
+  {id:"respiratory", label:"Respiratory Meds"},
+  {id:"mobilityextra", label:"A Few More"},
   {id:"antibiotics", label:"Antibiotics"},
   {id:"search", label:"Search Medications"},
   {id:"quiz", label:"Check Your Knowledge"}
@@ -620,12 +624,53 @@ main.innerHTML = `
     <ul id="redFlagList" class="checklist"></ul>
   </div>
 
-  ${panelNav("bleeding", "Opioids & Diabetes Medications", "opioids")}
+  ${panelNav("bleeding", "Pain Medications", "painmeds")}
+</section>
+
+<section class="panel" id="painmeds">
+  <div class="section-head">
+    <div class="eyebrow">Section 6 · Pain medications (non-opioid)</div>
+    <h2>Paracetamol, NSAIDs, gabapentinoids &amp; muscle relaxants</h2>
+    <p class="lede">Opioids get most of the attention, but the non-opioid pain medications your clients are on carry their own mobility, bleeding and sedation considerations — some of them just as significant.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 Paracetamol</h3>
+      <div class="effect-row"><span class="echip other">Low risk</span></div>
+      <p>Minimal direct effect on mobility or cognition, and no meaningful bleeding risk. Generally the preferred first-line option in older adults precisely because of this low-risk profile — but it's often underdosed or under-used out of unnecessary caution.</p>
+    </div>
+    <div class="card">
+      <h3>💊 NSAIDs (Ibuprofen, Naproxen, Diclofenac, Celecoxib)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip bleed">Bleeding risk</span></div>
+      <p>Fluid retention can worsen blood pressure control and heart failure. Can mask fracture or soft tissue injury pain, risking overuse of an injured area. Meaningfully increases GI bleeding risk on its own, and <b>combined with an anticoagulant or antiplatelet, the bleeding risk compounds</b> — worth flagging if you see both on a client's list. Kidney function risk rises with dehydration, common in aged care.</p>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 Gabapentinoids (Gabapentin, Pregabalin)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p>Sedation, dizziness and ataxia (unsteady, uncoordinated movement) — an increasingly recognised falls risk in older adults, often prescribed for neuropathic pain. Peripheral oedema is also common and can affect footwear fit and gait. Confusion is possible, particularly at higher doses or with reduced kidney clearance.</p>
+    </div>
+    <div class="card">
+      <h3>💊 Muscle relaxants (Baclofen, Orphenadrine, Cyclobenzaprine)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p>Sedation and generalised weakness — directly working against the strength you're trying to build in therapy. Confusion is possible, especially in older adults. Usually prescribed short-term, but the sedating effect can persist longer than expected.</p>
+    </div>
+  </div>
+
+  <div class="callout bad">
+    <b>NSAID + anticoagulant/antiplatelet combination</b>
+    This is one of the more common, more overlooked bleeding-risk combinations in aged care. If a client is on a regular or as-needed NSAID alongside warfarin, a DOAC, or an antiplatelet, it's worth flagging to the GP or pharmacist rather than assuming it's already been considered.
+  </div>
+
+  ${panelNav("psychotropics", "Opioids & Diabetes Medications", "opioids")}
 </section>
 
 <section class="panel" id="opioids">
   <div class="section-head">
-    <div class="eyebrow">Section 6 · Opioids &amp; diabetes medications</div>
+    <div class="eyebrow">Section 7 · Opioids &amp; diabetes medications</div>
     <h2>Two very different mechanisms, the same end result: a fall</h2>
     <p class="lede">Opioids and glucose-lowering medications don't share a drug class, but both are common causes of sudden, situational falls risk that can appear and disappear within the same day.</p>
   </div>
@@ -654,12 +699,108 @@ main.innerHTML = `
     If a client on insulin or a sulfonylurea reports feeling suddenly "off," shaky, sweaty or unsteady mid-session, treat it as a possible hypoglycaemic episode first — stop the activity, follow the facility's protocol, and don't push through it as deconditioning or fatigue.
   </div>
 
-  ${panelNav("psychotropics", "Antibiotics", "antibiotics")}
+  ${panelNav("painmeds", "Dementia Medications", "dementia")}
+</section>
+
+<section class="panel" id="dementia">
+  <div class="section-head">
+    <div class="eyebrow">Section 8 · Dementia medications</div>
+    <h2>Cholinesterase inhibitors &amp; memantine</h2>
+    <p class="lede">These medications aim to support cognition rather than impair it — but they still carry effects worth knowing, and they change how you should interpret a sudden cognitive change in a client taking them.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 Cholinesterase inhibitors (Donepezil, Rivastigmine, Galantamine)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p><b>Mobility:</b> can cause bradycardia (slowed heart rate) and, less commonly, syncope (fainting) — a falls mechanism distinct from sedation. GI upset (nausea, diarrhoea) can affect energy and participation in sessions. Muscle cramps are also reported.</p>
+      <p><b>Cognition:</b> intended to support cognitive function, so a sudden new decline in a client taking one of these is more likely explained by something else — delirium, an acute illness, or another medication — rather than the dementia medication itself.</p>
+    </div>
+    <div class="card">
+      <h3>💊 Memantine</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p>Generally well tolerated. Dizziness and mild sedation are possible but uncommon. Confusion can occur paradoxically in a small number of people, worth noting if cognition seems to worsen after starting it.</p>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <b>Watch the combination with beta-blockers</b>
+    Cholinesterase inhibitors and beta-blockers both slow the heart rate. Together, they raise the risk of clinically significant bradycardia and fainting — worth considering if a client on both reports new dizziness or a fainting episode.
+  </div>
+
+  ${panelNav("opioids", "Respiratory Medications", "respiratory")}
+</section>
+
+<section class="panel" id="respiratory">
+  <div class="section-head">
+    <div class="eyebrow">Section 9 · Respiratory medications</div>
+    <h2>Inhalers, bronchodilators &amp; oral corticosteroids</h2>
+    <p class="lede">Common in aged care given how prevalent COPD and asthma are in this population. Most respiratory medications have a fairly light mobility footprint on their own — with one significant exception.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 Bronchodilators (Salbutamol/Ventolin, Salmeterol)</h3>
+      <div class="effect-row"><span class="echip other">Tremor / tachycardia</span></div>
+      <p>Can cause a fine tremor and a faster heart rate shortly after use — this is a normal, expected medication effect rather than a new neurological finding, and can be mistaken for anxiety or exertional intolerance if you're not expecting it.</p>
+    </div>
+    <div class="card">
+      <h3>💊 Anticholinergic inhalers (Tiotropium, Ipratropium)</h3>
+      <div class="effect-row"><span class="echip cog">Cognition</span><span class="echip other">Other</span></div>
+      <p>Low falls risk on their own, but they add to a client's overall <b>anticholinergic burden</b> when combined with other anticholinergic medications (some antidepressants, antihistamines, bladder/incontinence medications). Urinary retention is also possible, which can indirectly affect mobility through frequent, urgent bathroom trips.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>💊 Oral corticosteroids (Prednisone, Prednisolone)</h3>
+    <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+    <p>The one respiratory-adjacent medication with a real, direct mobility effect. Longer courses can cause <b>proximal muscle weakness (steroid myopathy)</b> — most noticeable in the hip and shoulder girdle, and it can look exactly like general deconditioning if you don't know the medication history. Long-term use also raises fracture risk through accelerated bone loss. Mood changes, agitation, sleep disturbance and occasionally confusion are possible, especially at higher doses.</p>
+  </div>
+
+  <div class="callout bad">
+    <b>Don't mistake steroid myopathy for deconditioning</b>
+    A client on a corticosteroid course who reports new sit-to-stand or stair difficulty may be experiencing steroid-related muscle weakness rather than simple deconditioning. Pushing harder isn't the right response — pace loading and expect this to improve as the dose is tapered.
+  </div>
+
+  <div class="callout warn">
+    <b>Anticholinergic burden adds up across categories</b>
+    Respiratory inhalers, some psychotropics, antihistamines and bladder medications can all carry anticholinergic effects. The combined cognitive and falls risk from several such medications together is greater than any single one alone — this is a useful thing to flag even if no individual medication looks concerning by itself.
+  </div>
+
+  ${panelNav("dementia", "A Few More to Know", "mobilityextra")}
+</section>
+
+<section class="panel" id="mobilityextra">
+  <div class="section-head">
+    <div class="eyebrow">Section 10 · A few more worth knowing</div>
+    <h2>Statins, alpha-blockers &amp; bisphosphonates</h2>
+    <p class="lede">These don't fit neatly into the categories above, but each comes up often enough in aged care caseloads to be worth recognising.</p>
+  </div>
+
+  <div class="grid3">
+    <div class="card">
+      <h3>💊 Statins (Atorvastatin, Simvastatin, Rosuvastatin)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span></div>
+      <p>Muscle aches and weakness (myalgia, occasionally true myopathy) are a common complaint and can directly limit exercise tolerance and participation in therapy. If a client reports new, diffuse muscle pain or weakness after starting or increasing a statin, flag it rather than assuming general deconditioning.</p>
+    </div>
+    <div class="card">
+      <h3>💊 Alpha-blockers (Tamsulosin, Prazosin)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span></div>
+      <p>Used for prostate symptoms and sometimes blood pressure. Carry a strong orthostatic hypotension risk, particularly a "first-dose effect" with the first dose or a recent increase. Apply the same "sit, stand, pause" caution used for BP medications — especially soon after a new prescription.</p>
+    </div>
+    <div class="card">
+      <h3>💊 Bisphosphonates (Alendronate, Risedronate)</h3>
+      <div class="effect-row"><span class="echip other">Fracture-related</span></div>
+      <p>Used for osteoporosis. Not a falls-risk medication itself, but very long-term use has a rare association with atypical femoral fractures — worth being aware of if a client on long-term therapy reports new, unexplained thigh or groin pain. Dosing requires staying upright for 30–60 minutes after taking it, which can be relevant to morning routine and scheduling.</p>
+    </div>
+  </div>
+
+  ${panelNav("respiratory", "Antibiotics", "antibiotics")}
 </section>
 
 <section class="panel" id="antibiotics">
   <div class="section-head">
-    <div class="eyebrow">Section 7 · Antibiotics</div>
+    <div class="eyebrow">Section 11 · Antibiotics</div>
     <h2>Usually short-term — but two things worth knowing</h2>
     <p class="lede">Antibiotics aren't a long-term falls-risk medication class the way psychotropics are, but two specific issues come up often enough in aged care to be worth flagging.</p>
   </div>
@@ -682,12 +823,12 @@ main.innerHTML = `
     During an acute antibiotic course, treat a "bad day" as potentially explained by the underlying illness rather than a new baseline. Reassess function once the course finishes and the person has recovered, rather than updating long-term goals off a single unwell presentation.
   </div>
 
-  ${panelNav("opioids", "Search Medications", "search")}
+  ${panelNav("mobilityextra", "Search Medications", "search")}
 </section>
 
 <section class="panel" id="search">
   <div class="section-head">
-    <div class="eyebrow">Section 8 · Quick reference</div>
+    <div class="eyebrow">Section 12 · Quick reference</div>
     <h2>Search medications by name or condition</h2>
     <p class="lede">Type a medication name (brand or generic) or a condition/effect — like "falls," "confusion," "bleeding," or "Parkinson's" — to pull up a quick summary. Use the filter chips to browse by category.</p>
   </div>
@@ -704,9 +845,9 @@ main.innerHTML = `
 
 <section class="panel" id="quiz">
   <div class="section-head">
-    <div class="eyebrow">Section 9 · Competency check</div>
+    <div class="eyebrow">Section 13 · Competency check</div>
     <h2>Check your knowledge</h2>
-    <p class="lede">Ten questions covering the key medication effects from this module.</p>
+    <p class="lede">Fifteen questions covering the key medication effects from this module.</p>
   </div>
 
   <div id="quizArea"></div>
@@ -863,11 +1004,24 @@ const medDB = [
   {name:"Sulfonylureas", aka:"Gliclazide, Glipizide", cat:"diabetes", uses:"Diabetes — blood glucose control", mobility:"Hypoglycaemia risk similar to insulin, higher with reduced kidney function.", cognition:"Confusion, shakiness with hypoglycaemia.", bleeding:"Not relevant.", note:"Higher-risk diabetes medication class in older adults with renal impairment."},
   {name:"Metformin", aka:"", cat:"diabetes", uses:"Diabetes — blood glucose control", mobility:"Low hypoglycaemia risk alone.", cognition:"Low direct impact.", bleeding:"Not relevant.", note:"Caution in significant kidney impairment; can cause GI upset."},
   {name:"Fluoroquinolone antibiotics", aka:"Ciprofloxacin, Norfloxacin", cat:"antibiotics", uses:"Bacterial infections (e.g. UTI)", mobility:"Tendon rupture/tendinopathy risk, especially Achilles — higher in older adults and with concurrent corticosteroid use.", cognition:"Confusion and peripheral neuropathy possible in older adults.", bleeding:"Not relevant.", note:"Take new heel/tendon pain seriously in a client recently started on this class."},
-  {name:"Antibiotics generally", aka:"Any class", cat:"antibiotics", uses:"Bacterial infections", mobility:"Indirect — the underlying infection can cause acute functional decline.", cognition:"Delirium is common during acute infection/antibiotic courses, especially with UTIs.", bleeding:"Not relevant.", note:"Treat a 'bad day' during an antibiotic course as possibly explained by the illness, not a new baseline."}
+  {name:"Antibiotics generally", aka:"Any class", cat:"antibiotics", uses:"Bacterial infections", mobility:"Indirect — the underlying infection can cause acute functional decline.", cognition:"Delirium is common during acute infection/antibiotic courses, especially with UTIs.", bleeding:"Not relevant.", note:"Treat a 'bad day' during an antibiotic course as possibly explained by the illness, not a new baseline."},
+  {name:"Paracetamol", aka:"Acetaminophen, Panadol", cat:"painmeds", uses:"Pain, first-line analgesia", mobility:"Minimal direct effect.", cognition:"Minimal direct effect.", bleeding:"Not relevant.", note:"Preferred first-line pain option in older adults due to its low-risk profile; often under-dosed."},
+  {name:"NSAIDs", aka:"Ibuprofen, Naproxen, Diclofenac, Celecoxib", cat:"painmeds", uses:"Pain, inflammation", mobility:"Fluid retention can worsen BP/heart failure control; can mask fracture or injury pain.", cognition:"Low direct impact.", bleeding:"Increases GI bleeding risk; compounds significantly when combined with an anticoagulant or antiplatelet.", note:"Flag NSAID + anticoagulant/antiplatelet combinations — a commonly overlooked bleeding-risk pairing. Kidney risk rises with dehydration."},
+  {name:"Gabapentinoids", aka:"Gabapentin, Pregabalin", cat:"painmeds", uses:"Neuropathic pain", mobility:"Sedation, dizziness, ataxia — a genuine falls risk; peripheral oedema can affect footwear/gait.", cognition:"Confusion possible, especially at higher doses or reduced kidney clearance.", bleeding:"Not relevant.", note:"Treat with similar falls caution to benzodiazepines."},
+  {name:"Muscle relaxants", aka:"Baclofen, Orphenadrine, Cyclobenzaprine", cat:"painmeds", uses:"Muscle spasm", mobility:"Sedation and generalised weakness — works against strength gains from therapy.", cognition:"Confusion possible.", bleeding:"Not relevant.", note:"Usually short-term, but sedation can outlast expectations."},
+  {name:"Cholinesterase inhibitors", aka:"Donepezil, Rivastigmine, Galantamine", cat:"dementia", uses:"Alzheimer's disease and related dementias — cognitive support", mobility:"Bradycardia and, less commonly, syncope; GI upset; muscle cramps.", cognition:"Intended to support cognition — a sudden new decline is more likely delirium or another cause, not this medication.", bleeding:"Not relevant.", note:"Combined with a beta-blocker, raises risk of clinically significant bradycardia/fainting."},
+  {name:"Memantine", aka:"", cat:"dementia", uses:"Moderate-to-severe Alzheimer's disease", mobility:"Dizziness, mild sedation — uncommon.", cognition:"Generally well tolerated; occasional paradoxical confusion.", bleeding:"Not relevant.", note:"Consider if cognition seems to worsen shortly after starting."},
+  {name:"Bronchodilators", aka:"Salbutamol/Ventolin, Salmeterol", cat:"respiratory", uses:"Asthma, COPD", mobility:"Fine tremor and faster heart rate after use — a normal medication effect.", cognition:"Low direct impact.", bleeding:"Not relevant.", note:"Don't mistake post-dose tremor/tachycardia for anxiety or a new neurological issue."},
+  {name:"Anticholinergic inhalers", aka:"Tiotropium, Ipratropium", cat:"respiratory", uses:"COPD, asthma", mobility:"Low direct falls risk; urinary retention possible, indirectly affecting mobility.", cognition:"Adds to overall anticholinergic burden when combined with other anticholinergic medications.", bleeding:"Not relevant.", note:"Consider cumulative anticholinergic burden across a client's full medication list."},
+  {name:"Oral corticosteroids", aka:"Prednisone, Prednisolone", cat:"respiratory", uses:"COPD/asthma exacerbations, inflammatory conditions", mobility:"Proximal muscle weakness (steroid myopathy) with longer courses; increased fracture risk long-term.", cognition:"Mood changes, agitation, sleep disturbance; confusion possible at higher doses.", bleeding:"Not relevant.", note:"New sit-to-stand or stair difficulty during a steroid course may be myopathy, not deconditioning — pace loading rather than pushing harder."},
+  {name:"Statins", aka:"Atorvastatin, Simvastatin, Rosuvastatin", cat:"mobilityextra", uses:"Cholesterol lowering, cardiovascular risk reduction", mobility:"Muscle aches/weakness (myalgia, occasionally myopathy) can limit exercise tolerance.", cognition:"Not significant.", bleeding:"Not relevant.", note:"New diffuse muscle pain after a statin change is worth flagging, not assuming general deconditioning."},
+  {name:"Alpha-blockers", aka:"Tamsulosin, Prazosin", cat:"mobilityextra", uses:"Prostate symptoms, blood pressure", mobility:"Strong orthostatic hypotension risk, especially with the first dose or a recent increase.", cognition:"Low direct impact.", bleeding:"Not relevant.", note:"Apply the same 'sit, stand, pause' caution as other BP-lowering medications."},
+  {name:"Bisphosphonates", aka:"Alendronate, Risedronate", cat:"mobilityextra", uses:"Osteoporosis", mobility:"Not a falls-risk medication; rare association with atypical femoral fractures after long-term use.", cognition:"Not relevant.", bleeding:"Not relevant.", note:"New unexplained thigh/groin pain on long-term therapy is worth flagging. Requires staying upright 30–60 min after dosing."}
 ];
 const catLabels = {
   all:"All", parkinsons:"Parkinson's", cardiac:"Cardiovascular", bleeding:"Anticoagulants",
-  psychotropics:"Psychotropics", opioids:"Opioids", diabetes:"Diabetes", antibiotics:"Antibiotics"
+  psychotropics:"Psychotropics", painmeds:"Pain (non-opioid)", opioids:"Opioids", diabetes:"Diabetes",
+  dementia:"Dementia", respiratory:"Respiratory", mobilityextra:"Other Mobility-Relevant", antibiotics:"Antibiotics"
 };
 let activeCat = "all";
 const chipRow = document.getElementById("medFilterChips");
@@ -978,6 +1132,30 @@ const quizData = [
     opts:["DOACs carry no bleeding risk at all","DOACs have no routine blood test (like INR) to signal current bleeding risk, so the risk is 'silent' day to day","Warfarin is only used short-term","DOACs only affect mobility, not bleeding risk"],
     correct:1,
     explain:"DOACs carry a similar bleeding risk to warfarin but aren't routinely monitored with a blood test the way warfarin is with INR — so a physio can't gauge current risk from a lab value, and the same post-fall caution applies regardless."
+  },
+  {
+    q:"Which non-opioid pain medication carries the biggest additional bleeding risk when combined with an anticoagulant?",
+    opts:["Paracetamol","Gabapentin","NSAIDs (e.g. ibuprofen, diclofenac)","Baclofen"],
+    correct:2,
+    explain:"NSAIDs increase GI bleeding risk on their own, and this compounds significantly when combined with an anticoagulant or antiplatelet — a commonly overlooked combination worth flagging."
+  },
+  {
+    q:"A client on gabapentin reports new dizziness and unsteadiness. How should you treat this?",
+    opts:["Ignore it — gabapentin has no falls-related effects","Recognise it as a possible medication-related falls risk, similar in caution to a benzodiazepine","Assume it's unrelated to medication","Increase session intensity to build tolerance"],
+    correct:1,
+    explain:"Gabapentinoids cause sedation, dizziness and ataxia — an increasingly recognised falls risk in older adults that deserves the same caution as sedating psychotropics."
+  },
+  {
+    q:"A client on a long-term prednisone course reports new difficulty going from sit to stand. What's the most likely explanation?",
+    opts:["General deconditioning unrelated to medication","Steroid-induced proximal muscle myopathy","A normal ageing change","Nothing — steroids have no mobility effects"],
+    correct:1,
+    explain:"Longer corticosteroid courses can cause proximal muscle weakness (steroid myopathy), most noticeable in the hip and shoulder girdle. It can look like deconditioning, but the right response is to pace loading, not push harder."
+  },
+  {
+    q:"Why is 'anticholinergic burden' a useful concept for physios to understand?",
+    opts:["It only matters for a single medication at a time","Combining several anticholinergic medications (e.g. an inhaler, an antidepressant, a bladder medication) has a cumulative confusion/falls risk greater than any one alone","It has no relevance to falls risk","It only applies to Parkinson's medications"],
+    correct:1,
+    explain:"Anticholinergic effects add up across medication classes — respiratory inhalers, some psychotropics, antihistamines and bladder medications can each contribute a small effect that becomes significant in combination."
   }
 ];
 let quizScore = 0;
