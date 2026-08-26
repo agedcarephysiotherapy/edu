@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACP | Common Medications in Aged Care — Falls, Cognition &amp; Bleeding Risk for Physios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{
+    --acp-blue:#336699;
+    --acp-blue-dark:#264d73;
+    --acp-blue-tint:#eaf1f8;
+    --acp-red:#cc3300;
+    --acp-red-tint:#fdece5;
+    --ink:#1f2937;
+    --ink-soft:#516072;
+    --paper:#ffffff;
+    --bg:#f4f7fa;
+    --line:#dde5ee;
+    --good:#2f7d4f;
+    --good-tint:#e8f5ec;
+    --warn:#b8860b;
+    --warn-tint:#fdf3dd;
+    --bad:#b3261e;
+    --bad-tint:#fbe7e5;
+    --radius:14px;
+    --shadow:0 6px 20px rgba(38,77,115,.08);
+    --figure:#8a9bb0;
+    --figure-dark:#5c7085;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Lexend',system-ui,sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--acp-blue);}
+
+  header.site{
+    background:linear-gradient(120deg,var(--acp-blue) 0%,var(--acp-blue-dark) 100%);
+    color:#fff;
+    padding:0;
+    position:relative;
+    overflow:hidden;
+  }
+  .header-inner{max-width:1120px;margin:0 auto;padding:38px 28px 32px;position:relative;z-index:2;}
+  .brandrow{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
+  .brandmark{
+    width:40px;height:40px;border-radius:10px;background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;color:var(--acp-blue);font-size:18px;letter-spacing:.5px;
+    box-shadow:0 3px 10px rgba(0,0,0,.15);
+  }
+  .brandtext{font-size:14px;letter-spacing:.14em;text-transform:uppercase;opacity:.92;font-weight:500;}
+  .brandtext b{font-weight:700;}
+  h1{font-size:clamp(24px,3.4vw,38px);line-height:1.15;margin:0 0 10px;font-weight:700;max-width:840px;}
+  .subtitle{font-size:16.5px;opacity:.92;max-width:700px;font-weight:300;margin:0 0 22px;}
+  .meta-pills{display:flex;flex-wrap:wrap;gap:10px;}
+  .pill{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:6px;}
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:#ffd166;}
+  .deco-swirl{position:absolute;right:-60px;top:-60px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.10),transparent 65%);z-index:1;}
+
+  .progress-wrap{background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.03);}
+  .progress-inner{max-width:1120px;margin:0 auto;padding:0 28px;}
+  .progress-track{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:0;}
+  .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--acp-red),var(--acp-blue));transition:width .4s ease;}
+  nav.tabs{display:flex;gap:2px;overflow-x:auto;padding:10px 0 0;scrollbar-width:none;}
+  nav.tabs::-webkit-scrollbar{display:none;}
+  .tab-btn{
+    flex:0 0 auto;background:none;border:none;font-family:inherit;font-size:13px;font-weight:500;
+    color:var(--ink-soft);padding:10px 14px 12px;cursor:pointer;border-bottom:3px solid transparent;
+    white-space:nowrap;transition:.15s;
+  }
+  .tab-btn:hover{color:var(--acp-blue);}
+  .tab-btn.active{color:var(--acp-blue);border-bottom-color:var(--acp-red);font-weight:600;}
+  .tab-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--line);color:var(--ink-soft);font-size:10.5px;font-weight:700;margin-right:6px;}
+  .tab-btn.active .tab-num{background:var(--acp-red);color:#fff;}
+  .tab-btn.done .tab-num{background:var(--good);color:#fff;}
+
+  main{max-width:1120px;margin:0 auto;padding:34px 28px 90px;}
+  section.panel{display:none;animation:fadeIn .35s ease;}
+  section.panel.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .section-head{margin-bottom:22px;}
+  .eyebrow{color:var(--acp-red);text-transform:uppercase;font-size:12px;letter-spacing:.12em;font-weight:700;margin-bottom:6px;}
+  h2{font-size:25px;font-weight:700;margin:0 0 8px;color:var(--acp-blue-dark);}
+  .lede{color:var(--ink-soft);font-size:15.5px;max-width:780px;}
+
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow);margin-bottom:18px;}
+  .card h3{margin:0 0 10px;font-size:17px;color:var(--acp-blue-dark);display:flex;align-items:center;gap:8px;}
+  .card p{margin:0 0 10px;font-size:14.5px;color:var(--ink);}
+  .card ul{margin:0;padding-left:20px;font-size:14.5px;}
+  .card li{margin-bottom:6px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:6px;text-transform:uppercase;}
+  .tag.evidence{background:var(--acp-blue-tint);color:var(--acp-blue-dark);}
+  .tag.pd{background:var(--acp-red-tint);color:var(--acp-red);}
+
+  .callout{border-radius:12px;padding:16px 18px;margin:16px 0;font-size:14.5px;border:1px solid transparent;}
+  .callout.warn{background:var(--warn-tint);border-color:#f1dca0;}
+  .callout.bad{background:var(--bad-tint);border-color:#f0c2be;}
+  .callout.good{background:var(--good-tint);border-color:#bfe3cb;}
+  .callout b{display:block;margin-bottom:4px;}
+
+  /* effect chips inside med cards */
+  .effect-row{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px;}
+  .echip{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;}
+  .echip.mob{background:var(--warn-tint);color:var(--warn);}
+  .echip.cog{background:var(--acp-blue-tint);color:var(--acp-blue-dark);}
+  .echip.bleed{background:var(--bad-tint);color:var(--bad);}
+  .echip.other{background:#eef0f3;color:var(--ink-soft);}
+
+  /* ===== interactive sim blocks (reuse pattern) ===== */
+  .sim{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin:20px 0;}
+  .sim-controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+  .sim-btn{font-family:inherit;font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:999px;border:1.5px solid var(--acp-blue);background:#fff;color:var(--acp-blue);cursor:pointer;transition:.15s;}
+  .sim-btn:hover{background:var(--acp-blue-tint);}
+  .sim-btn.active{background:var(--acp-blue);color:#fff;}
+  .sim-btn.danger{border-color:var(--acp-red);color:var(--acp-red);}
+  .sim-btn.danger.active{background:var(--acp-red);color:#fff;}
+  .sim-stage{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;}
+  @media(max-width:760px){.sim-stage{grid-template-columns:1fr;}}
+  .sim-visual{background:var(--bg);border-radius:12px;padding:14px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;min-height:180px;}
+  .sim-readout h4{margin:0 0 8px;font-size:16px;color:var(--acp-blue-dark);}
+  .sim-readout p{font-size:14.5px;margin:0 0 8px;}
+  .status-badge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:10px;}
+  .status-badge.safe{background:var(--good-tint);color:var(--good);}
+  .status-badge.risk{background:var(--bad-tint);color:var(--bad);}
+  .status-badge.caution{background:var(--warn-tint);color:var(--warn);}
+
+  /* checklist */
+  .checklist{list-style:none;margin:0;padding:0;}
+  .checklist li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fff;cursor:pointer;transition:.15s;}
+  .checklist li:hover{border-color:var(--acp-blue);}
+  .checklist li.checked{background:var(--good-tint);border-color:#bfe3cb;}
+  .checklist .box{width:20px;height:20px;border-radius:6px;border:2px solid var(--acp-blue);flex:0 0 20px;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+  .checklist li.checked .box{background:var(--good);border-color:var(--good);}
+  .checklist .box svg{opacity:0;width:12px;height:12px;}
+  .checklist li.checked .box svg{opacity:1;}
+  .checklist .txt b{display:block;font-size:14px;}
+  .checklist .txt span{font-size:12.5px;color:var(--ink-soft);}
+  .checklist-progress{display:flex;align-items:center;gap:12px;margin:16px 0;font-size:13.5px;font-weight:600;color:var(--acp-blue-dark);}
+  .checklist-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .checklist-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--acp-red),var(--acp-blue));transition:width .3s ease;}
+
+  /* ===== med search ===== */
+  .search-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .search-bar input[type=text]{
+    flex:1 1 260px;padding:12px 16px;border:1.5px solid var(--line);border-radius:999px;
+    font-family:inherit;font-size:14.5px;background:#fff;color:var(--ink);
+  }
+  .search-bar input[type=text]:focus{outline:none;border-color:var(--acp-blue);box-shadow:0 0 0 4px var(--acp-blue-tint);}
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+  .filter-chip{
+    font-family:inherit;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:999px;
+    border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:.15s;
+  }
+  .filter-chip:hover{border-color:var(--acp-blue);color:var(--acp-blue);}
+  .filter-chip.active{background:var(--acp-blue);border-color:var(--acp-blue);color:#fff;}
+  #medResultsCount{font-size:13px;color:var(--ink-soft);margin-bottom:10px;}
+  .med-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:820px){.med-grid{grid-template-columns:1fr;}}
+  .med-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);}
+  .med-card h4{margin:0 0 2px;font-size:15.5px;color:var(--acp-blue-dark);}
+  .med-card .aka{font-size:12px;color:var(--ink-soft);margin-bottom:8px;}
+  .med-card .field{font-size:13.5px;margin:6px 0;}
+  .med-card .field b{color:var(--ink);display:inline;}
+  .no-results{text-align:center;padding:30px;color:var(--ink-soft);font-size:14px;}
+
+  /* quiz */
+  .quiz-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px;margin-bottom:16px;}
+  .quiz-q{font-size:15.5px;font-weight:600;margin-bottom:12px;}
+  .quiz-opts{display:flex;flex-direction:column;gap:8px;}
+  .quiz-opt{text-align:left;font-family:inherit;font-size:14px;padding:11px 14px;border-radius:9px;border:1.5px solid var(--line);background:#fff;cursor:pointer;transition:.15s;}
+  .quiz-opt:hover{border-color:var(--acp-blue);}
+  .quiz-opt.correct{background:var(--good-tint);border-color:var(--good);color:var(--good);font-weight:600;}
+  .quiz-opt.incorrect{background:var(--bad-tint);border-color:var(--bad);color:var(--bad);font-weight:600;}
+  .quiz-opt[disabled]{cursor:default;}
+  .quiz-explain{font-size:13.5px;margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--acp-blue-tint);display:none;}
+  .quiz-explain.show{display:block;}
+  .quiz-score{text-align:center;padding:26px;border-radius:var(--radius);background:var(--acp-blue);color:#fff;display:none;}
+  .quiz-score.show{display:block;}
+  .quiz-score .num{font-size:44px;font-weight:800;}
+  .quiz-reset{margin-top:14px;background:#fff;color:var(--acp-blue);border:none;padding:9px 18px;border-radius:999px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;}
+
+  .panel-nav{display:flex;justify-content:space-between;margin-top:30px;}
+  .nav-btn{font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;padding:11px 20px;border-radius:999px;border:1.5px solid var(--acp-blue);background:#fff;color:var(--acp-blue);display:flex;align-items:center;gap:6px;}
+  .nav-btn.primary{background:var(--acp-blue);color:#fff;}
+  .nav-btn:hover{opacity:.88;}
+
+  footer.site{background:var(--acp-blue-dark);color:#fff;padding:26px 28px;text-align:center;font-size:12.5px;opacity:.85;}
+  footer.site a{color:#cfe0f0;}
+
+  button, .checklist li, .tab-btn, .filter-chip{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+
+  .tab-btn:focus-visible, .sim-btn:focus-visible, .nav-btn:focus-visible, .quiz-opt:focus-visible,
+  .quiz-reset:focus-visible, .checklist li:focus-visible, .filter-chip:focus-visible{
+    outline:3px solid #ffb703;outline-offset:2px;
+  }
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} section.panel{animation:none;} }
+
+  @media(max-width:640px){
+    .header-inner{padding:24px 18px 26px;}
+    .brandrow{gap:10px;margin-bottom:16px;}
+    .brandmark{width:34px;height:34px;font-size:15px;border-radius:8px;}
+    .brandtext{font-size:11px;letter-spacing:.10em;}
+    h1{font-size:21px;line-height:1.22;}
+    .subtitle{font-size:14px;margin-bottom:16px;}
+    .meta-pills{gap:8px;}
+    .pill{font-size:11.5px;padding:6px 11px;}
+    .deco-swirl{width:220px;height:220px;right:-90px;top:-90px;}
+    .progress-inner{padding:0 14px;}
+    nav.tabs{gap:0;padding-top:8px;-webkit-overflow-scrolling:touch;}
+    .tab-btn{font-size:12px;padding:9px 11px 11px;}
+    .tab-num{width:16px;height:16px;font-size:9.5px;margin-right:5px;}
+    main{padding:22px 16px 70px;}
+    .section-head{margin-bottom:16px;}
+    h2{font-size:20px;}
+    .lede{font-size:14px;}
+    .card{padding:17px 16px;border-radius:12px;margin-bottom:14px;}
+    .card h3{font-size:15px;}
+    .card p, .card ul{font-size:14px;}
+    .grid2,.grid3,.med-grid{gap:12px;}
+    .sim{padding:16px;border-radius:12px;margin:16px 0;}
+    .sim-btn{font-size:12.5px;padding:9px 13px;flex:1 1 auto;text-align:center;}
+    .sim-stage{gap:16px;}
+    .search-bar input[type=text]{font-size:14px;}
+    .quiz-card{padding:16px;border-radius:12px;}
+    .quiz-q{font-size:14.5px;}
+    .quiz-opt{font-size:13.5px;padding:11px 13px;}
+    .panel-nav{margin-top:22px;}
+    .nav-btn{font-size:12.5px;padding:10px 16px;}
+    footer.site{padding:20px 16px;font-size:11.5px;}
+  }
+
+  /* ===== Auth gate & completion tracking ===== */
+  #authGate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(120deg,var(--acp-blue) 0%,var(--acp-blue-dark) 100%);}
+  #authGate .gate-card{background:#fff;border-radius:var(--radius);box-shadow:0 30px 60px -20px rgba(0,0,0,.4);padding:32px;max-width:400px;text-align:center;}
+  #authGate h2{color:var(--acp-blue-dark);font-size:19px;margin:0 0 10px;}
+  #authGate p{color:var(--ink-soft);font-size:14px;line-height:1.6;margin:0 0 18px;}
+  #authGate a.gate-link{display:inline-block;background:var(--acp-blue);color:#fff;text-decoration:none;font-weight:600;font-size:13.5px;padding:11px 22px;border-radius:999px;}
+  #authGate a.gate-link:hover{background:var(--acp-blue-dark);}
+  .completion-status{font-size:13.5px;margin-top:14px;min-height:16px;font-weight:500;}
+  .completion-status.saving{color:rgba(255,255,255,.85);}
+  .completion-status.ok{color:#bff0d2;font-weight:700;}
+  .completion-status.err{color:#ffd0c9;}
+  .completion-status.err button{background:#fff;color:var(--acp-red);border:none;padding:6px 14px;border-radius:999px;font-family:inherit;font-weight:600;font-size:12.5px;cursor:pointer;margin-top:8px;}
+</style>
+</head>
+<body>
+
+<div id="authGate" style="display:none;">
+  <div class="gate-card">
+    <h2>Sign in required</h2>
+    <p>You need to be signed in to the ACP Training Tracker to complete this course and have it recorded against your name.</p>
+    <a class="gate-link" href="../index.html">Go to the Training Tracker</a>
+  </div>
+</div>
+
+<div id="courseContent" style="display:none;">
+
+<header class="site">
+  <div class="deco-swirl"></div>
+  <div class="header-inner">
+    <div class="brandrow">
+      <div class="brandmark">acp</div>
+      <div class="brandtext"><b>Aged Care Physiotherapy</b> &nbsp;·&nbsp; Clinical Education Series</div>
+    </div>
+    <h1>Common Medications in Aged Care: What Physios Need to Know</h1>
+    <p class="subtitle">How the medications your clients are on affect mobility, falls risk, orientation and cognition — and when a fall needs urgent medical follow-up because of bleeding risk. Built for physios working across residential aged care, community, and home visiting caseloads.</p>
+    <div class="meta-pills">
+      <div class="pill"><span class="dot"></span> Aged Care &amp; Community Practice</div>
+      <div class="pill">Estimated time: 20–25 min</div>
+      <div class="pill">Includes searchable medication reference</div>
+    </div>
+  </div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-inner">
+    <nav class="tabs" id="tabNav"></nav>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</div>
+
+<main id="main"></main>
+
+<footer class="site">
+  Aged Care Physiotherapy Pty Ltd — Internal clinical education resource. This module summarises common, high-level medication effects relevant to physiotherapy practice. It is not prescribing guidance and does not replace medication review by a GP, geriatrician or pharmacist. Always check the individual's current medication list and care plan. &nbsp;|&nbsp; Review as part of ACP clinical governance.
+</footer>
+
+</div>
+
+<script>
+/* ---------------------------------------------------------
+   TRAINING TRACKER INTEGRATION
+--------------------------------------------------------- */
+const COURSE_ID = "PASTE-THE-COURSE-ID-HERE";
+const SUPABASE_URL = "https://unomkggpwiugvkovdjto.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_rakZ0iLM1Tncok00y6HFPA_Xlls_Mwc";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentAuthUser = null;
+
+async function initAuthGate(){
+  const { data } = await sb.auth.getSession();
+  if(!data.session){
+    document.getElementById("authGate").style.display = "flex";
+    return false;
+  }
+  currentAuthUser = data.session.user;
+  document.getElementById("courseContent").style.display = "block";
+  return true;
+}
+
+async function recordCompletion(resultText){
+  const el = document.getElementById("completionStatus");
+  if(!currentAuthUser){
+    el.textContent = "Not signed in — this attempt was not saved.";
+    el.className = "completion-status err";
+    return;
+  }
+  el.textContent = "Saving your completion...";
+  el.className = "completion-status saving";
+  const { error } = await sb.from("completions").insert({
+    staff_id: currentAuthUser.id,
+    course_id: COURSE_ID,
+    completion_date: new Date().toISOString().slice(0,10),
+    result: resultText,
+    recorded_by: currentAuthUser.id
+  });
+  if(error){
+    el.innerHTML = `Couldn't save your completion. <br><button onclick="recordCompletion('${resultText}')">Retry</button>`;
+    el.className = "completion-status err";
+    return;
+  }
+  el.textContent = "✓ Saved to your training record.";
+  el.className = "completion-status ok";
+}
+
+/* ---------------------------------------------------------
+   TAB DATA
+--------------------------------------------------------- */
+const sections = [
+  {id:"why", label:"Why It Matters"},
+  {id:"parkinsons", label:"Parkinson's Meds"},
+  {id:"cardiac", label:"BP &amp; Heart Meds"},
+  {id:"bleeding", label:"Anticoagulants &amp; Bleeding Risk"},
+  {id:"psychotropics", label:"Psychotropics &amp; BPSD Meds"},
+  {id:"opioids", label:"Opioids &amp; Diabetes Meds"},
+  {id:"antibiotics", label:"Antibiotics"},
+  {id:"search", label:"Search Medications"},
+  {id:"quiz", label:"Check Your Knowledge"}
+];
+
+const tabNav = document.getElementById("tabNav");
+sections.forEach((s,i)=>{
+  const btn = document.createElement("button");
+  btn.className = "tab-btn" + (i===0?" active":"");
+  btn.dataset.target = s.id;
+  btn.innerHTML = `<span class="tab-num">${i+1}</span>${s.label}`;
+  btn.addEventListener("click", ()=>showSection(s.id));
+  tabNav.appendChild(btn);
+});
+
+function updateProgress(){
+  const activeIdx = sections.findIndex(s=>s.id===currentId);
+  const pct = ((activeIdx+1)/sections.length)*100;
+  document.getElementById("progressFill").style.width = pct+"%";
+}
+
+let currentId = "why";
+function showSection(id){
+  currentId = id;
+  document.querySelectorAll("section.panel").forEach(p=>p.classList.toggle("active", p.id===id));
+  document.querySelectorAll(".tab-btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.target===id);
+    if (sections.findIndex(s=>s.id===b.dataset.target) < sections.findIndex(s=>s.id===id)) {
+      b.classList.add("done");
+    }
+  });
+  updateProgress();
+  document.getElementById("main").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function panelNav(prevId, nextLabel, nextId){
+  let html = `<div class="panel-nav">`;
+  html += prevId ? `<button class="nav-btn" onclick="showSection('${prevId}')">&larr; Back</button>` : `<span></span>`;
+  html += nextId ? `<button class="nav-btn primary" onclick="showSection('${nextId}')">${nextLabel} &rarr;</button>` : `<span></span>`;
+  html += `</div>`;
+  return html;
+}
+
+/* ---------------------------------------------------------
+   MAIN CONTENT
+--------------------------------------------------------- */
+const main = document.getElementById("main");
+main.innerHTML = `
+
+<section class="panel active" id="why">
+  <div class="section-head">
+    <div class="eyebrow">Section 1 · Foundations</div>
+    <h2>Why medications belong on a physio's radar</h2>
+    <p class="lede">Most people you see across aged care and community caseloads are on multiple medications — often five, ten, or more. Several common classes have effects that directly change what you see in a session: balance, gait, alertness, orientation, and how a fall should be managed afterward. You don't need to prescribe or dose-adjust anything — but recognising a medication effect changes how you interpret a wobble, a "bad day," or a fall.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>🎯 What this module covers</h3>
+      <p>High-level, practical effects — not pharmacology for its own sake — across the medication classes physios encounter most in aged care and community practice: Parkinson's medications, blood pressure and heart medications, anticoagulants, psychotropics used for behavioural symptoms, opioids, diabetes medications, and antibiotics.</p>
+      <span class="tag evidence">Practice-focused overview</span>
+    </div>
+    <div class="card">
+      <h3>⚠️ Four questions to ask about any medication effect</h3>
+      <ul>
+        <li><b>Mobility &amp; falls</b> — does it affect balance, gait, sedation, or blood pressure on standing?</li>
+        <li><b>Orientation &amp; cognition</b> — could it explain new confusion, drowsiness, or a change in engagement?</li>
+        <li><b>Bleeding risk</b> — if this person falls, does their medication list change how urgently it needs review?</li>
+        <li><b>Timing</b> — is there a "better" and "worse" window in the day to schedule therapy around this medication?</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <b>Polypharmacy compounds everything</b>
+    A single medication's individual risk is often modest. The real-world risk in aged care usually comes from the combination — sedating medications stacked together, several drugs that each independently cause orthostatic hypotension, or a new medication added on top of an already long list. If a client's presentation changes and you can't explain it clinically, a medication review is a reasonable thing to flag to nursing, the GP, or a pharmacist — this is well within a physio's scope to raise, not to diagnose.
+  </div>
+
+  <div class="callout bad">
+    <b>Scope note</b>
+    This module gives you enough to recognise a likely medication effect and know when to escalate. It does not replace a pharmacist-led medication review, and nothing here should be used to advise a client to stop or change a medication.
+  </div>
+
+  ${panelNav(null, "Parkinson's Medications", "parkinsons")}
+</section>
+
+<section class="panel" id="parkinsons">
+  <div class="section-head">
+    <div class="eyebrow">Section 2 · Parkinson's disease medications</div>
+    <h2>Levodopa and friends — why timing is everything</h2>
+    <p class="lede">Most PD medications work by topping up or mimicking dopamine. The single biggest practical issue for physios is that the effect wears off between doses — so the same person can look completely different depending on where they are in their medication cycle.</p>
+  </div>
+
+  <div class="sim">
+    <div class="sim-controls" id="pdControls">
+      <button class="sim-btn active" data-pd="on">🟢 "On" — medication working</button>
+      <button class="sim-btn danger" data-pd="off">🔴 "Off" — wearing off / due a dose</button>
+    </div>
+    <div class="sim-stage">
+      <div class="sim-visual" id="pdVisual"></div>
+      <div class="sim-readout" id="pdReadout"></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 Levodopa (Sinemet, Madopar)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p><b>Mobility:</b> the mainstay PD medication. Effect wears off between doses ("off" periods) — rigidity, slowness and freezing return before the next dose is due. Dyskinesia (excess involuntary movement) can appear at peak dose in more advanced disease and is itself a falls risk, just from the opposite direction.</p>
+      <p><b>Cognition:</b> generally low direct cognitive impact, but confusion or hallucinations can appear at higher doses or in advanced disease.</p>
+      <p><b>Physio note:</b> ask when their last dose was and when the next is due. Book sessions for the "on" window where possible, and don't mistake a genuine "off" period for a permanent decline in function.</p>
+    </div>
+    <div class="card">
+      <h3>💊 Dopamine agonists (Pramipexole, Ropinirole)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p><b>Mobility:</b> orthostatic hypotension and sudden-onset sleepiness ("sleep attacks") are both recognised risks — relevant for standing transfers and any activity requiring sustained alertness.</p>
+      <p><b>Cognition:</b> hallucinations, and importantly, impulse control disorders — gambling, hypersexuality, compulsive spending or eating. Worth knowing about if a family member or care team raises a behaviour change; it's a recognised medication effect, not necessarily a character change.</p>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 COMT &amp; MAO-B inhibitors (Entacapone, Rasagiline)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip other">Interactions</span></div>
+      <p>Used alongside levodopa to smooth out and extend its effect — same "on/off" logic applies. Orthostatic hypotension is possible. MAO-B inhibitors carry a serotonin syndrome interaction risk with certain antidepressants and with tramadol — worth knowing if a client is on both.</p>
+    </div>
+    <div class="card">
+      <h3>💊 Amantadine</h3>
+      <div class="effect-row"><span class="echip cog">Cognition</span><span class="echip other">Other</span></div>
+      <p>Can cause confusion and hallucinations in older people, sometimes more than the levodopa itself. Also associated with ankle swelling and a mottled skin appearance on the legs (livedo reticularis) — not a falls issue, but worth recognising as a medication effect rather than a new circulatory concern.</p>
+    </div>
+  </div>
+
+  ${panelNav("why", "BP & Heart Medications", "cardiac")}
+</section>
+
+<section class="panel" id="cardiac">
+  <div class="section-head">
+    <div class="eyebrow">Section 3 · Blood pressure &amp; cardiovascular medications</div>
+    <h2>The class most likely to drop someone's blood pressure on standing</h2>
+    <p class="lede">Almost every client you see is on at least one of these. Their shared thread is orthostatic hypotension — a drop in blood pressure on standing — which is one of the most common, most overlooked contributors to falls in aged care.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 Beta-blockers (Metoprolol, Atenolol, Bisoprolol)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span></div>
+      <p>Blunt the heart's ability to speed up during exercise. <b>This means heart rate is not a reliable measure of exertion for these clients</b> — use rating of perceived exertion (RPE) or talk test instead when grading intensity. Can also cause fatigue and, less commonly, bradycardia or dizziness.</p>
+    </div>
+    <div class="card">
+      <h3>💊 ACE inhibitors &amp; ARBs (Perindopril, Irbesartan)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span></div>
+      <p>Orthostatic hypotension is most pronounced after the first dose or a recent dose increase — worth double-checking sitting-to-standing tolerance if a client's medication list has changed recently. ACE inhibitors also commonly cause a dry cough, which can affect breathlessness perception during exercise.</p>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 Calcium channel blockers (Amlodipine)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span></div>
+      <p>Orthostatic hypotension and dizziness, plus ankle swelling that's common enough to affect footwear fit and gait — check shoes still fit properly if oedema has developed since last review.</p>
+    </div>
+    <div class="card">
+      <h3>💊 Diuretics (Furosemide/Frusemide, thiazides)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p>Orthostatic hypotension, dehydration, and electrolyte shifts — low sodium can cause confusion, low potassium can cause muscle weakness and cramping. Increased urinary frequency and nocturia are a major indirect falls risk: many falls happen on the way to the bathroom overnight.</p>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <b>Practical tip: the "sit, stand, pause" check</b>
+    For any client on one or more of these medications, build in a brief pause after standing before mobilising — this is often enough to catch a symptomatic BP drop before it becomes a fall, and it's a habit worth reinforcing with care staff and family too.
+  </div>
+
+  ${panelNav("parkinsons", "Anticoagulants & Bleeding Risk", "bleeding")}
+</section>
+
+<section class="panel" id="bleeding">
+  <div class="section-head">
+    <div class="eyebrow">Section 4 · Anticoagulants &amp; antiplatelets</div>
+    <h2>Why a "minor" fall isn't minor on these medications</h2>
+    <p class="lede">Anticoagulants and antiplatelets don't usually change how someone moves — but they change what a fall means afterward. This is the single most important medication-related escalation decision a physio in aged care will make.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 Warfarin</h3>
+      <div class="effect-row"><span class="echip bleed">Bleeding risk</span></div>
+      <p>Bleeding risk is monitored via INR — a higher INR means higher risk. Look for unexplained bruising as a general marker of current bleeding tendency. Any fall with a head strike warrants medical review regardless of how the person seems immediately afterward.</p>
+    </div>
+    <div class="card">
+      <h3>💊 DOACs (Apixaban, Rivaroxaban, Dabigatran)</h3>
+      <div class="effect-row"><span class="echip bleed">Bleeding risk</span></div>
+      <p>Similar bleeding risk to warfarin, but with no routine blood test to check it day to day — the risk is "silent" from a physio's point of view. Don't assume lower risk just because there's no INR to point to.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>💊 Antiplatelets (Aspirin, Clopidogrel)</h3>
+    <div class="effect-row"><span class="echip bleed">Bleeding risk</span></div>
+    <p>Lower bleeding risk than anticoagulants individually, but real — and some clients are on an antiplatelet <i>and</i> an anticoagulant together (dual therapy), which meaningfully raises the risk further. Check the full medication list, not just whether someone is "on blood thinners."</p>
+  </div>
+
+  <div class="sim">
+    <div class="sim-controls" id="bleedControls">
+      <button class="sim-btn active" data-bleed="nohead">Fall, no head impact, on blood thinners</button>
+      <button class="sim-btn danger" data-bleed="head">Fall with head impact, on blood thinners</button>
+      <button class="sim-btn" data-bleed="nomeds">Fall with head impact, not on blood thinners</button>
+    </div>
+    <div class="sim-stage">
+      <div class="sim-visual" id="bleedVisual"></div>
+      <div class="sim-readout" id="bleedReadout"></div>
+    </div>
+  </div>
+
+  <div class="callout bad">
+    <b>The key message</b>
+    On an anticoagulant or antiplatelet, a fall with any head impact — even if the person seems entirely well, alert and orientated straight after — needs urgent medical or ED review. Delayed intracranial bleeding (e.g. a subdural haematoma) can present hours to days later, and older adults on these medications are at meaningfully higher risk. "They seem fine" is not a reason to skip the review.
+  </div>
+
+  ${panelNav("cardiac", "Psychotropics & BPSD Medications", "psychotropics")}
+</section>
+
+<section class="panel" id="psychotropics">
+  <div class="section-head">
+    <div class="eyebrow">Section 5 · Psychotropics &amp; medications for behavioural symptoms</div>
+    <h2>The highest-risk group for falls, sedation and confusion</h2>
+    <p class="lede">This group — antipsychotics (often used for behavioural and psychological symptoms of dementia, or "BPSD"), benzodiazepines, antidepressants and sleep medications — carries the strongest and most consistent association with falls of any medication class in aged care.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 Antipsychotics (Risperidone, Quetiapine, Olanzapine)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p>Sedation and orthostatic hypotension both increase falls risk directly. Importantly for physios: these medications can cause drug-induced parkinsonism — rigidity, a shuffling gait, and reduced arm swing that closely mimics actual Parkinson's disease. If a client develops a new parkinsonian gait pattern shortly after starting or increasing one of these medications, consider whether it's the medication rather than a new neurological diagnosis, and flag it.</p>
+    </div>
+    <div class="card">
+      <h3>💊 Benzodiazepines (Diazepam, Temazepam, Oxazepam)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p>Sedation, slowed reaction time, muscle relaxation that can blunt the protective "catch yourself" reflex, and confusion — a classic, well-documented falls risk in older adults. Generally recommended to minimise or avoid in this population where possible (per Beers Criteria-type guidance), though that decision sits with the prescriber.</p>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 Antidepressants (SSRIs, TCAs)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p>SSRIs (e.g. Sertraline) are generally better tolerated but still carry some falls association and a risk of low sodium (hyponatraemia) causing confusion. Older-style tricyclic antidepressants (e.g. Amitriptyline) are more strongly anticholinergic — sedation, orthostatic hypotension, confusion and blurred vision — and are one of the classic medication classes flagged as higher-risk in older adults.</p>
+    </div>
+    <div class="card">
+      <h3>💊 "Z-drugs" for sleep (Zolpidem, Zopiclone)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p>Marketed as gentler than benzodiazepines, but carry a similar falls and confusion risk profile in older adults — particularly if the person wakes overnight to go to the toilet while still sedated.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🚩 Red flags a psychotropic medication may be contributing to a fall or functional change</h3>
+    <ul id="redFlagList" class="checklist"></ul>
+  </div>
+
+  ${panelNav("bleeding", "Opioids & Diabetes Medications", "opioids")}
+</section>
+
+<section class="panel" id="opioids">
+  <div class="section-head">
+    <div class="eyebrow">Section 6 · Opioids &amp; diabetes medications</div>
+    <h2>Two very different mechanisms, the same end result: a fall</h2>
+    <p class="lede">Opioids and glucose-lowering medications don't share a drug class, but both are common causes of sudden, situational falls risk that can appear and disappear within the same day.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 Opioids (Oxycodone, Tramadol, Codeine, Morphine)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p>Sedation, dizziness and slowed reaction time increase falls risk, especially around dose changes when tolerance hasn't built up yet. Constipation is common and can indirectly reduce mobility and participation. Tramadol specifically lowers the seizure threshold and carries a serotonin syndrome risk when combined with SSRIs or MAO-B inhibitors used for Parkinson's — worth checking the full medication list.</p>
+    </div>
+    <div class="card">
+      <h3>💊 Insulin &amp; sulfonylureas (Gliclazide, Glipizide)</h3>
+      <div class="effect-row"><span class="echip mob">Mobility</span><span class="echip cog">Cognition</span></div>
+      <p>Hypoglycaemia causes sudden dizziness, confusion, sweating and unsteadiness — a genuine falls risk that can come on quickly, particularly around peak medication action or if a meal is delayed or missed. Sulfonylureas carry higher hypoglycaemia risk in people with reduced kidney function, which is common in older age.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>💊 Metformin</h3>
+    <div class="effect-row"><span class="echip other">Lower falls risk</span></div>
+    <p>Low hypoglycaemia risk on its own (it doesn't force insulin release the way sulfonylureas do), but can cause GI upset, and needs caution in significant kidney impairment. Included here mainly as a useful contrast — not every diabetes medication carries the same falls risk.</p>
+  </div>
+
+  <div class="callout warn">
+    <b>Practical tip</b>
+    If a client on insulin or a sulfonylurea reports feeling suddenly "off," shaky, sweaty or unsteady mid-session, treat it as a possible hypoglycaemic episode first — stop the activity, follow the facility's protocol, and don't push through it as deconditioning or fatigue.
+  </div>
+
+  ${panelNav("psychotropics", "Antibiotics", "antibiotics")}
+</section>
+
+<section class="panel" id="antibiotics">
+  <div class="section-head">
+    <div class="eyebrow">Section 7 · Antibiotics</div>
+    <h2>Usually short-term — but two things worth knowing</h2>
+    <p class="lede">Antibiotics aren't a long-term falls-risk medication class the way psychotropics are, but two specific issues come up often enough in aged care to be worth flagging.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>💊 Fluoroquinolones (Ciprofloxacin, Norfloxacin)</h3>
+      <div class="effect-row"><span class="echip other">Tendon injury</span><span class="echip cog">Cognition</span></div>
+      <p>The one antibiotic class directly relevant to physio practice: fluoroquinolones carry a recognised risk of tendon rupture and tendinopathy, most often the Achilles tendon. Risk is higher in older adults, and higher again with concurrent corticosteroid use. Take new heel or tendon pain seriously in a client who has recently started one of these, and consider modifying loading rather than pushing through it. Confusion and peripheral neuropathy are also possible, particularly in older adults.</p>
+    </div>
+    <div class="card">
+      <h3>🩺 Any antibiotic course, for any infection</h3>
+      <div class="effect-row"><span class="echip cog">Cognition</span><span class="echip mob">Mobility</span></div>
+      <p>A sudden drop in alertness, orientation or mobility during a course of antibiotics is very often the underlying infection causing delirium — a UTI is a classic trigger — rather than a direct effect of the antibiotic itself. Either way, expect fluctuating presentation during this window and grade session intensity and safety accordingly rather than assuming a permanent decline.</p>
+    </div>
+  </div>
+
+  <div class="callout good">
+    <b>What this means for your sessions</b>
+    During an acute antibiotic course, treat a "bad day" as potentially explained by the underlying illness rather than a new baseline. Reassess function once the course finishes and the person has recovered, rather than updating long-term goals off a single unwell presentation.
+  </div>
+
+  ${panelNav("opioids", "Search Medications", "search")}
+</section>
+
+<section class="panel" id="search">
+  <div class="section-head">
+    <div class="eyebrow">Section 8 · Quick reference</div>
+    <h2>Search medications by name or condition</h2>
+    <p class="lede">Type a medication name (brand or generic) or a condition/effect — like "falls," "confusion," "bleeding," or "Parkinson's" — to pull up a quick summary. Use the filter chips to browse by category.</p>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="medSearchInput" placeholder="Search by medication name or condition, e.g. &quot;amlodipine&quot; or &quot;falls risk&quot;">
+  </div>
+  <div class="chip-row" id="medFilterChips"></div>
+  <div id="medResultsCount"></div>
+  <div class="med-grid" id="medResults"></div>
+
+  ${panelNav("antibiotics", "Check Your Knowledge", "quiz")}
+</section>
+
+<section class="panel" id="quiz">
+  <div class="section-head">
+    <div class="eyebrow">Section 9 · Competency check</div>
+    <h2>Check your knowledge</h2>
+    <p class="lede">Ten questions covering the key medication effects from this module.</p>
+  </div>
+
+  <div id="quizArea"></div>
+  <div class="quiz-score" id="quizScore">
+    <div class="num" id="quizScoreNum">0/10</div>
+    <div id="quizScoreMsg"></div>
+    <div class="completion-status" id="completionStatus"></div>
+    <button class="quiz-reset" onclick="resetQuiz()">Try again</button>
+  </div>
+
+  ${panelNav("search", "", null)}
+</section>
+`;
+
+/* ---------------------------------------------------------
+   PD ON/OFF SIMULATOR
+--------------------------------------------------------- */
+const pdData = {
+  on:{
+    status:"safe",
+    title:'"On" — medication at effective levels',
+    text:"Smoother, faster movement; more normal stride length and arm swing; easier transfers and turning. This is the window to schedule gait training, strengthening, or anything requiring coordinated movement — you're seeing closer to the person's real capacity.",
+    svg:`<svg width="150" height="150" viewBox="0 0 150 150" role="img" aria-label="Figure walking with a normal, upright gait">
+      <circle cx="75" cy="34" r="14" fill="var(--acp-blue)" opacity=".85"/>
+      <line x1="75" y1="48" x2="75" y2="95" stroke="var(--figure-dark)" stroke-width="10" stroke-linecap="round"/>
+      <line x1="75" y1="60" x2="55" y2="75" stroke="var(--figure-dark)" stroke-width="8" stroke-linecap="round"/>
+      <line x1="75" y1="60" x2="96" y2="72" stroke="var(--figure-dark)" stroke-width="8" stroke-linecap="round"/>
+      <line x1="75" y1="95" x2="58" y2="130" stroke="var(--figure)" stroke-width="9" stroke-linecap="round"/>
+      <line x1="75" y1="95" x2="94" y2="128" stroke="var(--figure)" stroke-width="9" stroke-linecap="round"/>
+      <text x="75" y="146" font-size="11" fill="var(--good)" font-family="Lexend, sans-serif" text-anchor="middle" font-weight="700">Fluid, coordinated</text>
+    </svg>`
+  },
+  off:{
+    status:"risk",
+    title:'"Off" — medication wearing off',
+    text:"Rigidity, slowness (bradykinesia), shortened shuffling steps, and a higher risk of freezing episodes — especially at doorways or turns. This is not a sign that therapy 'isn't working'; it's the expected pattern between doses. Reschedule non-essential loading tasks for the next 'on' window rather than pushing through.",
+    svg:`<svg width="150" height="150" viewBox="0 0 150 150" role="img" aria-label="Figure with a stooped, shuffling, rigid gait">
+      <circle cx="70" cy="40" r="13" fill="var(--acp-red)" opacity=".85"/>
+      <path d="M70 52 Q78 75 68 96" stroke="var(--figure-dark)" stroke-width="10" stroke-linecap="round" fill="none"/>
+      <line x1="72" y1="62" x2="58" y2="80" stroke="var(--figure-dark)" stroke-width="8" stroke-linecap="round"/>
+      <line x1="70" y1="96" x2="60" y2="122" stroke="var(--figure)" stroke-width="9" stroke-linecap="round"/>
+      <line x1="70" y1="96" x2="76" y2="122" stroke="var(--figure)" stroke-width="9" stroke-linecap="round"/>
+      <text x="75" y="146" font-size="11" fill="var(--bad)" font-family="Lexend, sans-serif" text-anchor="middle" font-weight="700">Stooped, shuffling</text>
+    </svg>`
+  }
+};
+function renderPD(key){
+  const d = pdData[key];
+  document.querySelectorAll("#pdControls .sim-btn").forEach(b=>b.classList.toggle("active", b.dataset.pd===key));
+  document.getElementById("pdVisual").innerHTML = d.svg;
+  document.getElementById("pdReadout").innerHTML = `
+    <span class="status-badge ${d.status}">${d.status==="safe"?"✅ Good window for therapy":"⚠️ Higher fall/freeze risk"}</span>
+    <h4>${d.title}</h4>
+    <p>${d.text}</p>`;
+}
+document.getElementById("pdControls").addEventListener("click", e=>{
+  const btn = e.target.closest(".sim-btn");
+  if(!btn) return;
+  renderPD(btn.dataset.pd);
+});
+renderPD("on");
+
+/* ---------------------------------------------------------
+   BLEEDING RISK PATHWAY
+--------------------------------------------------------- */
+const bleedData = {
+  nohead:{
+    status:"caution",
+    title:"No head impact, but on an anticoagulant/antiplatelet",
+    text:"Assess and document as normal — check for pain, swelling, deformity and ability to weight-bear. Monitor the fall site over the following days for delayed bruising, which can be more pronounced and longer-lasting on these medications. Escalate if new pain, swelling or bruising develops.",
+    icon:"⚠️"
+  },
+  head:{
+    status:"risk",
+    title:"Head impact, on an anticoagulant/antiplatelet",
+    text:"Urgent medical or ED review is needed — regardless of how the person presents immediately afterward. Delayed intracranial bleeding can take hours to days to become apparent, and this population is at meaningfully elevated risk. Do not wait for symptoms to appear before escalating.",
+    icon:"⛔"
+  },
+  nomeds:{
+    status:"caution",
+    title:"Head impact, not on an anticoagulant/antiplatelet",
+    text:"Still assess for signs of head injury and follow your facility's post-fall head injury protocol — head injuries need appropriate monitoring regardless of medications. The absence of a blood thinner lowers the risk of delayed bleeding but does not remove the need for standard head injury observation.",
+    icon:"⚠️"
+  }
+};
+function renderBleed(key){
+  const d = bleedData[key];
+  document.querySelectorAll("#bleedControls .sim-btn").forEach(b=>b.classList.toggle("active", b.dataset.bleed===key));
+  document.getElementById("bleedVisual").innerHTML = `<div style="font-size:56px;">${d.icon}</div>`;
+  document.getElementById("bleedReadout").innerHTML = `
+    <span class="status-badge ${d.status}">${d.status==="risk"?"⛔ Urgent medical review":"⚠️ Assess & monitor"}</span>
+    <h4>${d.title}</h4>
+    <p>${d.text}</p>`;
+}
+document.getElementById("bleedControls").addEventListener("click", e=>{
+  const btn = e.target.closest(".sim-btn");
+  if(!btn) return;
+  renderBleed(btn.dataset.bleed);
+});
+renderBleed("nohead");
+
+/* ---------------------------------------------------------
+   RED FLAG CHECKLIST
+--------------------------------------------------------- */
+const redFlags = [
+  {t:"New or increased daytime drowsiness", d:"Especially if it coincides with a new medication or a recent dose increase."},
+  {t:"New unsteadiness or a change in gait pattern", d:"Including a new shuffling, rigid, or 'parkinsonian' pattern that wasn't there before."},
+  {t:"Dizziness or lightheadedness on standing", d:"Classic sign of orthostatic hypotension — check lying/sitting/standing BP if this is reportable in your setting."},
+  {t:"New confusion or disorientation", d:"Consider both direct medication effect and delirium secondary to an acute illness or infection."},
+  {t:"Recent medication change", d:"A new medication, a dose increase, or several medications started around the same time."},
+  {t:"Unexplained bruising", d:"Worth noting alongside anticoagulant/antiplatelet use, not just as a general observation."}
+];
+const redFlagList = document.getElementById("redFlagList");
+redFlags.forEach((item,i)=>{
+  const li = document.createElement("li");
+  li.dataset.i = i;
+  li.tabIndex = 0;
+  li.setAttribute("role","checkbox");
+  li.setAttribute("aria-checked","false");
+  li.innerHTML = `<div class="box"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="txt"><b>${item.t}</b><span>${item.d}</span></div>`;
+  const toggle = ()=>{
+    li.classList.toggle("checked");
+    li.setAttribute("aria-checked", li.classList.contains("checked") ? "true" : "false");
+  };
+  li.addEventListener("click", toggle);
+  li.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(); } });
+  redFlagList.appendChild(li);
+});
+
+/* ---------------------------------------------------------
+   MEDICATION SEARCH DATABASE
+--------------------------------------------------------- */
+const medDB = [
+  {name:"Levodopa / Carbidopa", aka:"Sinemet, Madopar", cat:"parkinsons", uses:"Parkinson's disease — main symptom control", mobility:"Wearing-off causes rigidity, slowness and freezing before the next dose; peak-dose dyskinesia possible in advanced disease.", cognition:"Low direct impact generally; confusion/hallucinations possible at higher doses or advanced disease.", bleeding:"Not relevant.", note:"Schedule therapy in the 'on' window where possible."},
+  {name:"Dopamine agonists", aka:"Pramipexole, Ropinirole", cat:"parkinsons", uses:"Parkinson's disease", mobility:"Orthostatic hypotension; sudden-onset sleepiness ('sleep attacks').", cognition:"Hallucinations; impulse control disorders (gambling, hypersexuality, compulsive behaviours).", bleeding:"Not relevant.", note:"Flag new impulsive/compulsive behaviours as a possible medication effect."},
+  {name:"COMT inhibitors", aka:"Entacapone", cat:"parkinsons", uses:"Extends levodopa effect in Parkinson's disease", mobility:"Same wearing-off pattern as levodopa; orthostatic hypotension possible.", cognition:"Low direct impact.", bleeding:"Not relevant.", note:"Can harmlessly discolour urine orange — not a medical concern."},
+  {name:"MAO-B inhibitors", aka:"Rasagiline, Selegiline", cat:"parkinsons", uses:"Parkinson's disease", mobility:"Orthostatic hypotension possible.", cognition:"Low direct impact.", bleeding:"Not relevant.", note:"Serotonin syndrome risk with some antidepressants and with tramadol — check full medication list."},
+  {name:"Amantadine", aka:"", cat:"parkinsons", uses:"Parkinson's disease; dyskinesia", mobility:"Ankle swelling; mottled skin (livedo reticularis) — not a falls issue.", cognition:"Confusion and hallucinations in older adults, sometimes more than levodopa itself.", bleeding:"Not relevant.", note:"Consider as a cause of new confusion in a PD client."},
+  {name:"Beta-blockers", aka:"Metoprolol, Atenolol, Bisoprolol", cat:"cardiac", uses:"High blood pressure, heart rate control, heart failure", mobility:"Blunts heart rate response to exercise — use RPE, not HR, to grade intensity. Fatigue, occasional bradycardia/dizziness.", cognition:"Low direct impact.", bleeding:"Not relevant.", note:"Don't rely on heart rate for exertion monitoring in these clients."},
+  {name:"ACE inhibitors / ARBs", aka:"Perindopril, Irbesartan", cat:"cardiac", uses:"High blood pressure, heart failure, kidney protection", mobility:"Orthostatic hypotension, most pronounced after first dose or a recent increase.", cognition:"Low direct impact.", bleeding:"Not relevant.", note:"ACE inhibitors can cause a dry cough affecting breathlessness perception."},
+  {name:"Calcium channel blockers", aka:"Amlodipine", cat:"cardiac", uses:"High blood pressure, angina", mobility:"Orthostatic hypotension, dizziness, ankle swelling affecting footwear fit.", cognition:"Low direct impact.", bleeding:"Not relevant.", note:"Check shoe fit if ankle oedema has developed."},
+  {name:"Diuretics", aka:"Furosemide/Frusemide, thiazides", cat:"cardiac", uses:"High blood pressure, fluid overload, heart failure", mobility:"Orthostatic hypotension, dehydration, urinary frequency/nocturia — a major indirect falls risk overnight.", cognition:"Electrolyte shifts: low sodium can cause confusion, low potassium can cause weakness/cramps.", bleeding:"Not relevant.", note:"Nocturia-related falls are common — check the path to the bathroom is clear and lit."},
+  {name:"Warfarin", aka:"Coumadin", cat:"bleeding", uses:"Anticoagulation — AF, DVT/PE, mechanical heart valves", mobility:"No direct mobility effect.", cognition:"No direct cognitive effect.", bleeding:"High — risk tracked via INR. Watch for unexplained bruising.", note:"Any fall with head impact needs urgent medical review, regardless of how the person seems."},
+  {name:"DOACs", aka:"Apixaban, Rivaroxaban, Dabigatran", cat:"bleeding", uses:"Anticoagulation — AF, DVT/PE", mobility:"No direct mobility effect.", cognition:"No direct cognitive effect.", bleeding:"High — similar to warfarin, but no routine blood test to check it; risk is 'silent.'", note:"Same urgent-review rule after a head impact as warfarin."},
+  {name:"Antiplatelets", aka:"Aspirin, Clopidogrel", cat:"bleeding", uses:"Cardiovascular/stroke prevention", mobility:"No direct mobility effect.", cognition:"No direct cognitive effect.", bleeding:"Moderate — higher if combined with an anticoagulant (dual therapy).", note:"Check the full medication list for combined anticoagulant + antiplatelet use."},
+  {name:"Antipsychotics", aka:"Risperidone, Quetiapine, Olanzapine", cat:"psychotropics", uses:"Behavioural and psychological symptoms of dementia (BPSD), psychosis", mobility:"Sedation, orthostatic hypotension, and drug-induced parkinsonism (rigidity, shuffling gait) that can mimic actual Parkinson's disease.", cognition:"Sedation, confusion.", bleeding:"Not relevant.", note:"A new parkinsonian gait after starting this class may be the medication, not a new diagnosis."},
+  {name:"Benzodiazepines", aka:"Diazepam, Temazepam, Oxazepam", cat:"psychotropics", uses:"Anxiety, sleep, muscle spasm", mobility:"Sedation, slowed reaction time, muscle relaxation reducing protective reflexes — a classic falls risk.", cognition:"Confusion, drowsiness.", bleeding:"Not relevant.", note:"Generally minimised in older adults where possible."},
+  {name:"Antidepressants (SSRIs)", aka:"Sertraline, Escitalopram", cat:"psychotropics", uses:"Depression, anxiety", mobility:"Some falls association; generally better tolerated than older agents.", cognition:"Risk of low sodium (hyponatraemia) causing confusion.", bleeding:"Slightly increased bleeding tendency, especially combined with anticoagulants.", note:"Consider hyponatraemia if new confusion appears after starting an SSRI."},
+  {name:"Antidepressants (TCAs)", aka:"Amitriptyline", cat:"psychotropics", uses:"Depression, neuropathic pain", mobility:"Sedation, orthostatic hypotension.", cognition:"Confusion, blurred vision — strongly anticholinergic.", bleeding:"Not significant.", note:"Flagged as higher-risk in older adults; often avoided where alternatives exist."},
+  {name:"Z-drugs (sleep medications)", aka:"Zolpidem, Zopiclone", cat:"psychotropics", uses:"Insomnia", mobility:"Sedation, ataxia — falls risk especially with overnight waking to toilet.", cognition:"Confusion possible, similar profile to benzodiazepines despite marketing as gentler.", bleeding:"Not relevant.", note:"Treat with the same caution as benzodiazepines for falls risk."},
+  {name:"Opioids", aka:"Oxycodone, Tramadol, Codeine, Morphine", cat:"opioids", uses:"Pain management", mobility:"Sedation, dizziness, slowed reaction time — especially around dose changes.", cognition:"Cognitive clouding, confusion.", bleeding:"Not relevant.", note:"Tramadol: seizure threshold risk and serotonin syndrome risk with SSRIs/MAO-B inhibitors. Constipation can indirectly reduce mobility."},
+  {name:"Insulin", aka:"", cat:"diabetes", uses:"Diabetes — blood glucose control", mobility:"Hypoglycaemia causes sudden dizziness, unsteadiness — genuine falls risk.", cognition:"Confusion, sweating, shakiness with hypoglycaemia.", bleeding:"Not relevant.", note:"Time sessions with meals/peak insulin action in mind; treat sudden 'off' presentations as possible hypoglycaemia."},
+  {name:"Sulfonylureas", aka:"Gliclazide, Glipizide", cat:"diabetes", uses:"Diabetes — blood glucose control", mobility:"Hypoglycaemia risk similar to insulin, higher with reduced kidney function.", cognition:"Confusion, shakiness with hypoglycaemia.", bleeding:"Not relevant.", note:"Higher-risk diabetes medication class in older adults with renal impairment."},
+  {name:"Metformin", aka:"", cat:"diabetes", uses:"Diabetes — blood glucose control", mobility:"Low hypoglycaemia risk alone.", cognition:"Low direct impact.", bleeding:"Not relevant.", note:"Caution in significant kidney impairment; can cause GI upset."},
+  {name:"Fluoroquinolone antibiotics", aka:"Ciprofloxacin, Norfloxacin", cat:"antibiotics", uses:"Bacterial infections (e.g. UTI)", mobility:"Tendon rupture/tendinopathy risk, especially Achilles — higher in older adults and with concurrent corticosteroid use.", cognition:"Confusion and peripheral neuropathy possible in older adults.", bleeding:"Not relevant.", note:"Take new heel/tendon pain seriously in a client recently started on this class."},
+  {name:"Antibiotics generally", aka:"Any class", cat:"antibiotics", uses:"Bacterial infections", mobility:"Indirect — the underlying infection can cause acute functional decline.", cognition:"Delirium is common during acute infection/antibiotic courses, especially with UTIs.", bleeding:"Not relevant.", note:"Treat a 'bad day' during an antibiotic course as possibly explained by the illness, not a new baseline."}
+];
+const catLabels = {
+  all:"All", parkinsons:"Parkinson's", cardiac:"Cardiovascular", bleeding:"Anticoagulants",
+  psychotropics:"Psychotropics", opioids:"Opioids", diabetes:"Diabetes", antibiotics:"Antibiotics"
+};
+let activeCat = "all";
+const chipRow = document.getElementById("medFilterChips");
+Object.keys(catLabels).forEach(key=>{
+  const chip = document.createElement("button");
+  chip.className = "filter-chip" + (key==="all" ? " active" : "");
+  chip.textContent = catLabels[key];
+  chip.dataset.cat = key;
+  chip.addEventListener("click", ()=>{
+    activeCat = key;
+    document.querySelectorAll(".filter-chip").forEach(c=>c.classList.toggle("active", c.dataset.cat===key));
+    renderMedResults();
+  });
+  chipRow.appendChild(chip);
+});
+
+function medMatchesQuery(med, q){
+  if(!q) return true;
+  const haystack = [med.name, med.aka, med.uses, med.mobility, med.cognition, med.bleeding, med.note, catLabels[med.cat]].join(" ").toLowerCase();
+  return haystack.includes(q);
+}
+
+function renderMedResults(){
+  const q = document.getElementById("medSearchInput").value.trim().toLowerCase();
+  const results = medDB.filter(m => (activeCat==="all" || m.cat===activeCat) && medMatchesQuery(m, q));
+  const wrap = document.getElementById("medResults");
+  const countEl = document.getElementById("medResultsCount");
+  countEl.textContent = `${results.length} medication${results.length===1?"":"s"} shown`;
+  if(results.length===0){
+    wrap.innerHTML = `<p class="no-results">No medications match that search — try a different term, e.g. a condition like "falls" or "confusion."</p>`;
+    return;
+  }
+  wrap.innerHTML = results.map(m=>`
+    <div class="med-card">
+      <h4>${m.name}</h4>
+      ${m.aka ? `<div class="aka">${m.aka}</div>` : ""}
+      <div class="field"><b>Used for:</b> ${m.uses}</div>
+      <div class="field"><b>Mobility/falls:</b> ${m.mobility}</div>
+      <div class="field"><b>Orientation/cognition:</b> ${m.cognition}</div>
+      <div class="field"><b>Bleeding risk:</b> ${m.bleeding}</div>
+      <div class="field"><b>Physio note:</b> ${m.note}</div>
+    </div>
+  `).join("");
+}
+document.getElementById("medSearchInput").addEventListener("input", renderMedResults);
+renderMedResults();
+
+/* ---------------------------------------------------------
+   QUIZ
+--------------------------------------------------------- */
+const quizData = [
+  {
+    q:"A client is on a beta-blocker. How should you best judge their exercise intensity?",
+    opts:["Heart rate targets, same as anyone else","Rating of perceived exertion (RPE) or the talk test, not heart rate","Blood pressure only","Beta-blockers don't affect exercise monitoring"],
+    correct:1,
+    explain:"Beta-blockers blunt the heart's ability to speed up with exertion, so heart rate is not a reliable measure of intensity — use RPE or the talk test instead."
+  },
+  {
+    q:"A client on a DOAC has an unwitnessed fall with a head strike. They seem alert and well immediately afterward. What's the appropriate response?",
+    opts:["No action needed since they seem fine","Monitor informally over the next hour","Urgent medical/ED review regardless of how they currently present","Only escalate if they develop a headache"],
+    correct:2,
+    explain:"Delayed intracranial bleeding can appear hours to days later in someone on an anticoagulant. Seeming fine immediately after the fall doesn't rule this out — urgent review is needed regardless."
+  },
+  {
+    q:"Which medication class is most associated with drug-induced parkinsonism (rigidity, shuffling gait) that can mimic actual Parkinson's disease?",
+    opts:["Antipsychotics","Beta-blockers","Antibiotics","Metformin"],
+    correct:0,
+    explain:"Antipsychotics, often used for BPSD, can cause drug-induced parkinsonism — a gait pattern that closely resembles idiopathic Parkinson's disease."
+  },
+  {
+    q:"What's generally the best time to schedule therapy for a client on levodopa for Parkinson's disease?",
+    opts:["First thing in the morning before any medication","During their 'on' window, once the medication is working","It doesn't matter when — effect is constant","Right before their next dose is due"],
+    correct:1,
+    explain:"Levodopa's effect wears off between doses. Scheduling therapy during the 'on' window gives a truer picture of the client's capacity and a safer, more productive session."
+  },
+  {
+    q:"A client's family reports new, uncharacteristic gambling behaviour shortly after a medication change for Parkinson's disease. Which class is most likely responsible?",
+    opts:["Levodopa","Dopamine agonists","MAO-B inhibitors","COMT inhibitors"],
+    correct:1,
+    explain:"Dopamine agonists carry a recognised risk of impulse control disorders, including gambling, hypersexuality, and compulsive spending or eating."
+  },
+  {
+    q:"Which falls-related effect of benzodiazepines is most relevant to consider in a physio session?",
+    opts:["They raise blood pressure","They cause tendon rupture","Sedation and reduced protective reflexes, blunting the ability to 'catch' a stumble","They have no falls-related effects"],
+    correct:2,
+    explain:"Benzodiazepines cause sedation, slowed reaction time, and muscle relaxation that can blunt protective righting reflexes — a well-documented falls risk in older adults."
+  },
+  {
+    q:"Why are fluoroquinolone antibiotics specifically relevant to physiotherapy practice?",
+    opts:["They cause tendon rupture and tendinopathy, particularly Achilles","They lower blood pressure significantly","They cause permanent muscle weakness","They have no musculoskeletal relevance"],
+    correct:0,
+    explain:"Fluoroquinolones carry a recognised risk of tendon rupture and tendinopathy — take new tendon pain seriously in a client recently started on this class, especially if also on corticosteroids."
+  },
+  {
+    q:"A client becomes acutely confused partway through a course of antibiotics for a UTI. What's the most likely explanation?",
+    opts:["The antibiotic is directly causing permanent cognitive decline","Delirium secondary to the underlying infection — common in older adults with UTIs","This is unrelated and should be ignored","It means the antibiotic dose needs to be increased"],
+    correct:1,
+    explain:"Delirium secondary to an acute infection, especially a UTI, is a very common cause of sudden confusion in older adults — often more likely than a direct antibiotic effect."
+  },
+  {
+    q:"Which medication class requires timing therapy sessions around meals due to a hypoglycaemia risk?",
+    opts:["ACE inhibitors","Insulin and sulfonylureas","Antibiotics","Antiplatelets"],
+    correct:1,
+    explain:"Insulin and sulfonylureas can cause hypoglycaemia, which presents as sudden dizziness, confusion or unsteadiness — timing around meals reduces this risk."
+  },
+  {
+    q:"What's the key practical difference between DOACs and warfarin from a physio's point of view?",
+    opts:["DOACs carry no bleeding risk at all","DOACs have no routine blood test (like INR) to signal current bleeding risk, so the risk is 'silent' day to day","Warfarin is only used short-term","DOACs only affect mobility, not bleeding risk"],
+    correct:1,
+    explain:"DOACs carry a similar bleeding risk to warfarin but aren't routinely monitored with a blood test the way warfarin is with INR — so a physio can't gauge current risk from a lab value, and the same post-fall caution applies regardless."
+  }
+];
+let quizScore = 0;
+let quizAnswered = 0;
+function renderQuiz(){
+  quizScore = 0; quizAnswered = 0;
+  const area = document.getElementById("quizArea");
+  area.innerHTML = "";
+  document.getElementById("quizScore").classList.remove("show");
+  quizData.forEach((q,qi)=>{
+    const card = document.createElement("div");
+    card.className = "quiz-card";
+    card.innerHTML = `<div class="quiz-q">${qi+1}. ${q.q}</div>
+      <div class="quiz-opts">${q.opts.map((o,oi)=>`<button class="quiz-opt" data-q="${qi}" data-o="${oi}">${o}</button>`).join("")}</div>
+      <div class="quiz-explain" id="explain-${qi}">${q.explain}</div>`;
+    area.appendChild(card);
+  });
+  area.querySelectorAll(".quiz-opt").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const qi = Number(btn.dataset.q), oi = Number(btn.dataset.o);
+      const opts = area.querySelectorAll(`.quiz-opt[data-q="${qi}"]`);
+      if (opts[0].disabled) return;
+      opts.forEach(b=>b.disabled = true);
+      const correct = quizData[qi].correct;
+      opts[correct].classList.add("correct");
+      if (oi !== correct) opts[oi].classList.add("incorrect");
+      else quizScore++;
+      quizAnswered++;
+      document.getElementById(`explain-${qi}`).classList.add("show");
+      if (quizAnswered === quizData.length) showQuizScore();
+    });
+  });
+}
+function showQuizScore(){
+  const box = document.getElementById("quizScore");
+  document.getElementById("quizScoreNum").textContent = `${quizScore}/${quizData.length}`;
+  let msg = "";
+  if (quizScore === quizData.length) msg = "Excellent — full marks. Ready to apply this at the bedside.";
+  else if (quizScore >= quizData.length - 2) msg = "Strong result — review the missed items above before applying at the bedside.";
+  else msg = "Worth revisiting the relevant sections above before applying this independently.";
+  document.getElementById("quizScoreMsg").textContent = msg;
+  box.classList.add("show");
+  recordCompletion(`${quizScore}/${quizData.length} correct`);
+}
+function resetQuiz(){
+  document.getElementById("completionStatus").textContent = "";
+  document.getElementById("completionStatus").className = "completion-status";
+  renderQuiz();
+}
+renderQuiz();
+
+updateProgress();
+
+initAuthGate();
+</script>
+</body>
+</html>
