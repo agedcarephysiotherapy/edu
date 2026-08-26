@@ -81,15 +81,28 @@
   th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);border-bottom:1px solid var(--line);padding:11px 10px;font-weight:600;}
   td{padding:13px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
   tbody tr:hover td{background:var(--paper);}
-  .row-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .row-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;}
+  .row-actions .btn{flex:0 0 auto;}
   .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;}
-  .table-wrap table{min-width:700px;}
   .table-wrap th{background:#fafafa;}
   .table-wrap tbody tr:nth-child(even) td{background:#fbfbfc;}
   .table-wrap tbody tr:hover td{background:var(--blue-light);}
   .table-wrap th:first-child,.table-wrap td:first-child{padding-left:16px;}
   .table-wrap th:last-child,.table-wrap td:last-child{padding-right:16px;}
   .table-wrap tbody tr:last-child td{border-bottom:none;}
+  .table-wrap td{overflow-wrap:break-word;word-break:break-word;}
+  /* Roles table: fixed layout so long category chips can't balloon the
+     table wider than its container and push the action buttons off
+     screen — every column gets a guaranteed share of the width instead. */
+  #rolesTable table{table-layout:fixed;min-width:560px;}
+  #rolesTable th:nth-child(1),#rolesTable td:nth-child(1){width:16%;}
+  #rolesTable th:nth-child(2),#rolesTable td:nth-child(2){width:19%;}
+  #rolesTable th:nth-child(3),#rolesTable td:nth-child(3){width:13%;}
+  #rolesTable th:nth-child(4),#rolesTable td:nth-child(4){width:12%;}
+  #rolesTable th:nth-child(5),#rolesTable td:nth-child(5){width:22%;}
+  #rolesTable th:nth-child(6),#rolesTable td:nth-child(6){width:18%;}
+  #rolesTable .chip-check{white-space:normal;text-align:left;line-height:1.2;}
+  #rolesTable .approval-tag,#rolesTable .role-tag{white-space:nowrap;}
   .badge{display:inline-block;padding:4px 12px;border-radius:980px;font-size:11.5px;font-weight:700;}
   .badge.pass{background:#E3F1E8;color:var(--success);}
   .badge.fail{background:#F6E4E1;color:var(--danger);}
