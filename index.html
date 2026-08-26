@@ -10,7 +10,7 @@
     --brand:#CC3300; --brand-dark:#A32900; --brand-light:#FBEAE3;
     --blue:#336699; --blue-dark:#25507A; --blue-light:#EAF1F7;
     --ink:#1D1D1F; --muted:#6E6E73; --paper:#F5F5F7; --card:#FFFFFF;
-    --line:#D2D2D7; --success:#2F7D4F; --danger:#B23A2E;
+    --line:#D2D2D7; --success:#2F7D4F; --danger:#B23A2E; --warn:#B8860B; --warn-tint:#FBF3DD;
   }
   *{box-sizing:border-box;}
   body{
@@ -127,18 +127,19 @@
     background:#fafafa;font-size:10.5px;text-transform:uppercase;color:var(--muted);
     position:sticky;top:0;z-index:2;box-shadow:0 1px 0 var(--line);
   }
-  table.matrix td:nth-child(1),table.matrix td:nth-child(2),
-  table.matrix th:nth-child(1),table.matrix th:nth-child(2){
+  table.matrix td.audit-check-col,table.matrix td.col-name,
+  table.matrix th.audit-check-col,table.matrix th.col-name{
     text-align:left;position:sticky;background:#fff;white-space:nowrap;z-index:1;
   }
-  table.matrix td:nth-child(1),table.matrix th:nth-child(1){left:0;width:34px;padding-right:4px;}
-  table.matrix td:nth-child(2),table.matrix th:nth-child(2){left:34px;font-weight:600;box-shadow:2px 0 0 var(--line);}
-  table.matrix thead th:nth-child(1),table.matrix thead th:nth-child(2){z-index:3;}
+  table.matrix td.audit-check-col,table.matrix th.audit-check-col{left:0;width:34px;padding-right:4px;}
+  table.matrix td.col-name,table.matrix th.col-name{left:34px;font-weight:600;box-shadow:2px 0 0 var(--line);}
+  table.matrix thead th.audit-check-col,table.matrix thead th.col-name{z-index:3;}
   table.matrix tbody tr:nth-child(even) td{background:#fbfbfc;}
-  table.matrix tbody tr:nth-child(even) td:nth-child(1),
-  table.matrix tbody tr:nth-child(even) td:nth-child(2){background:#fbfbfc;}
+  table.matrix tbody tr:nth-child(even) td.audit-check-col,
+  table.matrix tbody tr:nth-child(even) td.col-name{background:#fbfbfc;}
   table.matrix .staff-name .cats{display:block;font-weight:400;color:var(--muted);font-size:10.5px;margin-top:2px;}
   table.matrix .cell-done{color:var(--success);font-weight:700;font-size:14px;}
+  table.matrix .cell-attempted{color:var(--warn);font-weight:700;font-size:13px;}
   table.matrix .cell-missing{color:var(--danger);font-weight:700;font-size:14px;}
   table.matrix .cell-na{color:var(--line);}
   table.matrix .summary-badge{
@@ -193,6 +194,7 @@
     .btn.small{width:auto;}
   }
   @media print{
+    @page { size: landscape; margin: 10mm; }
     #loginScreen, #pendingScreen, #nameScreen, header.top .who, .backup-row, .tabs,
     #panel-add, #panel-courses, #panel-roles, #panel-mine,
     #staffFilterInput, #clearFilterBtn, #printRecordsBtn, label[for="staffFilterInput"],
@@ -209,10 +211,27 @@
     table{font-size:11px;}
     th{color:#000;border-bottom:2px solid #000;}
     .badge{border:1px solid #999;background:#fff !important;color:#000 !important;}
+
+    /* Staff-audit matrix: force it to actually fit the printed page instead
+       of silently clipping columns past the right edge. table-layout:fixed
+       + a narrow fixed width per course column lets many courses fit;
+       rotating the course-name headers keeps them readable at that width. */
     .matrix-wrap{max-height:none !important;overflow:visible !important;border:none;}
-    table.matrix thead th,table.matrix td:nth-child(1),table.matrix td:nth-child(2),
-    table.matrix th:nth-child(1),table.matrix th:nth-child(2){position:static !important;box-shadow:none !important;}
+    table.matrix{table-layout:fixed;width:100%;font-size:9px;page-break-inside:auto;}
+    table.matrix tr{page-break-inside:avoid;}
+    table.matrix th,table.matrix td{padding:3px 2px;white-space:normal;word-break:break-word;}
+    table.matrix th.audit-check-col,table.matrix td.audit-check-col,
+    table.matrix th.col-name,table.matrix td.col-name,
+    table.matrix th.col-summary,table.matrix td.col-summary{
+      position:static !important;box-shadow:none !important;width:auto;
+    }
     table.matrix th{color:#000;border-bottom:2px solid #000;}
+    table.matrix th.col-course{
+      writing-mode:vertical-rl;transform:rotate(180deg);
+      height:130px;width:16px;vertical-align:bottom;font-size:8.5px;padding:4px 1px;
+    }
+    table.matrix td.cell-done,table.matrix td.cell-attempted,
+    table.matrix td.cell-missing,table.matrix td.cell-na{width:16px;font-size:11px;}
     .print-hide-row{display:none !important;}
   }
 </style>
@@ -280,7 +299,7 @@
       <button data-tab="add">Record Completion</button>
       <button data-tab="courses">Courses</button>
       <button data-tab="roles">Manage Staff</button>
-      <button data-tab="audit">Audit</button>
+      <button data-tab="audit">Staff Audit</button>
     </div>
 
     <!-- STAFF: MY COMPLETIONS -->
@@ -393,8 +412,8 @@
     <!-- MANAGER: AUDIT -->
     <div id="panel-audit" class="panel" style="display:none;">
       <div class="card">
-        <h2>Course Audit</h2>
-        <p class="sub">Every approved staff member against every course they're expected to have (by category, individual assignment, or "everyone") — and whether they've completed it. Tick who to include, then print or export.</p>
+        <h2>Staff Audit</h2>
+        <p class="sub">Every approved staff member against every course they're expected to have (by category, individual assignment, or "everyone") — and whether they've successfully completed it, only attempted it, or not started. Tick who to include, then print or export.</p>
         <div id="auditPrintHeader" style="display:none;"></div>
         <div class="row" style="align-items:end;">
           <div>
@@ -1021,6 +1040,23 @@
   // ---------- AUDIT ----------
   let auditSelectedIds = null; // Set of staff ids to include in print/export; null = not yet initialised
 
+  // A completions row existing is not the same as having actually passed —
+  // "Fail"/"In Progress" are explicit non-completions, and free-text quiz
+  // scores ("6/8 correct") only count as a pass at the ≥75% threshold used
+  // across the quiz-gated course pages. Anything unrecognised is treated as
+  // NOT successful — never silently upgrade an unclear result to "complete".
+  function completionOutcome(result){
+    const r = String(result ?? "").trim();
+    if(r === "Pass" || r === "Attended") return "complete";
+    if(r === "Fail" || r === "In Progress") return "attempted";
+    const m = r.match(/(\d+)\s*\/\s*(\d+)/);
+    if(m){
+      const num = parseInt(m[1], 10), den = parseInt(m[2], 10);
+      if(den > 0) return (num / den) >= 0.75 ? "complete" : "attempted";
+    }
+    return "attempted"; // unrecognised result text — don't assume success
+  }
+
   function computeAuditData(){
     const staff = allProfiles.filter(p => p.status === "approved");
     const completionKey = (staffId, courseId) => `${staffId}::${courseId}`;
@@ -1029,11 +1065,13 @@
     const rows = staff.map(p=>{
       let expected = 0, done = 0;
       const cells = allCourses.map(c=>{
-        if(!isCourseVisibleTo(c.id, p.id)) return {course: c, applicable: false};
+        if(!isCourseVisibleTo(c.id, p.id)) return {course: c, applicable: false, status: "na"};
         expected++;
         const rec = completed.get(completionKey(p.id, c.id));
-        if(rec) done++;
-        return {course: c, applicable: true, record: rec || null};
+        if(!rec) return {course: c, applicable: true, status: "not-started", record: null};
+        const outcome = completionOutcome(rec.result);
+        if(outcome === "complete") done++;
+        return {course: c, applicable: true, status: outcome, record: rec};
       });
       return {profile: p, cells, expected, done};
     });
@@ -1059,6 +1097,13 @@
     renderAuditTable(document.getElementById("auditFilterInput")?.value.trim() || "");
   }
 
+  const AUDIT_CELL = {
+    complete:    {cls: "cell-done",      symbol: "✓", label: "Completed"},
+    attempted:   {cls: "cell-attempted", symbol: "⚠", label: "Attempted — not passed"},
+    "not-started": {cls: "cell-missing", symbol: "○", label: "Not started"},
+    na:          {cls: "cell-na",        symbol: "—", label: "Not applicable"}
+  };
+
   function renderAuditTable(filterText){
     const wrap = document.getElementById("auditMatrix");
     const rows = computeAuditData();
@@ -1076,8 +1121,8 @@
 
     let html = `<div class="matrix-wrap"><table class="matrix"><thead><tr>
         <th class="audit-check-col"><input type="checkbox" id="auditSelectAll" ${allVisibleSelected ? "checked" : ""}></th>
-        <th>Staff</th><th>Completed</th>` +
-      allCourses.map(c=>`<th>${c.name}</th>`).join("") + `</tr></thead><tbody>`;
+        <th class="col-name">Staff</th><th class="col-summary">Passed</th>` +
+      allCourses.map(c=>`<th class="col-course">${c.name}</th>`).join("") + `</tr></thead><tbody>`;
 
     visibleRows.forEach(r=>{
       const p = r.profile;
@@ -1086,20 +1131,23 @@
       const summaryCls = r.expected > 0 && r.done === r.expected ? "complete" : "";
       html += `<tr data-staffrow="${p.id}" class="${checked ? "" : "print-hide-row"}">
         <td class="audit-check-col"><input type="checkbox" data-audit-select="${p.id}" ${checked ? "checked" : ""}></td>
-        <td class="staff-name">${p.full_name || p.email}${cats ? `<span class="cats">${cats}</span>` : ""}</td>
-        <td><span class="summary-badge ${summaryCls}">${r.done}/${r.expected}</span></td>`;
+        <td class="col-name staff-name">${p.full_name || p.email}${cats ? `<span class="cats">${cats}</span>` : ""}</td>
+        <td class="col-summary"><span class="summary-badge ${summaryCls}">${r.done}/${r.expected}</span></td>`;
       r.cells.forEach(cell=>{
-        if(!cell.applicable){ html += `<td class="cell-na">—</td>`; return; }
-        html += cell.record
-          ? `<td class="cell-done" title="${fmtDate(cell.record.completion_date)} · ${cell.record.result||''}">✓</td>`
-          : `<td class="cell-missing" title="Expected, not yet completed">○</td>`;
+        const meta = AUDIT_CELL[cell.status];
+        const title = cell.status === "na" ? "Not applicable to this person"
+          : cell.status === "not-started" ? "Expected, not yet started"
+          : cell.status === "attempted" ? `Attempted, not passed — ${fmtDate(cell.record.completion_date)} · ${cell.record.result||""}`
+          : `Completed — ${fmtDate(cell.record.completion_date)} · ${cell.record.result||""}`;
+        html += `<td class="${meta.cls}" title="${title}">${meta.symbol}</td>`;
       });
       html += `</tr>`;
     });
     html += `</tbody></table></div>
       <div class="audit-legend">
-        <span><b class="cell-done" style="font-size:14px;">✓</b> completed</span>
-        <span><b class="cell-missing" style="font-size:14px;">○</b> expected, not yet done</span>
+        <span><b class="cell-done" style="font-size:14px;">✓</b> completed &amp; passed</span>
+        <span><b class="cell-attempted" style="font-size:13px;">⚠</b> attempted, not passed</span>
+        <span><b class="cell-missing" style="font-size:14px;">○</b> expected, not started</span>
         <span><b class="cell-na" style="font-size:14px;">—</b> not applicable to this person</span>
       </div>`;
     wrap.innerHTML = html;
@@ -1134,7 +1182,7 @@
       return;
     }
     const header = document.getElementById("auditPrintHeader");
-    header.innerHTML = `<strong>Aged Care Physiotherapy — Course Audit Report</strong><br>
+    header.innerHTML = `<strong>Aged Care Physiotherapy — Staff Audit Report</strong><br>
       ${auditSelectedIds.size} staff member${auditSelectedIds.size===1?"":"s"} included
       &nbsp;&middot;&nbsp; Printed ${new Date().toLocaleDateString("en-AU", {day:"numeric", month:"long", year:"numeric"})}`;
     window.print();
@@ -1146,14 +1194,16 @@
       return;
     }
     const rows = computeAuditData().filter(r => auditSelectedIds.has(r.profile.id));
-    const header = ["Staff", "Email", "Category", "Completed/Expected", ...allCourses.map(c=>c.name)];
+    const header = ["Staff", "Email", "Category", "Passed/Expected", ...allCourses.map(c=>c.name)];
     const lines = [header];
     rows.forEach(r=>{
       const cats = (r.profile.staff_categories||[]).map(c=>CATEGORY_LABELS[c]).join("; ");
       const line = [r.profile.full_name || "", r.profile.email || "", cats, `${r.done}/${r.expected}`];
       r.cells.forEach(cell=>{
-        if(!cell.applicable){ line.push("N/A"); return; }
-        line.push(cell.record ? `Completed ${fmtDate(cell.record.completion_date)} (${cell.record.result||""})` : "Not completed");
+        if(cell.status === "na"){ line.push("N/A"); return; }
+        if(cell.status === "not-started"){ line.push("Not started"); return; }
+        if(cell.status === "attempted"){ line.push(`Attempted, not passed — ${fmtDate(cell.record.completion_date)} (${cell.record.result||""})`); return; }
+        line.push(`Passed ${fmtDate(cell.record.completion_date)} (${cell.record.result||""})`);
       });
       lines.push(line);
     });
@@ -1162,7 +1212,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `course-audit-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `staff-audit-${new Date().toISOString().slice(0,10)}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
