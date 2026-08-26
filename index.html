@@ -120,16 +120,34 @@
     background:var(--line);border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;
     font-size:11px;line-height:1;color:var(--ink);
   }
-  .matrix-wrap{overflow-x:auto;}
-  table.matrix{border-collapse:collapse;font-size:12.5px;white-space:nowrap;}
-  table.matrix th,table.matrix td{padding:8px 10px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);text-align:center;}
-  table.matrix th{background:var(--paper);font-size:10.5px;text-transform:uppercase;color:var(--muted);}
-  table.matrix td:first-child,table.matrix th:first-child{
-    text-align:left;position:sticky;left:0;background:#fff;font-weight:600;white-space:nowrap;z-index:1;
+  .matrix-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;max-height:560px;overflow-y:auto;}
+  table.matrix{border-collapse:collapse;font-size:12.5px;white-space:nowrap;width:100%;}
+  table.matrix th,table.matrix td{padding:9px 12px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);text-align:center;}
+  table.matrix thead th{
+    background:#fafafa;font-size:10.5px;text-transform:uppercase;color:var(--muted);
+    position:sticky;top:0;z-index:2;box-shadow:0 1px 0 var(--line);
   }
-  table.matrix .cell-done{color:var(--success);font-weight:700;}
-  table.matrix .cell-missing{color:var(--danger);font-weight:700;}
+  table.matrix td:nth-child(1),table.matrix td:nth-child(2),
+  table.matrix th:nth-child(1),table.matrix th:nth-child(2){
+    text-align:left;position:sticky;background:#fff;white-space:nowrap;z-index:1;
+  }
+  table.matrix td:nth-child(1),table.matrix th:nth-child(1){left:0;width:34px;padding-right:4px;}
+  table.matrix td:nth-child(2),table.matrix th:nth-child(2){left:34px;font-weight:600;box-shadow:2px 0 0 var(--line);}
+  table.matrix thead th:nth-child(1),table.matrix thead th:nth-child(2){z-index:3;}
+  table.matrix tbody tr:nth-child(even) td{background:#fbfbfc;}
+  table.matrix tbody tr:nth-child(even) td:nth-child(1),
+  table.matrix tbody tr:nth-child(even) td:nth-child(2){background:#fbfbfc;}
+  table.matrix .staff-name .cats{display:block;font-weight:400;color:var(--muted);font-size:10.5px;margin-top:2px;}
+  table.matrix .cell-done{color:var(--success);font-weight:700;font-size:14px;}
+  table.matrix .cell-missing{color:var(--danger);font-weight:700;font-size:14px;}
   table.matrix .cell-na{color:var(--line);}
+  table.matrix .summary-badge{
+    display:inline-block;padding:3px 10px;border-radius:980px;font-size:11px;font-weight:700;
+    background:var(--blue-light);color:var(--blue-dark);
+  }
+  table.matrix .summary-badge.complete{background:#E3F1E8;color:var(--success);}
+  .audit-legend{display:flex;gap:16px;align-items:center;font-size:12px;color:var(--muted);margin-top:10px;flex-wrap:wrap;}
+  .audit-legend span{display:inline-flex;align-items:center;gap:5px;}
   .status-line{font-size:12.5px;color:var(--muted);margin-top:8px;min-height:14px;}
   .status-line.ok{color:var(--success);font-weight:600;}
   .status-line.err{color:var(--danger);}
@@ -177,7 +195,9 @@
   @media print{
     #loginScreen, #pendingScreen, #nameScreen, header.top .who, .backup-row, .tabs,
     #panel-add, #panel-courses, #panel-roles, #panel-mine,
-    #staffFilterInput, #clearFilterBtn, #printRecordsBtn, label[for="staffFilterInput"] {
+    #staffFilterInput, #clearFilterBtn, #printRecordsBtn, label[for="staffFilterInput"],
+    #auditFilterInput, #auditClearFilterBtn, #auditExportCsvBtn, #auditPrintBtn,
+    label[for="auditFilterInput"], .audit-check-col {
       display:none !important;
     }
     body{background:#fff;}
@@ -185,9 +205,15 @@
     .card{box-shadow:none;border:1px solid #000;border-radius:0;}
     .card-banner{display:none;}
     #printHeader{display:block !important;font-size:12px;color:#333;margin-bottom:10px;}
+    #auditPrintHeader{display:block !important;font-size:12px;color:#333;margin-bottom:10px;}
     table{font-size:11px;}
     th{color:#000;border-bottom:2px solid #000;}
     .badge{border:1px solid #999;background:#fff !important;color:#000 !important;}
+    .matrix-wrap{max-height:none !important;overflow:visible !important;border:none;}
+    table.matrix thead th,table.matrix td:nth-child(1),table.matrix td:nth-child(2),
+    table.matrix th:nth-child(1),table.matrix th:nth-child(2){position:static !important;box-shadow:none !important;}
+    table.matrix th{color:#000;border-bottom:2px solid #000;}
+    .print-hide-row{display:none !important;}
   }
 </style>
 </head>
@@ -368,7 +394,19 @@
     <div id="panel-audit" class="panel" style="display:none;">
       <div class="card">
         <h2>Course Audit</h2>
-        <p class="sub">Every approved staff member against every course they're expected to have (by category, individual assignment, or "everyone") — and whether they've completed it. Blank columns mean the course isn't relevant to that person.</p>
+        <p class="sub">Every approved staff member against every course they're expected to have (by category, individual assignment, or "everyone") — and whether they've completed it. Tick who to include, then print or export.</p>
+        <div id="auditPrintHeader" style="display:none;"></div>
+        <div class="row" style="align-items:end;">
+          <div>
+            <label for="auditFilterInput">Filter by Name or Email</label>
+            <input type="text" id="auditFilterInput" placeholder="e.g. Jane, or jane@acphysio.com.au">
+          </div>
+          <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
+            <button class="btn small ghost" id="auditClearFilterBtn">Clear Filter</button>
+            <button class="btn small blue" id="auditExportCsvBtn">⬇ Export CSV</button>
+            <button class="btn small blue" id="auditPrintBtn">🖨 Print Selected</button>
+          </div>
+        </div>
         <div id="auditMatrix"><p class="empty">Loading&hellip;</p></div>
       </div>
     </div>
@@ -980,42 +1018,156 @@
     });
   }
 
+  // ---------- AUDIT ----------
+  let auditSelectedIds = null; // Set of staff ids to include in print/export; null = not yet initialised
+
+  function computeAuditData(){
+    const staff = allProfiles.filter(p => p.status === "approved");
+    const completionKey = (staffId, courseId) => `${staffId}::${courseId}`;
+    const completed = new Map();
+    allCompletionsCache.forEach(c => completed.set(completionKey(c.staff_id, c.course_id), c));
+    const rows = staff.map(p=>{
+      let expected = 0, done = 0;
+      const cells = allCourses.map(c=>{
+        if(!isCourseVisibleTo(c.id, p.id)) return {course: c, applicable: false};
+        expected++;
+        const rec = completed.get(completionKey(p.id, c.id));
+        if(rec) done++;
+        return {course: c, applicable: true, record: rec || null};
+      });
+      return {profile: p, cells, expected, done};
+    });
+    return rows;
+  }
+
+  function csvEscape(v){
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+  }
+
   function renderAudit(){
     const wrap = document.getElementById("auditMatrix");
     if(!wrap) return;
-    const staff = allProfiles.filter(p => p.status === "approved");
-    if(staff.length===0 || allCourses.length===0){
+    const rows = computeAuditData();
+    if(rows.length===0 || allCourses.length===0){
       wrap.innerHTML = '<p class="empty">Nothing to audit yet — need at least one approved staff member and one course.</p>';
       return;
     }
-    // Completion lookup keyed on staff_id + course_id (allCompletionsCache is
-    // populated by renderAll(), which already runs for every manager session).
-    const completionKey = (staffId, courseId) => `${staffId}::${courseId}`;
-    const completed = new Map();
-    allCompletionsCache.forEach(c=>{
-      completed.set(completionKey(c.staff_id, c.course_id), c);
-    });
+    if(auditSelectedIds === null){
+      auditSelectedIds = new Set(rows.map(r => r.profile.id));
+    }
+    renderAuditTable(document.getElementById("auditFilterInput")?.value.trim() || "");
+  }
 
-    let html = `<div class="matrix-wrap"><table class="matrix"><thead><tr><th>Staff</th>` +
+  function renderAuditTable(filterText){
+    const wrap = document.getElementById("auditMatrix");
+    const rows = computeAuditData();
+    const needle = (filterText || "").toLowerCase();
+    const visibleRows = needle
+      ? rows.filter(r => (r.profile.full_name||"").toLowerCase().includes(needle) || (r.profile.email||"").toLowerCase().includes(needle))
+      : rows;
+
+    if(visibleRows.length===0){
+      wrap.innerHTML = `<p class="empty">No staff match that name or email.</p>`;
+      return;
+    }
+
+    const allVisibleSelected = visibleRows.every(r => auditSelectedIds.has(r.profile.id));
+
+    let html = `<div class="matrix-wrap"><table class="matrix"><thead><tr>
+        <th class="audit-check-col"><input type="checkbox" id="auditSelectAll" ${allVisibleSelected ? "checked" : ""}></th>
+        <th>Staff</th><th>Completed</th>` +
       allCourses.map(c=>`<th>${c.name}</th>`).join("") + `</tr></thead><tbody>`;
-    staff.forEach(p=>{
-      html += `<tr><td>${p.full_name || p.email}</td>`;
-      allCourses.forEach(c=>{
-        if(!isCourseVisibleTo(c.id, p.id)){
-          html += `<td class="cell-na">—</td>`;
-          return;
-        }
-        const done = completed.get(completionKey(p.id, c.id));
-        html += done
-          ? `<td class="cell-done" title="${fmtDate(done.completion_date)} · ${done.result||''}">✓</td>`
+
+    visibleRows.forEach(r=>{
+      const p = r.profile;
+      const checked = auditSelectedIds.has(p.id);
+      const cats = (p.staff_categories||[]).map(c=>CATEGORY_LABELS[c]).join(", ");
+      const summaryCls = r.expected > 0 && r.done === r.expected ? "complete" : "";
+      html += `<tr data-staffrow="${p.id}" class="${checked ? "" : "print-hide-row"}">
+        <td class="audit-check-col"><input type="checkbox" data-audit-select="${p.id}" ${checked ? "checked" : ""}></td>
+        <td class="staff-name">${p.full_name || p.email}${cats ? `<span class="cats">${cats}</span>` : ""}</td>
+        <td><span class="summary-badge ${summaryCls}">${r.done}/${r.expected}</span></td>`;
+      r.cells.forEach(cell=>{
+        if(!cell.applicable){ html += `<td class="cell-na">—</td>`; return; }
+        html += cell.record
+          ? `<td class="cell-done" title="${fmtDate(cell.record.completion_date)} · ${cell.record.result||''}">✓</td>`
           : `<td class="cell-missing" title="Expected, not yet completed">○</td>`;
       });
       html += `</tr>`;
     });
     html += `</tbody></table></div>
-      <p class="sub" style="margin-top:10px;">✓ completed &nbsp;·&nbsp; ○ expected, not yet done &nbsp;·&nbsp; — not applicable to this person</p>`;
+      <div class="audit-legend">
+        <span><b class="cell-done" style="font-size:14px;">✓</b> completed</span>
+        <span><b class="cell-missing" style="font-size:14px;">○</b> expected, not yet done</span>
+        <span><b class="cell-na" style="font-size:14px;">—</b> not applicable to this person</span>
+      </div>`;
     wrap.innerHTML = html;
+
+    document.getElementById("auditSelectAll")?.addEventListener("change", (e)=>{
+      visibleRows.forEach(r => e.target.checked ? auditSelectedIds.add(r.profile.id) : auditSelectedIds.delete(r.profile.id));
+      renderAuditTable(filterText);
+    });
+    wrap.querySelectorAll("input[data-audit-select]").forEach(cb=>{
+      cb.addEventListener("change", ()=>{
+        if(cb.checked) auditSelectedIds.add(cb.dataset.auditSelect);
+        else auditSelectedIds.delete(cb.dataset.auditSelect);
+        const tr = wrap.querySelector(`tr[data-staffrow="${cb.dataset.auditSelect}"]`);
+        if(tr) tr.classList.toggle("print-hide-row", !cb.checked);
+        const master = document.getElementById("auditSelectAll");
+        if(master) master.checked = visibleRows.every(r => auditSelectedIds.has(r.profile.id));
+      });
+    });
   }
+
+  document.getElementById("auditFilterInput")?.addEventListener("input", (e)=>{
+    renderAuditTable(e.target.value.trim());
+  });
+  document.getElementById("auditClearFilterBtn")?.addEventListener("click", ()=>{
+    document.getElementById("auditFilterInput").value = "";
+    renderAuditTable("");
+  });
+
+  document.getElementById("auditPrintBtn")?.addEventListener("click", ()=>{
+    if(!auditSelectedIds || auditSelectedIds.size===0){
+      alert("Select at least one staff member to print.");
+      return;
+    }
+    const header = document.getElementById("auditPrintHeader");
+    header.innerHTML = `<strong>Aged Care Physiotherapy — Course Audit Report</strong><br>
+      ${auditSelectedIds.size} staff member${auditSelectedIds.size===1?"":"s"} included
+      &nbsp;&middot;&nbsp; Printed ${new Date().toLocaleDateString("en-AU", {day:"numeric", month:"long", year:"numeric"})}`;
+    window.print();
+  });
+
+  document.getElementById("auditExportCsvBtn")?.addEventListener("click", ()=>{
+    if(!auditSelectedIds || auditSelectedIds.size===0){
+      alert("Select at least one staff member to export.");
+      return;
+    }
+    const rows = computeAuditData().filter(r => auditSelectedIds.has(r.profile.id));
+    const header = ["Staff", "Email", "Category", "Completed/Expected", ...allCourses.map(c=>c.name)];
+    const lines = [header];
+    rows.forEach(r=>{
+      const cats = (r.profile.staff_categories||[]).map(c=>CATEGORY_LABELS[c]).join("; ");
+      const line = [r.profile.full_name || "", r.profile.email || "", cats, `${r.done}/${r.expected}`];
+      r.cells.forEach(cell=>{
+        if(!cell.applicable){ line.push("N/A"); return; }
+        line.push(cell.record ? `Completed ${fmtDate(cell.record.completion_date)} (${cell.record.result||""})` : "Not completed");
+      });
+      lines.push(line);
+    });
+    const csv = lines.map(row => row.map(csvEscape).join(",")).join("\r\n");
+    const blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `course-audit-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
 
   // ---------- TABS (manager view) ----------
   const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles", audit:"panel-audit"};
