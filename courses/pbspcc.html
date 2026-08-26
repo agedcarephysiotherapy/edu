@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACP | Positive Behaviour Support, Dementia Care &amp; De-escalation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{
+    --acp-blue:#336699;
+    --acp-blue-dark:#264d73;
+    --acp-blue-tint:#eaf1f8;
+    --acp-red:#cc3300;
+    --acp-red-tint:#fdece5;
+    --ink:#1f2937;
+    --ink-soft:#516072;
+    --paper:#ffffff;
+    --bg:#f4f7fa;
+    --line:#dde5ee;
+    --good:#2f7d4f;
+    --good-tint:#e8f5ec;
+    --warn:#b8860b;
+    --warn-tint:#fdf3dd;
+    --bad:#b3261e;
+    --bad-tint:#fbe7e5;
+    --purple:#6b4c9a;
+    --purple-tint:#f0ecf7;
+    --radius:14px;
+    --shadow:0 6px 20px rgba(38,77,115,.08);
+    --figure:#8a9bb0;
+    --figure-dark:#5c7085;
+    --skin:#e9c6a0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Lexend',system-ui,sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--acp-blue);}
+
+  /* ===== Header ===== */
+  header.site{
+    background:linear-gradient(120deg,var(--acp-blue) 0%,var(--acp-blue-dark) 100%);
+    color:#fff;
+    padding:0;
+    position:relative;
+    overflow:hidden;
+  }
+  .header-inner{
+    max-width:1120px;
+    margin:0 auto;
+    padding:38px 28px 32px;
+    position:relative;
+    z-index:2;
+  }
+  .brandrow{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
+  .brandmark{
+    width:40px;height:40px;border-radius:10px;
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;color:var(--acp-blue);font-size:18px;letter-spacing:.5px;
+    box-shadow:0 3px 10px rgba(0,0,0,.15);
+  }
+  .brandtext{font-size:14px;letter-spacing:.14em;text-transform:uppercase;opacity:.92;font-weight:500;}
+  .brandtext b{font-weight:700;}
+  h1{
+    font-size:clamp(24px,3.4vw,38px);
+    line-height:1.15;
+    margin:0 0 10px;
+    font-weight:700;
+    max-width:820px;
+  }
+  .subtitle{
+    font-size:17px;
+    opacity:.92;
+    max-width:700px;
+    font-weight:300;
+    margin:0 0 22px;
+  }
+  .meta-pills{display:flex;flex-wrap:wrap;gap:10px;}
+  .pill{
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.28);
+    padding:7px 14px;
+    border-radius:999px;
+    font-size:12.5px;
+    font-weight:500;
+    display:flex;align-items:center;gap:6px;
+  }
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:#ffd166;}
+  .deco-swirl{
+    position:absolute;right:-60px;top:-60px;width:340px;height:340px;
+    border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.10),transparent 65%);
+    z-index:1;
+  }
+
+  /* ===== Progress bar ===== */
+  .progress-wrap{
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:50;
+    box-shadow:0 2px 8px rgba(0,0,0,.03);
+  }
+  .progress-inner{max-width:1120px;margin:0 auto;padding:0 28px;}
+  .progress-track{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:0;}
+  .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--acp-red),var(--acp-blue));transition:width .4s ease;}
+  nav.tabs{
+    display:flex;gap:2px;overflow-x:auto;
+    padding:10px 0 0;
+    scrollbar-width:none;
+  }
+  nav.tabs::-webkit-scrollbar{display:none;}
+  .tab-btn{
+    flex:0 0 auto;
+    background:none;border:none;
+    font-family:inherit;font-size:13.5px;font-weight:500;color:var(--ink-soft);
+    padding:10px 16px 12px;
+    cursor:pointer;
+    border-bottom:3px solid transparent;
+    white-space:nowrap;
+    transition:.15s;
+  }
+  .tab-btn:hover{color:var(--acp-blue);}
+  .tab-btn.active{color:var(--acp-blue);border-bottom-color:var(--acp-red);font-weight:600;}
+  .tab-num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:18px;height:18px;border-radius:50%;
+    background:var(--line);color:var(--ink-soft);
+    font-size:10.5px;font-weight:700;margin-right:6px;
+  }
+  .tab-btn.active .tab-num{background:var(--acp-red);color:#fff;}
+  .tab-btn.done .tab-num{background:var(--good);color:#fff;}
+
+  /* ===== Main ===== */
+  main{max-width:1120px;margin:0 auto;padding:34px 28px 90px;}
+  section.panel{display:none;animation:fadeIn .35s ease;}
+  section.panel.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .section-head{margin-bottom:22px;}
+  .eyebrow{
+    color:var(--acp-red);text-transform:uppercase;font-size:12px;letter-spacing:.12em;font-weight:700;margin-bottom:6px;
+  }
+  h2{font-size:26px;font-weight:700;margin:0 0 8px;color:var(--acp-blue-dark);}
+  .lede{color:var(--ink-soft);font-size:15.5px;max-width:760px;}
+
+  .card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px 24px;
+    box-shadow:var(--shadow);
+    margin-bottom:18px;
+  }
+  .card h3{margin:0 0 10px;font-size:17px;color:var(--acp-blue-dark);display:flex;align-items:center;gap:8px;}
+  .card p{margin:0 0 10px;font-size:14.5px;color:var(--ink);}
+  .card ul{margin:0;padding-left:20px;font-size:14.5px;}
+  .card li{margin-bottom:6px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+  .tag{
+    display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;
+    padding:3px 9px;border-radius:6px;text-transform:uppercase;
+  }
+  .tag.evidence{background:var(--acp-blue-tint);color:var(--acp-blue-dark);}
+  .tag.pbs{background:var(--acp-red-tint);color:var(--acp-red);}
+  .tag.trauma{background:var(--purple-tint);color:var(--purple);}
+
+  /* callouts */
+  .callout{border-radius:12px;padding:16px 18px;margin:16px 0;font-size:14.5px;border:1px solid transparent;}
+  .callout.warn{background:var(--warn-tint);border-color:#f1dca0;}
+  .callout.bad{background:var(--bad-tint);border-color:#f0c2be;}
+  .callout.good{background:var(--good-tint);border-color:#bfe3cb;}
+  .callout.info{background:var(--acp-blue-tint);border-color:#c7dbee;}
+  .callout b{display:block;margin-bottom:4px;}
+
+  /* ===== Interactive: simulators (bed-sim pattern reused) ===== */
+  .sim{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px;margin:20px 0;
+  }
+  .sim-controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+  .sim-btn{
+    font-family:inherit;font-size:13.5px;font-weight:600;
+    padding:9px 16px;border-radius:999px;border:1.5px solid var(--acp-blue);
+    background:#fff;color:var(--acp-blue);cursor:pointer;transition:.15s;
+  }
+  .sim-btn:hover{background:var(--acp-blue-tint);}
+  .sim-btn.active{background:var(--acp-blue);color:#fff;}
+  .sim-stage{
+    display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:center;
+  }
+  @media(max-width:760px){.sim-stage{grid-template-columns:1fr;}}
+  .sim-visual{
+    background:var(--bg);border-radius:12px;padding:14px;border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;min-height:220px;
+  }
+  .sim-readout h4{margin:0 0 8px;font-size:16px;color:var(--acp-blue-dark);}
+  .sim-readout p{font-size:14.5px;margin:0 0 8px;}
+  .status-badge{
+    display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;
+    padding:5px 12px;border-radius:999px;margin-bottom:10px;
+  }
+  .status-badge.safe{background:var(--good-tint);color:var(--good);}
+  .status-badge.risk{background:var(--bad-tint);color:var(--bad);}
+  .status-badge.caution{background:var(--warn-tint);color:var(--warn);}
+  .status-badge.info{background:var(--acp-blue-tint);color:var(--acp-blue-dark);}
+
+  /* clickable card grid (needs / functions) */
+  .opt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;}
+  @media(max-width:760px){.opt-grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:480px){.opt-grid{grid-template-columns:1fr;}}
+  .opt-card{
+    border:1.5px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;transition:.15s;background:#fff;
+    text-align:center;
+  }
+  .opt-card:hover{border-color:var(--acp-blue);}
+  .opt-card.selected{border-color:var(--acp-red);background:var(--acp-red-tint);}
+  .opt-card .opt-icon{
+    width:44px;height:44px;border-radius:50%;margin:0 auto 10px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--acp-blue-tint);font-size:20px;
+  }
+  .opt-card.selected .opt-icon{background:var(--acp-red);color:#fff;}
+  .opt-card h4{margin:0 0 6px;font-size:14px;color:var(--acp-blue-dark);}
+  .opt-card p{margin:0;font-size:12px;color:var(--ink-soft);}
+  .opt-detail{
+    margin-top:16px;background:var(--acp-blue-tint);border-radius:12px;padding:16px 18px;font-size:14px;display:none;
+  }
+  .opt-detail.show{display:block;}
+
+  /* checklist */
+  .checklist{list-style:none;margin:0;padding:0;}
+  .checklist li{
+    display:flex;gap:12px;align-items:flex-start;
+    padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;
+    background:#fff;cursor:pointer;transition:.15s;
+  }
+  .checklist li:hover{border-color:var(--acp-blue);}
+  .checklist li.checked{background:var(--good-tint);border-color:#bfe3cb;}
+  .checklist .box{
+    width:20px;height:20px;border-radius:6px;border:2px solid var(--acp-blue);flex:0 0 20px;
+    display:flex;align-items:center;justify-content:center;margin-top:1px;
+  }
+  .checklist li.checked .box{background:var(--good);border-color:var(--good);}
+  .checklist .box svg{opacity:0;width:12px;height:12px;}
+  .checklist li.checked .box svg{opacity:1;}
+  .checklist .txt b{display:block;font-size:14px;}
+  .checklist .txt span{font-size:12.5px;color:var(--ink-soft);}
+  .checklist-progress{
+    display:flex;align-items:center;gap:12px;margin:16px 0;font-size:13.5px;font-weight:600;color:var(--acp-blue-dark);
+  }
+  .checklist-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .checklist-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--acp-red),var(--acp-blue));transition:width .3s ease;}
+
+  /* restrictive practice ladder */
+  .ladder{list-style:none;margin:16px 0 0;padding:0;counter-reset:step;}
+  .ladder li{
+    position:relative;padding:12px 14px 12px 48px;border:1px solid var(--line);border-radius:10px;
+    margin-bottom:8px;background:#fff;font-size:14px;
+  }
+  .ladder li::before{
+    counter-increment:step;content:counter(step);
+    position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    width:24px;height:24px;border-radius:50%;background:var(--acp-blue);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  }
+  .ladder li.restrictive::before{background:var(--acp-red);}
+  .ladder li b{display:block;}
+  .ladder li span{font-size:12.5px;color:var(--ink-soft);}
+
+  /* quiz */
+  .quiz-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px;margin-bottom:16px;}
+  .quiz-q{font-size:15.5px;font-weight:600;margin-bottom:12px;}
+  .quiz-opts{display:flex;flex-direction:column;gap:8px;}
+  .quiz-opt{
+    text-align:left;font-family:inherit;font-size:14px;
+    padding:11px 14px;border-radius:9px;border:1.5px solid var(--line);background:#fff;cursor:pointer;
+    transition:.15s;
+  }
+  .quiz-opt:hover{border-color:var(--acp-blue);}
+  .quiz-opt.correct{background:var(--good-tint);border-color:var(--good);color:var(--good);font-weight:600;}
+  .quiz-opt.incorrect{background:var(--bad-tint);border-color:var(--bad);color:var(--bad);font-weight:600;}
+  .quiz-opt[disabled]{cursor:default;}
+  .quiz-explain{font-size:13.5px;margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--acp-blue-tint);display:none;}
+  .quiz-explain.show{display:block;}
+  .quiz-score{
+    text-align:center;padding:26px;border-radius:var(--radius);background:var(--acp-blue);color:#fff;
+    display:none;
+  }
+  .quiz-score.show{display:block;}
+  .quiz-score .num{font-size:44px;font-weight:800;}
+  .quiz-reset{
+    margin-top:14px;background:#fff;color:var(--acp-blue);border:none;padding:9px 18px;border-radius:999px;
+    font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;
+  }
+
+  /* nav footer */
+  .panel-nav{display:flex;justify-content:space-between;margin-top:30px;}
+  .nav-btn{
+    font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;
+    padding:11px 20px;border-radius:999px;border:1.5px solid var(--acp-blue);background:#fff;color:var(--acp-blue);
+    display:flex;align-items:center;gap:6px;
+  }
+  .nav-btn.primary{background:var(--acp-blue);color:#fff;}
+  .nav-btn:hover{opacity:.88;}
+
+  footer.site{
+    background:var(--acp-blue-dark);color:#fff;padding:26px 28px;text-align:center;font-size:12.5px;opacity:.85;
+  }
+  footer.site a{color:#cfe0f0;}
+
+  button, .checklist li, .tab-btn, .opt-card{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+
+  /* ===== Accessible focus states ===== */
+  .tab-btn:focus-visible,
+  .sim-btn:focus-visible,
+  .nav-btn:focus-visible,
+  .quiz-opt:focus-visible,
+  .quiz-reset:focus-visible,
+  .opt-card:focus-visible,
+  .checklist li:focus-visible{
+    outline:3px solid #ffb703;
+    outline-offset:2px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    section.panel{animation:none;}
+  }
+
+  /* ===== Mobile ===== */
+  @media(max-width:640px){
+    .header-inner{padding:24px 18px 26px;}
+    .brandrow{gap:10px;margin-bottom:16px;}
+    .brandmark{width:34px;height:34px;font-size:15px;border-radius:8px;}
+    .brandtext{font-size:11px;letter-spacing:.10em;}
+    h1{font-size:21px;line-height:1.22;}
+    .subtitle{font-size:14.5px;margin-bottom:16px;}
+    .meta-pills{gap:8px;}
+    .pill{font-size:11.5px;padding:6px 11px;}
+    .deco-swirl{width:220px;height:220px;right:-90px;top:-90px;}
+
+    .progress-inner{padding:0 14px;}
+    nav.tabs{gap:0;padding-top:8px;-webkit-overflow-scrolling:touch;}
+    .tab-btn{font-size:12.5px;padding:9px 12px 11px;}
+    .tab-num{width:16px;height:16px;font-size:9.5px;margin-right:5px;}
+
+    main{padding:22px 16px 70px;}
+    .section-head{margin-bottom:16px;}
+    .eyebrow{font-size:11px;}
+    h2{font-size:20px;}
+    .lede{font-size:14.5px;}
+
+    .card{padding:17px 16px;border-radius:12px;margin-bottom:14px;}
+    .card h3{font-size:15.5px;}
+    .card p, .card ul{font-size:14px;}
+
+    .grid2,.grid3{gap:12px;}
+
+    .sim{padding:16px;border-radius:12px;margin:16px 0;}
+    .sim-controls{gap:8px;margin-bottom:14px;}
+    .sim-btn{font-size:12.5px;padding:9px 13px;flex:1 1 auto;text-align:center;}
+    .sim-stage{gap:16px;}
+    .sim-visual{min-height:160px;padding:10px;}
+    .sim-readout h4{font-size:15px;}
+    .sim-readout p{font-size:14px;}
+    .status-badge{font-size:11.5px;padding:5px 10px;}
+
+    .opt-grid{gap:10px;margin-top:14px;}
+    .opt-card{padding:13px;}
+    .opt-card h4{font-size:13.5px;}
+    .opt-card p{font-size:11.5px;}
+    .opt-detail{padding:14px 15px;font-size:13.5px;}
+
+    .checklist li{padding:12px;gap:10px;}
+    .checklist .box{width:22px;height:22px;flex:0 0 22px;}
+    .checklist .txt b{font-size:13.5px;}
+    .checklist .txt span{font-size:12px;}
+    .checklist-progress{font-size:12.5px;gap:10px;flex-wrap:wrap;}
+
+    .ladder li{font-size:13.5px;padding:11px 12px 11px 44px;}
+
+    .quiz-card{padding:16px;border-radius:12px;}
+    .quiz-q{font-size:14.5px;}
+    .quiz-opt{font-size:13.5px;padding:11px 13px;}
+    .quiz-explain{font-size:13px;}
+    .quiz-score{padding:20px;}
+    .quiz-score .num{font-size:34px;}
+
+    .panel-nav{margin-top:22px;}
+    .nav-btn{font-size:12.5px;padding:10px 16px;}
+
+    .callout{padding:14px 15px;font-size:13.5px;}
+
+    footer.site{padding:20px 16px;font-size:11.5px;}
+  }
+  @media(max-width:400px){
+    h1{font-size:19px;}
+    .sim-btn{font-size:11.5px;padding:8px 10px;}
+    .nav-btn{flex:1;justify-content:center;}
+    .panel-nav{gap:8px;}
+    .quiz-score .num{font-size:28px;}
+  }
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+
+  /* ===== Auth gate & completion tracking ===== */
+  #authGate{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:24px;background:linear-gradient(120deg,var(--acp-blue) 0%,var(--acp-blue-dark) 100%);
+  }
+  #authGate .gate-card{
+    background:#fff;border-radius:var(--radius);box-shadow:0 30px 60px -20px rgba(0,0,0,.4);
+    padding:32px;max-width:400px;text-align:center;
+  }
+  #authGate h2{color:var(--acp-blue-dark);font-size:19px;margin:0 0 10px;}
+  #authGate p{color:var(--ink-soft);font-size:14px;line-height:1.6;margin:0 0 18px;}
+  #authGate a.gate-link{
+    display:inline-block;background:var(--acp-blue);color:#fff;text-decoration:none;
+    font-weight:600;font-size:13.5px;padding:11px 22px;border-radius:999px;
+  }
+  #authGate a.gate-link:hover{background:var(--acp-blue-dark);}
+  .completion-status{
+    font-size:13.5px;margin-top:14px;min-height:16px;font-weight:500;
+  }
+  .completion-status.saving{color:rgba(255,255,255,.85);}
+  .completion-status.ok{color:#bff0d2;font-weight:700;}
+  .completion-status.err{color:#ffd0c9;}
+  .completion-status.err button{
+    background:#fff;color:var(--acp-red);border:none;padding:6px 14px;border-radius:999px;
+    font-family:inherit;font-weight:600;font-size:12.5px;cursor:pointer;margin-top:8px;
+  }
+</style>
+</head>
+<body>
+
+<div id="authGate" style="display:none;">
+  <div class="gate-card">
+    <h2>Sign in required</h2>
+    <p>You need to be signed in to the ACP Training Tracker to complete this course and have it recorded against your name.</p>
+    <a class="gate-link" href="../index.html">Go to the Training Tracker</a>
+  </div>
+</div>
+
+<div id="courseContent" style="display:none;">
+
+<header class="site">
+  <div class="deco-swirl"></div>
+  <div class="header-inner">
+    <div class="brandrow">
+      <div class="brandmark">acp</div>
+      <div class="brandtext"><b>Aged Care Physiotherapy</b> &nbsp;·&nbsp; Clinical Education Series</div>
+    </div>
+    <h1>Positive Behaviour Support, Dementia Care &amp; De-escalation</h1>
+    <p class="subtitle">An interactive module on person-centred dementia care, recognising BPSD triggers, the Positive Behaviour Support framework, de-escalation techniques, and trauma-informed practice for aged care and disability support work.</p>
+    <div class="meta-pills">
+      <div class="pill"><span class="dot"></span> Aged Care &amp; NDIS Practice</div>
+      <div class="pill">Estimated time: 18–22 min</div>
+      <div class="pill">Includes competency check</div>
+    </div>
+  </div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-inner">
+    <nav class="tabs" id="tabNav"></nav>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</div>
+
+<main id="main"></main>
+
+<footer class="site">
+  Aged Care Physiotherapy Pty Ltd — Internal clinical education resource. This module supports, but does not replace, an individualised Positive Behaviour Support plan, dementia care plan, or specialist behaviour support practitioner input where one is in place. &nbsp;|&nbsp; Review as part of ACP clinical governance.
+</footer>
+
+</div>
+
+<script>
+/* ---------------------------------------------------------
+   TRAINING TRACKER INTEGRATION
+   Edit COURSE_ID for this specific course — copy it from the
+   Courses tab in the training tracker. SUPABASE_URL/ANON_KEY are
+   the same for every course page (same edu project as index.html).
+--------------------------------------------------------- */
+const COURSE_ID = "PASTE-THE-COURSE-ID-HERE";
+const SUPABASE_URL = "https://unomkggpwiugvkovdjto.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_rakZ0iLM1Tncok00y6HFPA_Xlls_Mwc";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentAuthUser = null;
+
+async function initAuthGate(){
+  const { data } = await sb.auth.getSession();
+  if(!data.session){
+    document.getElementById("authGate").style.display = "flex";
+    return false;
+  }
+  currentAuthUser = data.session.user;
+  document.getElementById("courseContent").style.display = "block";
+  return true;
+}
+
+async function recordCompletion(resultText){
+  const el = document.getElementById("completionStatus");
+  if(!currentAuthUser){
+    el.textContent = "Not signed in — this attempt was not saved.";
+    el.className = "completion-status err";
+    return;
+  }
+  el.textContent = "Saving your completion...";
+  el.className = "completion-status saving";
+  const { error } = await sb.from("completions").insert({
+    staff_id: currentAuthUser.id,
+    course_id: COURSE_ID,
+    completion_date: new Date().toISOString().slice(0,10),
+    result: resultText,
+    recorded_by: currentAuthUser.id
+  });
+  if(error){
+    el.innerHTML = `Couldn't save your completion. <br><button onclick="recordCompletion('${resultText}')">Retry</button>`;
+    el.className = "completion-status err";
+    return;
+  }
+  el.textContent = "✓ Saved to your training record.";
+  el.className = "completion-status ok";
+}
+
+/* ---------------------------------------------------------
+   DATA
+--------------------------------------------------------- */
+const sections = [
+  {id:"foundations", label:"Foundations"},
+  {id:"pcc", label:"Person-Centred Care"},
+  {id:"bpsd", label:"Understanding BPSD"},
+  {id:"pbs", label:"PBS Framework"},
+  {id:"deescalation", label:"De-escalation"},
+  {id:"trauma", label:"Trauma-Informed Care"},
+  {id:"toolkit", label:"Shift Toolkit"},
+  {id:"quiz", label:"Check Your Knowledge"}
+];
+
+/* ---------------------------------------------------------
+   TAB NAV BUILD
+--------------------------------------------------------- */
+const tabNav = document.getElementById("tabNav");
+sections.forEach((s,i)=>{
+  const btn = document.createElement("button");
+  btn.className = "tab-btn" + (i===0?" active":"");
+  btn.dataset.target = s.id;
+  btn.innerHTML = `<span class="tab-num">${i+1}</span>${s.label}`;
+  btn.addEventListener("click", ()=>showSection(s.id));
+  tabNav.appendChild(btn);
+});
+
+function updateProgress(){
+  const activeIdx = sections.findIndex(s=>s.id===currentId);
+  const pct = ((activeIdx+1)/sections.length)*100;
+  document.getElementById("progressFill").style.width = pct+"%";
+}
+
+let currentId = "foundations";
+function showSection(id){
+  currentId = id;
+  document.querySelectorAll("section.panel").forEach(p=>p.classList.toggle("active", p.id===id));
+  document.querySelectorAll(".tab-btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.target===id);
+    if (sections.findIndex(s=>s.id===b.dataset.target) < sections.findIndex(s=>s.id===id)) {
+      b.classList.add("done");
+    }
+  });
+  updateProgress();
+  document.getElementById("main").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function panelNav(prevId, nextLabel, nextId){
+  let html = `<div class="panel-nav">`;
+  html += prevId ? `<button class="nav-btn" onclick="showSection('${prevId}')">&larr; Back</button>` : `<span></span>`;
+  html += nextId ? `<button class="nav-btn primary" onclick="showSection('${nextId}')">${nextLabel} &rarr;</button>` : `<span></span>`;
+  html += `</div>`;
+  return html;
+}
+
+/* ---------------------------------------------------------
+   MAIN CONTENT
+--------------------------------------------------------- */
+const main = document.getElementById("main");
+main.innerHTML = `
+
+<section class="panel active" id="foundations">
+  <div class="section-head">
+    <div class="eyebrow">Section 1 · Foundations</div>
+    <h2>Four frameworks, one underlying idea</h2>
+    <p class="lede">Positive Behaviour Support, person-centred dementia care, de-escalation, and trauma-informed care are taught as separate topics, but they rest on the same premise: behaviours that look challenging, aggressive, or "non-compliant" are almost always communication — an unmet need, a source of distress, or a survival response — rather than a character trait to be corrected.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>🧩 From "managing behaviour" to "understanding behaviour"</h3>
+      <p>Older models of care asked "how do we stop this behaviour?" Contemporary practice asks "what is this behaviour telling us, and what does this person need?" That shift in question changes the response — from restriction and control toward assessment, environment, and relationship.</p>
+      <span class="tag evidence">Practice standard</span>
+    </div>
+    <div class="card">
+      <h3>⚖️ Why this matters legally, not just clinically</h3>
+      <p>Under the NDIS Quality and Safeguards Commission framework, the use of restrictive practices in response to behaviours of concern is tightly regulated and must be a last resort, authorised, and reducible over time through a Positive Behaviour Support plan. Getting the underlying approach right is a compliance issue as well as a quality-of-life one.</p>
+      <span class="tag pbs">NDIS Commission</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🎯 What this module covers</h3>
+    <ul>
+      <li><b>Person-centred dementia care</b> — Kitwood's psychological needs model and why it changes how you read behaviour.</li>
+      <li><b>BPSD triggers</b> — the common physical, environmental, psychological, and communication-related causes behind behavioural and psychological symptoms of dementia.</li>
+      <li><b>The PBS framework</b> — understanding function, the ABC model, and the restrictive practices hierarchy.</li>
+      <li><b>De-escalation techniques</b> — practical verbal and non-verbal strategies for the moment things are escalating.</li>
+      <li><b>Trauma-informed care</b> — the SAMHSA principles and why "what happened to you" replaces "what's wrong with you."</li>
+    </ul>
+  </div>
+
+  <div class="callout warn">
+    <b>Scope of this module</b>
+    This module is general education, not a substitute for an individual's existing Positive Behaviour Support plan, dementia care plan, or specialist behaviour support practitioner guidance. Where a documented plan exists, it takes precedence — follow it, and raise any concerns about it with the treating team rather than deviating unilaterally.
+  </div>
+
+  ${panelNav(null, "Person-Centred Care", "pcc")}
+</section>
+
+<section class="panel" id="pcc">
+  <div class="section-head">
+    <div class="eyebrow">Section 2 · Person-centred dementia care</div>
+    <h2>Kitwood's model: five psychological needs</h2>
+    <p class="lede">Tom Kitwood's person-centred model reframed dementia care around the idea that people living with dementia have the same fundamental psychological needs as everyone else — they just have fewer intact ways of meeting them independently, and rely more on the people around them to do so. Select each need below.</p>
+  </div>
+
+  <div class="opt-grid" id="needsGrid"></div>
+  <div class="opt-detail" id="needsDetail"></div>
+
+  <div class="callout info" style="margin-top:20px;">
+    <b>Love sits at the centre</b>
+    Kitwood placed love — genuine warmth and connection — at the centre of the five needs, not as a sixth need alongside them, but as the thing that makes meeting the other five possible. A task-focused, rushed interaction can technically meet a physical need while leaving every psychological need unmet.
+  </div>
+
+  ${panelNav("foundations", "Understanding BPSD", "bpsd")}
+</section>
+
+<section class="panel" id="bpsd">
+  <div class="section-head">
+    <div class="eyebrow">Section 3 · Behavioural and psychological symptoms of dementia</div>
+    <h2>BPSD is a symptom, not a diagnosis in itself</h2>
+    <p class="lede">Behavioural and Psychological Symptoms of Dementia (BPSD) — agitation, calling out, resisting care, wandering, aggression — are downstream effects of something else going on. Before responding to the behaviour itself, the first job is ruling in or out a trigger. Select each category to see common triggers and the assessment response.</p>
+  </div>
+
+  <div class="sim">
+    <div class="sim-controls" id="bpsdControls">
+      <button class="sim-btn active" data-trigger="physical">🩺 Physical</button>
+      <button class="sim-btn" data-trigger="environmental">🏠 Environmental</button>
+      <button class="sim-btn" data-trigger="psychological">💭 Psychological</button>
+      <button class="sim-btn" data-trigger="communication">💬 Communication</button>
+    </div>
+    <div class="sim-stage">
+      <div class="sim-visual" id="bpsdVisual"></div>
+      <div class="sim-readout" id="bpsdReadout"></div>
+    </div>
+  </div>
+
+  <div class="callout bad">
+    <b>Rule out pain and delirium first</b>
+    A sudden change in behaviour — especially in someone who was previously settled — should always prompt a check for pain, infection (particularly UTI), constipation, dehydration, or new medication effects before it's treated as "just the dementia progressing." Undetected pain is one of the most common and most fixable drivers of BPSD.
+  </div>
+
+  <div class="callout good">
+    <b>Sundowning</b>
+    Increased agitation and confusion in the late afternoon and evening is common enough to have its own name. Contributing factors include fatigue, low light changing visual cues, shift changeover noise and disruption, and a build-up of unmet needs across the day. Anticipating it — a calmer environment, an earlier meal, familiar activity — is more effective than only reacting once it starts.
+  </div>
+
+  ${panelNav("pcc", "PBS Framework", "pbs")}
+</section>
+
+<section class="panel" id="pbs">
+  <div class="section-head">
+    <div class="eyebrow">Section 4 · Positive Behaviour Support</div>
+    <h2>Function before response</h2>
+    <p class="lede">Positive Behaviour Support (PBS) starts from the position that all behaviour serves a function for the person, even when it's distressing to witness or support. Identifying that function — not just describing the behaviour — is what allows a genuinely useful response rather than a purely reactive one.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>📋 The ABC model</h3>
+      <p>Every behaviour of concern is best understood in context, not in isolation:</p>
+      <ul>
+        <li><b>Antecedent</b> — what happened immediately before (time, place, people, activity, request made).</li>
+        <li><b>Behaviour</b> — described specifically and observably, not interpreted ("gripped the carer's wrist and did not let go for approximately 10 seconds" rather than "became aggressive").</li>
+        <li><b>Consequence</b> — what happened immediately after, including how staff responded and what the person gained or avoided as a result.</li>
+      </ul>
+      <p>Consistent ABC data collection over time is what a behaviour support practitioner uses to identify a pattern and write an effective PBS plan.</p>
+    </div>
+    <div class="card">
+      <h3>🎯 Four common functions</h3>
+      <p>Most behaviours of concern serve one (or more) of four functions — sometimes taught as the acronym SEAT:</p>
+      <ul>
+        <li><b>Sensory</b> — the behaviour itself is soothing, stimulating, or regulating.</li>
+        <li><b>Escape</b> — avoiding or ending an unwanted task, demand, or interaction.</li>
+        <li><b>Attention</b> — seeking social contact, connection, or response from others.</li>
+        <li><b>Tangible</b> — obtaining a specific item, activity, or outcome.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="opt-grid" id="functionsGrid"></div>
+  <div class="opt-detail" id="functionsDetail"></div>
+
+  <div class="card" style="margin-top:20px;">
+    <h3>🪜 The restrictive practices hierarchy</h3>
+    <p>Under the NDIS Commission framework, any regulated restrictive practice (restricting a person's rights or freedom of movement) must be the least restrictive option available, used only as a last resort to prevent harm, authorised in line with state/territory requirements, and documented in an interim or comprehensive PBS plan with a clear plan to reduce and eliminate its use over time.</p>
+    <ul class="ladder">
+      <li><b>1. Proactive strategies</b><span>Environmental adjustment, routine, communication supports, meeting needs before distress builds — the majority of PBS work happens here.</span></li>
+      <li><b>2. Reactive, non-restrictive strategies</b><span>De-escalation, redirection, offering choice, giving space — responding to distress without restricting the person.</span></li>
+      <li class="restrictive"><b>3. Restrictive practice (last resort only)</b><span>Chemical, mechanical, physical, environmental restraint, or seclusion — only where authorised, time-limited, and actively being reduced.</span></li>
+    </ul>
+  </div>
+
+  <div class="callout warn">
+    <b>If you believe a restrictive practice is being used without authorisation</b>
+    Raise it with your manager and the person's behaviour support practitioner immediately. Unauthorised restrictive practice is a reportable incident under the NDIS Commission framework, not a judgement call to make informally at the bedside.
+  </div>
+
+  ${panelNav("bpsd", "De-escalation", "deescalation")}
+</section>
+
+<section class="panel" id="deescalation">
+  <div class="section-head">
+    <div class="eyebrow">Section 5 · In the moment</div>
+    <h2>De-escalation: what to do while it's happening</h2>
+    <p class="lede">PBS and person-centred care shape the proactive plan. De-escalation is what you actually do in the 30–60 seconds a situation is escalating. Compare the three approaches below.</p>
+  </div>
+
+  <div class="sim">
+    <div class="sim-controls" id="deescControls">
+      <button class="sim-btn active" data-approach="calm">✅ Calm &amp; validating</button>
+      <button class="sim-btn" data-approach="confrontational">⛔ Confrontational</button>
+      <button class="sim-btn" data-approach="rushed">⚠️ Rushed / crowding</button>
+    </div>
+    <div class="sim-stage">
+      <div class="sim-visual" id="deescVisual"></div>
+      <div class="sim-readout" id="deescReadout"></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>🗣️ Verbal techniques</h3>
+      <ul>
+        <li>Lower your voice and slow your speech rather than raising it to be heard.</li>
+        <li>Use short, simple sentences — distress narrows a person's ability to process complex language.</li>
+        <li>Validate the emotion before addressing the content: "I can see you're really upset" before "let's talk about what happened."</li>
+        <li>Avoid arguing, correcting, or reasoning someone out of a delusion or false belief in the moment — it rarely works and often escalates further.</li>
+        <li>One person communicates at a time; multiple staff talking at once is disorienting and can feel like being ganged up on.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🧍 Non-verbal techniques</h3>
+      <ul>
+        <li>Give physical space — at minimum an arm's length more than usual, more if the person is highly agitated.</li>
+        <li>Keep hands visible and open, not crossed or on hips.</li>
+        <li>Approach at an angle, not head-on, and avoid blocking a clear exit path for either of you.</li>
+        <li>Get to the same eye level rather than standing over someone who is seated.</li>
+        <li>Reduce environmental stimulation where possible — lower noise, dim harsh lighting, clear the area of an audience.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout bad">
+    <b>Know when to withdraw</b>
+    If de-escalation isn't working, safety comes first. Disengage, maintain a safe distance, call for backup or use the duress alarm per your facility's procedure, and do not attempt to physically manage a situation alone or outside your training and authorisation.
+  </div>
+
+  ${panelNav("pbs", "Trauma-Informed Care", "trauma")}
+</section>
+
+<section class="panel" id="trauma">
+  <div class="section-head">
+    <div class="eyebrow">Section 6 · Trauma-informed care</div>
+    <h2>"What happened to you?" not "what's wrong with you?"</h2>
+    <p class="lede">Many people in aged care and disability support have histories of trauma — institutional, medical, family, or otherwise — that shape how they experience being touched, directed, confined, or cared for by others, sometimes decades later and regardless of cognitive status. Trauma-informed care doesn't require knowing someone's history in detail; it means assuming it could be present and adjusting your approach accordingly.</p>
+  </div>
+
+  <div class="grid3">
+    <div class="card">
+      <h3>🛡️ Safety</h3>
+      <p>Physical and emotional safety comes first — for the person and for staff. Predictable routines, calm environments, and consistent staff reduce the chance of a care interaction feeling threatening.</p>
+      <span class="tag trauma">SAMHSA principle</span>
+    </div>
+    <div class="card">
+      <h3>🤝 Trustworthiness &amp; transparency</h3>
+      <p>Explain what you're about to do before you do it, especially for personal care. Do what you say you'll do. Unexplained touch or sudden movement can retrigger a trauma response even when the intent is entirely benign.</p>
+      <span class="tag trauma">SAMHSA principle</span>
+    </div>
+    <div class="card">
+      <h3>🧑‍🤝‍🧑 Peer support</h3>
+      <p>Where possible, connection with others who've had similar experiences — other residents, peer workers — can be protective and normalising in a way staff-only relationships can't fully replace.</p>
+      <span class="tag trauma">SAMHSA principle</span>
+    </div>
+    <div class="card">
+      <h3>🤲 Collaboration &amp; mutuality</h3>
+      <p>Care done <i>with</i> someone rather than <i>to</i> them. Flattening the power difference between carer and cared-for, even in small ways, reduces the re-enactment of past powerlessness.</p>
+      <span class="tag trauma">SAMHSA principle</span>
+    </div>
+    <div class="card">
+      <h3>🗳️ Empowerment, voice &amp; choice</h3>
+      <p>Real choices, not false ones. "Would you like a shower now or in an hour?" is a genuine choice; "we need to do this now" delivered as a question is not, and people generally know the difference.</p>
+      <span class="tag trauma">SAMHSA principle</span>
+    </div>
+    <div class="card">
+      <h3>🌏 Cultural, historical &amp; gender issues</h3>
+      <p>Actively responsive to cultural, historical, and gender-related trauma — including the specific history of institutional and medical harm experienced by particular communities — rather than applying a one-size-fits-all approach.</p>
+      <span class="tag trauma">SAMHSA principle</span>
+    </div>
+  </div>
+
+  <div class="callout good">
+    <b>Trauma-informed care and PBS reinforce each other</b>
+    A behaviour that looks like "resistance to care" through a PBS lens (function: escape) may also be a trauma response through a trauma-informed lens (function: self-protection). The two frameworks aren't competing explanations — they usually point to the same proactive strategy: predictability, choice, and explanation before touch.
+  </div>
+
+  ${panelNav("deescalation", "Shift Toolkit", "toolkit")}
+</section>
+
+<section class="panel" id="toolkit">
+  <div class="section-head">
+    <div class="eyebrow">Section 7 · Bedside tool</div>
+    <h2>Before, during, and after a difficult interaction</h2>
+    <p class="lede">A practical checklist pulling together the frameworks in this module. Tap each item as it's confirmed.</p>
+  </div>
+
+  <div class="checklist-progress">
+    <span id="checklistCount">0 / 8 confirmed</span>
+    <div class="checklist-track"><div class="checklist-fill" id="checklistFill"></div></div>
+  </div>
+
+  <ul class="checklist" id="checklistItems"></ul>
+
+  <div class="callout good" id="checklistDone" style="display:none;">
+    <b>Approach confirmed</b>
+    Document what worked in the person's care notes so the next shift can build on it, and flag any new or worsening pattern to your team leader or the behaviour support practitioner rather than treating it as a one-off.
+  </div>
+
+  ${panelNav("trauma", "Check Your Knowledge", "quiz")}
+</section>
+
+<section class="panel" id="quiz">
+  <div class="section-head">
+    <div class="eyebrow">Section 8 · Competency check</div>
+    <h2>Check your knowledge</h2>
+    <p class="lede">Six questions covering the key concepts from this module.</p>
+  </div>
+
+  <div id="quizArea"></div>
+  <div class="quiz-score" id="quizScore">
+    <div class="num" id="quizScoreNum">0/6</div>
+    <div id="quizScoreMsg"></div>
+    <div class="completion-status" id="completionStatus"></div>
+    <button class="quiz-reset" onclick="resetQuiz()">Try again</button>
+  </div>
+
+  ${panelNav("toolkit", "", null)}
+</section>
+`;
+
+/* ---------------------------------------------------------
+   KITWOOD'S FIVE NEEDS
+--------------------------------------------------------- */
+const needsData = [
+  {
+    id:"comfort", label:"Comfort", icon:"🫂",
+    blurb:"Warmth, closeness, tenderness.",
+    detail:"Comfort is the soothing of pain and distress — physical and emotional. It's provided through tone of voice, unhurried touch where welcomed, and simply staying present with someone who is upset rather than moving straight to problem-solving or moving on to the next task."
+  },
+  {
+    id:"attachment", label:"Attachment", icon:"🔗",
+    blurb:"Bonds that provide security.",
+    detail:"As other coping mechanisms are lost, attachment to familiar people, places, and objects becomes more important, not less. A familiar staff member, a photo, or a well-worn cardigan can carry real security. Frequent staff changes and unfamiliar environments erode this need directly."
+  },
+  {
+    id:"inclusion", label:"Inclusion", icon:"👥",
+    blurb:"Being part of a group, not on its edge.",
+    detail:"Being talked over, excluded from a conversation happening in the room, or left out of group activity because it's 'easier' communicates exclusion clearly, even when cognition is significantly impaired. Simple inclusion — being greeted, addressed directly, seated within a group rather than at its margin — meets this need."
+  },
+  {
+    id:"occupation", label:"Occupation", icon:"🧶",
+    blurb:"Purposeful engagement and activity.",
+    detail:"Being involved in a process regarded as personally significant, drawing on remaining abilities and past roles or interests. A lack of meaningful occupation is one of the most under-recognised drivers of agitation, wandering, and low mood — boredom presents as behaviour, not as a stated complaint."
+  },
+  {
+    id:"identity", label:"Identity", icon:"🪞",
+    blurb:"A continuous sense of self.",
+    detail:"Knowing who you are, your history, your preferences, and being known by others in that way. Using a first name without invitation, referring to someone only by their diagnosis or room number, or ignoring stated preferences all chip away at identity — a need that becomes more, not less, important as verbal memory declines."
+  }
+];
+const needsGrid = document.getElementById("needsGrid");
+needsData.forEach(opt=>{
+  const div = document.createElement("div");
+  div.className = "opt-card";
+  div.dataset.id = opt.id;
+  div.tabIndex = 0;
+  div.setAttribute("role","button");
+  div.innerHTML = `<div class="opt-icon">${opt.icon}</div><h4>${opt.label}</h4><p>${opt.blurb}</p>`;
+  div.addEventListener("click", ()=>selectOpt(needsData, opt.id, "needsGrid", "needsDetail"));
+  div.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); selectOpt(needsData, opt.id, "needsGrid", "needsDetail"); } });
+  needsGrid.appendChild(div);
+});
+
+/* ---------------------------------------------------------
+   PBS FOUR FUNCTIONS (SEAT)
+--------------------------------------------------------- */
+const functionsData = [
+  {
+    id:"sensory", label:"Sensory", icon:"🎧",
+    blurb:"The behaviour itself is regulating.",
+    detail:"Rocking, humming, repetitive touching, or fabric rubbing can be self-soothing or stimulating in a way that has nothing to do with anyone else's response. The proactive strategy is usually to offer an acceptable alternative that provides similar sensory input, not to eliminate the behaviour outright."
+  },
+  {
+    id:"escape", label:"Escape", icon:"🚪",
+    blurb:"Avoiding or ending something unwanted.",
+    detail:"Resisting a task, pushing away, or becoming distressed when a particular activity or person approaches often functions to end or avoid it. The proactive strategy looks at whether the task itself can be modified, offered differently, or given more warning and choice around timing."
+  },
+  {
+    id:"attention", label:"Attention", icon:"🙋",
+    blurb:"Seeking social contact or response.",
+    detail:"Calling out, following staff, or repeated requests can function to obtain social connection — particularly where a person's need for inclusion or attachment (see Person-Centred Care) is otherwise going unmet. Proactively scheduling brief, predictable contact throughout the day is often more effective than only responding once the behaviour has escalated."
+  },
+  {
+    id:"tangible", label:"Tangible", icon:"🎯",
+    blurb:"Obtaining a specific item or outcome.",
+    detail:"Behaviour aimed at getting a particular food, item, or activity. The proactive strategy is to build predictable, legitimate access to the thing the person wants into the routine, rather than only ever supplying it as a reaction to the behaviour — which can inadvertently reinforce the behaviour itself."
+  }
+];
+const functionsGrid = document.getElementById("functionsGrid");
+functionsData.forEach(opt=>{
+  const div = document.createElement("div");
+  div.className = "opt-card";
+  div.dataset.id = opt.id;
+  div.tabIndex = 0;
+  div.setAttribute("role","button");
+  div.innerHTML = `<div class="opt-icon">${opt.icon}</div><h4>${opt.label}</h4><p>${opt.blurb}</p>`;
+  div.addEventListener("click", ()=>selectOpt(functionsData, opt.id, "functionsGrid", "functionsDetail"));
+  div.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); selectOpt(functionsData, opt.id, "functionsGrid", "functionsDetail"); } });
+  functionsGrid.appendChild(div);
+});
+
+function selectOpt(dataset, id, gridId, detailId){
+  document.querySelectorAll(`#${gridId} .opt-card`).forEach(c=>c.classList.toggle("selected", c.dataset.id===id));
+  const opt = dataset.find(o=>o.id===id);
+  const detail = document.getElementById(detailId);
+  detail.innerHTML = `<b>${opt.label}:</b> ${opt.detail}`;
+  detail.classList.add("show");
+}
+selectOpt(needsData, "comfort", "needsGrid", "needsDetail");
+selectOpt(functionsData, "sensory", "functionsGrid", "functionsDetail");
+
+/* ---------------------------------------------------------
+   BPSD TRIGGER SIMULATOR
+--------------------------------------------------------- */
+const bpsdData = {
+  physical:{
+    status:"risk",
+    badge:"⛔ Rule out first",
+    title:"Physical triggers",
+    text:"Pain (including undiagnosed dental, musculoskeletal, or positioning pain), urinary tract or other infection, constipation, hunger or thirst, fatigue, and medication side effects are the most common physical drivers. A sudden behaviour change in a previously settled person should trigger a physical health check before anything else.",
+    svg:`<svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Medical cross icon"><circle cx="60" cy="60" r="52" fill="var(--bad-tint)"/><rect x="50" y="30" width="20" height="60" rx="6" fill="var(--bad)"/><rect x="30" y="50" width="60" height="20" rx="6" fill="var(--bad)"/></svg>`
+  },
+  environmental:{
+    status:"caution",
+    badge:"⚠️ Adjust the setting",
+    title:"Environmental triggers",
+    text:"Overstimulation (noise, crowding, TV left on), understimulation and boredom, unfamiliar surroundings, glare or poor lighting, temperature discomfort, and clutter that's hard to navigate or interpret visually all contribute. Environmental change is often the fastest lever available on shift.",
+    svg:`<svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="House icon"><circle cx="60" cy="60" r="52" fill="var(--warn-tint)"/><path d="M30 65 L60 38 L90 65 V88 H30 Z" fill="var(--warn)"/><rect x="50" y="70" width="20" height="18" fill="#fff"/></svg>`
+  },
+  psychological:{
+    status:"caution",
+    badge:"💭 Emotional state",
+    title:"Psychological &amp; emotional triggers",
+    text:"Fear, confusion about where they are or what's happening, loss of control over a decision, grief (including recurring grief for a spouse or a past role), and depression or anxiety that presents as agitation rather than as a stated mood. These often sit underneath a physical or environmental trigger rather than standing alone.",
+    svg:`<svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Thought bubble icon"><circle cx="60" cy="60" r="52" fill="var(--acp-blue-tint)"/><ellipse cx="60" cy="52" rx="30" ry="20" fill="var(--acp-blue)"/><circle cx="34" cy="80" r="7" fill="var(--acp-blue)"/><circle cx="24" cy="94" r="4" fill="var(--acp-blue)"/></svg>`
+  },
+  communication:{
+    status:"safe",
+    badge:"💬 Unmet need signal",
+    title:"Communication-related triggers",
+    text:"Where expressive or receptive language is impaired, behaviour becomes the primary channel for expressing an unmet need — 'I'm in pain,' 'I want to go home,' 'I don't understand what you're asking of me.' Treating the behaviour as the message to decode, rather than the problem to stop, is the core skill this category calls for.",
+    svg:`<svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Speech bubble icon"><circle cx="60" cy="60" r="52" fill="var(--good-tint)"/><path d="M28 40 h64 a8 8 0 0 1 8 8 v22 a8 8 0 0 1 -8 8 H52 l-14 14 v-14 h-10 a8 8 0 0 1 -8 -8 v-22 a8 8 0 0 1 8 -8 Z" fill="var(--good)"/></svg>`
+  }
+};
+function renderBpsd(key){
+  const d = bpsdData[key];
+  document.querySelectorAll("#bpsdControls .sim-btn").forEach(b=>b.classList.toggle("active", b.dataset.trigger===key));
+  document.getElementById("bpsdVisual").innerHTML = d.svg;
+  document.getElementById("bpsdReadout").innerHTML = `
+    <span class="status-badge ${d.status}">${d.badge}</span>
+    <h4>${d.title}</h4>
+    <p>${d.text}</p>`;
+}
+document.getElementById("bpsdControls").addEventListener("click", e=>{
+  const btn = e.target.closest(".sim-btn");
+  if(!btn) return;
+  renderBpsd(btn.dataset.trigger);
+});
+renderBpsd("physical");
+
+/* ---------------------------------------------------------
+   DE-ESCALATION SIMULATOR
+--------------------------------------------------------- */
+const deescData = {
+  calm:{
+    status:"safe",
+    badge:"✅ Recommended",
+    title:"Calm & validating",
+    text:"Lowered voice, slower pace, open body language, physical space given, feelings acknowledged before content is addressed. This lowers physiological arousal and gives the person room to regain a sense of control — usually the fastest route back to a settled state.",
+    svg:`<svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Two calm figures with space between them"><circle cx="60" cy="60" r="52" fill="var(--good-tint)"/><circle cx="38" cy="46" r="12" fill="var(--figure)"/><rect x="28" y="60" width="20" height="30" rx="8" fill="var(--figure)"/><circle cx="82" cy="46" r="12" fill="var(--figure-dark)"/><rect x="72" y="60" width="20" height="30" rx="8" fill="var(--figure-dark)"/><path d="M50 55 Q60 60 70 55" stroke="var(--good)" stroke-width="2" fill="none" stroke-dasharray="2 3"/></svg>`
+  },
+  confrontational:{
+    status:"risk",
+    badge:"⛔ Avoid",
+    title:"Confrontational",
+    text:"Raised voice, arguing the facts, correcting or reasoning against a false belief, standing over a seated person, or closing off personal space. This raises arousal further and is one of the most common ways staff unintentionally escalate a situation that could have settled on its own.",
+    svg:`<svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Two figures facing off closely"><circle cx="60" cy="60" r="52" fill="var(--bad-tint)"/><circle cx="46" cy="46" r="12" fill="var(--figure)"/><rect x="36" y="60" width="20" height="30" rx="8" fill="var(--figure)"/><circle cx="74" cy="46" r="12" fill="var(--figure-dark)"/><rect x="64" y="60" width="20" height="30" rx="8" fill="var(--figure-dark)"/><path d="M56 40 L64 40" stroke="var(--bad)" stroke-width="3"/><path d="M60 30 L60 20" stroke="var(--bad)" stroke-width="3"/></svg>`
+  },
+  rushed:{
+    status:"caution",
+    badge:"⚠️ Case-by-case",
+    title:"Rushed / crowding",
+    text:"Multiple staff arriving at once, fast movement, talking over each other, or trying to complete a task quickly 'to get it over with' can feel overwhelming even when every individual action is well-intentioned. Sometimes more hands genuinely are needed for safety — but coordinate roles and communication first rather than converging without a plan.",
+    svg:`<svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Three figures crowding one central figure"><circle cx="60" cy="60" r="52" fill="var(--warn-tint)"/><circle cx="60" cy="46" r="12" fill="var(--skin)"/><rect x="50" y="60" width="20" height="28" rx="8" fill="var(--figure-dark)"/><circle cx="26" cy="70" r="9" fill="var(--figure)"/><circle cx="94" cy="70" r="9" fill="var(--figure)"/><circle cx="60" cy="94" r="9" fill="var(--figure)"/></svg>`
+  }
+};
+function renderDeesc(key){
+  const d = deescData[key];
+  document.querySelectorAll("#deescControls .sim-btn").forEach(b=>b.classList.toggle("active", b.dataset.approach===key));
+  document.getElementById("deescVisual").innerHTML = d.svg;
+  document.getElementById("deescReadout").innerHTML = `
+    <span class="status-badge ${d.status}">${d.badge}</span>
+    <h4>${d.title}</h4>
+    <p>${d.text}</p>`;
+}
+document.getElementById("deescControls").addEventListener("click", e=>{
+  const btn = e.target.closest(".sim-btn");
+  if(!btn) return;
+  renderDeesc(btn.dataset.approach);
+});
+renderDeesc("calm");
+
+/* ---------------------------------------------------------
+   CHECKLIST
+--------------------------------------------------------- */
+const checklistData = [
+  {t:"Physical causes ruled out", d:"Pain, infection, constipation, hunger/thirst, fatigue, and medication effects considered before assuming a purely behavioural cause."},
+  {t:"Environment checked", d:"Noise, lighting, temperature, and crowding adjusted where possible."},
+  {t:"Approach matches the person's plan", d:"Existing PBS plan, dementia care plan, or communication supports followed, not improvised."},
+  {t:"Explained before touching", d:"What you're about to do said clearly, in short sentences, before starting personal care or a transfer."},
+  {t:"Genuine choice offered where possible", d:"A real choice between two acceptable options, not a directive phrased as a question."},
+  {t:"Space and calm body language maintained", d:"Voice lowered, pace slowed, physical space given if any distress is present."},
+  {t:"Function considered, not just the behaviour", d:"Sensory, escape, attention, or tangible — a guess at what the behaviour is achieving for the person."},
+  {t:"Outcome documented and escalated if needed", d:"Care notes updated, and any new or worsening pattern flagged to the team leader or behaviour support practitioner."}
+];
+const checklistEl = document.getElementById("checklistItems");
+checklistData.forEach((item,i)=>{
+  const li = document.createElement("li");
+  li.dataset.i = i;
+  li.tabIndex = 0;
+  li.setAttribute("role","checkbox");
+  li.setAttribute("aria-checked","false");
+  li.innerHTML = `<div class="box"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="txt"><b>${item.t}</b><span>${item.d}</span></div>`;
+  const toggle = ()=>{
+    li.classList.toggle("checked");
+    li.setAttribute("aria-checked", li.classList.contains("checked") ? "true" : "false");
+    updateChecklistProgress();
+  };
+  li.addEventListener("click", toggle);
+  li.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(); } });
+  checklistEl.appendChild(li);
+});
+function updateChecklistProgress(){
+  const total = checklistData.length;
+  const done = document.querySelectorAll("#checklistItems li.checked").length;
+  document.getElementById("checklistCount").textContent = `${done} / ${total} confirmed`;
+  document.getElementById("checklistFill").style.width = (done/total*100)+"%";
+  document.getElementById("checklistDone").style.display = done===total ? "block" : "none";
+}
+
+/* ---------------------------------------------------------
+   QUIZ
+--------------------------------------------------------- */
+const quizData = [
+  {
+    q:"Under the NDIS Commission framework, when can a regulated restrictive practice be used?",
+    opts:["Whenever staff judge it's the quickest option","As a first response to any behaviour of concern","Only as a last resort, authorised, and with a documented plan to reduce and eliminate it","Only if the person's family agrees on the day"],
+    correct:2,
+    explain:"Restrictive practices must be the least restrictive option, used only as a last resort to prevent harm, properly authorised, and actively worked toward reduction and elimination through a PBS plan."
+  },
+  {
+    q:"In Kitwood's model, which psychological need relates most directly to purposeful, meaningful activity?",
+    opts:["Attachment","Occupation","Comfort","Inclusion"],
+    correct:1,
+    explain:"Occupation is about being involved in a process that draws on remaining abilities and feels personally significant — unmet occupation is a common, under-recognised driver of agitation and low mood."
+  },
+  {
+    q:"A resident who was previously settled suddenly becomes agitated and resistant to care. What should happen first?",
+    opts:["Increase PRN sedation immediately","Assume the dementia is progressing and continue as normal","Check for physical causes such as pain, infection, or constipation","Restrict the resident to their room for everyone's safety"],
+    correct:2,
+    explain:"A sudden behaviour change in a previously settled person should always prompt a physical health check first — pain and infection, particularly UTI, are among the most common and most fixable causes."
+  },
+  {
+    q:"In the ABC model of behaviour, what does the 'B' need to describe?",
+    opts:["A best guess at the person's diagnosis","The behaviour, described specifically and observably rather than interpreted","The staff member's opinion of the behaviour","Only behaviours severe enough to require restraint"],
+    correct:1,
+    explain:"The behaviour should be recorded objectively and specifically — what was observed — rather than in interpreted or judgemental terms, so the pattern can be analysed accurately over time."
+  },
+  {
+    q:"Which of these is a recommended de-escalation technique?",
+    opts:["Standing directly over a seated, distressed person to assert calm authority","Arguing the facts to correct a false belief in the moment","Lowering your voice, slowing your pace, and giving physical space","Having several staff speak to the person at once to show support"],
+    correct:2,
+    explain:"Lowering voice and pace, along with giving space, reduces physiological arousal. Standing over someone, arguing facts, and multiple people talking at once all tend to escalate rather than settle a situation."
+  },
+  {
+    q:"Which SAMHSA trauma-informed care principle is specifically about ensuring a person has real control over decisions affecting them?",
+    opts:["Peer support","Empowerment, voice and choice","Cultural, historical and gender issues","Trustworthiness and transparency"],
+    correct:1,
+    explain:"Empowerment, voice and choice is about offering genuine choices and real control, not a directive dressed up as a question — something people generally recognise the difference between."
+  }
+];
+let quizScore = 0;
+let quizAnswered = 0;
+function renderQuiz(){
+  quizScore = 0; quizAnswered = 0;
+  const area = document.getElementById("quizArea");
+  area.innerHTML = "";
+  document.getElementById("quizScore").classList.remove("show");
+  quizData.forEach((q,qi)=>{
+    const card = document.createElement("div");
+    card.className = "quiz-card";
+    card.innerHTML = `<div class="quiz-q">${qi+1}. ${q.q}</div>
+      <div class="quiz-opts">${q.opts.map((o,oi)=>`<button class="quiz-opt" data-q="${qi}" data-o="${oi}">${o}</button>`).join("")}</div>
+      <div class="quiz-explain" id="explain-${qi}">${q.explain}</div>`;
+    area.appendChild(card);
+  });
+  area.querySelectorAll(".quiz-opt").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const qi = Number(btn.dataset.q), oi = Number(btn.dataset.o);
+      const opts = area.querySelectorAll(`.quiz-opt[data-q="${qi}"]`);
+      if (opts[0].disabled) return;
+      opts.forEach(b=>b.disabled = true);
+      const correct = quizData[qi].correct;
+      opts[correct].classList.add("correct");
+      if (oi !== correct) opts[oi].classList.add("incorrect");
+      else quizScore++;
+      quizAnswered++;
+      document.getElementById(`explain-${qi}`).classList.add("show");
+      if (quizAnswered === quizData.length) showQuizScore();
+    });
+  });
+}
+function showQuizScore(){
+  const box = document.getElementById("quizScore");
+  document.getElementById("quizScoreNum").textContent = `${quizScore}/${quizData.length}`;
+  let msg = "";
+  if (quizScore === quizData.length) msg = "Excellent — full marks. Ready to apply this at the bedside.";
+  else if (quizScore >= quizData.length - 1) msg = "Strong result — review the missed item above before applying at the bedside.";
+  else msg = "Worth revisiting the relevant sections above before applying this independently.";
+  document.getElementById("quizScoreMsg").textContent = msg;
+  box.classList.add("show");
+  recordCompletion(`${quizScore}/${quizData.length} correct`);
+}
+function resetQuiz(){
+  document.getElementById("completionStatus").textContent = "";
+  document.getElementById("completionStatus").className = "completion-status";
+  renderQuiz();
+}
+renderQuiz();
+
+updateProgress();
+
+initAuthGate();
+</script>
+</body>
+</html>
