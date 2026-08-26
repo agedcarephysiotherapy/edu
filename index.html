@@ -212,26 +212,28 @@
     th{color:#000;border-bottom:2px solid #000;}
     .badge{border:1px solid #999;background:#fff !important;color:#000 !important;}
 
-    /* Staff-audit matrix: force it to actually fit the printed page instead
-       of silently clipping columns past the right edge. table-layout:fixed
-       + a narrow fixed width per course column lets many courses fit;
-       rotating the course-name headers keeps them readable at that width. */
+    /* Staff-audit matrix: exact column widths are computed in JS right
+       before printing (see prepareAuditPrintWidths) so name/summary stay
+       thin and the remaining width divides evenly across however many
+       course columns are actually present — guaranteed to sum to 100%,
+       so the table can't silently overflow the page regardless of course
+       count. This CSS only handles what doesn't depend on that count. */
     .matrix-wrap{max-height:none !important;overflow:visible !important;border:none;}
-    table.matrix{table-layout:fixed;width:100%;font-size:9px;page-break-inside:auto;}
+    table.matrix{table-layout:fixed;width:100%;font-size:8.5px;page-break-inside:auto;}
     table.matrix tr{page-break-inside:avoid;}
-    table.matrix th,table.matrix td{padding:3px 2px;white-space:normal;word-break:break-word;}
-    table.matrix th.audit-check-col,table.matrix td.audit-check-col,
+    table.matrix th,table.matrix td{padding:2px 1px;white-space:normal;word-break:break-word;overflow:hidden;}
+    table.matrix th.audit-check-col,table.matrix td.audit-check-col{display:none !important;width:0 !important;padding:0 !important;border:none !important;}
     table.matrix th.col-name,table.matrix td.col-name,
     table.matrix th.col-summary,table.matrix td.col-summary{
-      position:static !important;box-shadow:none !important;width:auto;
+      position:static !important;box-shadow:none !important;
     }
     table.matrix th{color:#000;border-bottom:2px solid #000;}
     table.matrix th.col-course{
       writing-mode:vertical-rl;transform:rotate(180deg);
-      height:130px;width:16px;vertical-align:bottom;font-size:8.5px;padding:4px 1px;
+      height:120px;vertical-align:bottom;font-size:8px;padding:3px 1px;
     }
     table.matrix td.cell-done,table.matrix td.cell-attempted,
-    table.matrix td.cell-missing,table.matrix td.cell-na{width:16px;font-size:11px;}
+    table.matrix td.cell-missing,table.matrix td.cell-na{font-size:10px;}
     .print-hide-row{display:none !important;}
   }
 </style>
@@ -1176,6 +1178,27 @@
     renderAuditTable("");
   });
 
+  // Fixed pixel/percentage guesses can't account for how many courses exist,
+  // so widths are computed right before printing: name/summary stay thin and
+  // fixed, and whatever's left splits evenly across the actual course count.
+  // This is what guarantees the table always fits the printed page width
+  // instead of overflowing once there are more than a handful of courses.
+  function prepareAuditPrintWidths(){
+    const nameTh = document.querySelector("table.matrix th.col-name");
+    const summaryTh = document.querySelector("table.matrix th.col-summary");
+    const courseThs = document.querySelectorAll("table.matrix th.col-course");
+    if(!nameTh || !summaryTh || courseThs.length === 0) return;
+    const namePct = 8, summaryPct = 4;
+    const coursePct = (100 - namePct - summaryPct) / courseThs.length;
+    nameTh.style.width = namePct + "%";
+    summaryTh.style.width = summaryPct + "%";
+    courseThs.forEach(th => th.style.width = coursePct + "%");
+  }
+  function resetAuditPrintWidths(){
+    document.querySelectorAll("table.matrix th.col-name, table.matrix th.col-summary, table.matrix th.col-course")
+      .forEach(th => th.style.width = "");
+  }
+
   document.getElementById("auditPrintBtn")?.addEventListener("click", ()=>{
     if(!auditSelectedIds || auditSelectedIds.size===0){
       alert("Select at least one staff member to print.");
@@ -1185,7 +1208,9 @@
     header.innerHTML = `<strong>Aged Care Physiotherapy — Staff Audit Report</strong><br>
       ${auditSelectedIds.size} staff member${auditSelectedIds.size===1?"":"s"} included
       &nbsp;&middot;&nbsp; Printed ${new Date().toLocaleDateString("en-AU", {day:"numeric", month:"long", year:"numeric"})}`;
+    prepareAuditPrintWidths();
     window.print();
+    resetAuditPrintWidths();
   });
 
   document.getElementById("auditExportCsvBtn")?.addEventListener("click", ()=>{
