@@ -73,12 +73,23 @@
   .btn.ghost:hover{background:var(--brand-light);}
   .btn.ghost.blue{color:var(--blue);border-color:var(--blue);}
   .btn.ghost.blue:hover{background:var(--blue-light);}
+  .btn.green{background:var(--success);}
+  .btn.green:hover{background:#245f3d;}
   .btn.small{padding:8px 15px;font-size:12.5px;}
   .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
   table{width:100%;border-collapse:collapse;font-size:14px;}
-  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);border-bottom:1px solid var(--line);padding:10px 6px;font-weight:600;}
-  td{padding:12px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);border-bottom:1px solid var(--line);padding:11px 10px;font-weight:600;}
+  td{padding:13px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
   tbody tr:hover td{background:var(--paper);}
+  .row-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;}
+  .table-wrap table{min-width:700px;}
+  .table-wrap th{background:#fafafa;}
+  .table-wrap tbody tr:nth-child(even) td{background:#fbfbfc;}
+  .table-wrap tbody tr:hover td{background:var(--blue-light);}
+  .table-wrap th:first-child,.table-wrap td:first-child{padding-left:16px;}
+  .table-wrap th:last-child,.table-wrap td:last-child{padding-right:16px;}
+  .table-wrap tbody tr:last-child td{border-bottom:none;}
   .badge{display:inline-block;padding:4px 12px;border-radius:980px;font-size:11.5px;font-weight:700;}
   .badge.pass{background:#E3F1E8;color:var(--success);}
   .badge.fail{background:#F6E4E1;color:var(--danger);}
@@ -958,7 +969,7 @@
 
   async function renderRoles(){
     const wrap = document.getElementById("rolesTable");
-    wrap.innerHTML = `<table><thead><tr><th>Staff</th><th>Email</th><th>Status</th><th>Role</th><th>Category</th><th></th></tr></thead><tbody>` +
+    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Staff</th><th>Email</th><th>Status</th><th>Role</th><th>Category</th><th></th></tr></thead><tbody>` +
       allProfiles.map(p=>{
         const statusTag = `<span class="approval-tag ${p.status||'pending'}">${p.status||'pending'}</span>`;
         const isYou = p.id === currentUser.id;
@@ -967,14 +978,13 @@
           actions = '<span style="color:var(--muted);font-size:12px;">(you)</span>';
         }else{
           if(p.status !== "approved"){
-            actions += `<button class="btn small blue" data-approve="${p.id}">✓ Approve</button> `;
+            actions += `<button class="btn small green" data-approve="${p.id}">✓ Approve</button>`;
           }
           if(p.status !== "rejected"){
-            actions += `<button class="btn small ghost" data-reject="${p.id}">✕ Reject</button> `;
+            actions += `<button class="btn small ghost" data-reject="${p.id}">✕ Reject</button>`;
           }
-          actions += `<button class="btn small ghost" data-toggle="${p.id}" data-role="${p.role}">
-                        ${p.role === "manager" ? "↓ Demote" : "↑ Promote"}
-                      </button>`;
+          actions += `<button class="btn small ghost blue" data-toggle="${p.id}" data-role="${p.role}">${p.role === "manager" ? "↓ Demote" : "↑ Promote"}</button>`;
+          actions = `<div class="row-actions">${actions}</div>`;
         }
         const staffCats = p.staff_categories || [];
         const catCell = isYou
@@ -995,7 +1005,7 @@
           <td>${catCell}</td>
           <td>${actions}</td>
         </tr>`;
-      }).join("") + `</tbody></table>`;
+      }).join("") + `</tbody></table></div>`;
     wrap.querySelectorAll("button[data-toggle]").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
         const newRole = btn.dataset.role === "manager" ? "staff" : "manager";
