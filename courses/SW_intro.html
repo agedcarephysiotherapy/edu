@@ -1,0 +1,2484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NDIS Support Worker Training - Vitals & Emergency Response | ACP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <style>
+        :root {
+            --primary: #336699;
+            --secondary: #cc3300;
+            --accent: #336699;
+            --danger: #cc3300;
+            --warning: #e0983f;
+            --success: #2f8f5b;
+            --light: #f4f6f8;
+            --dark: #234a70;
+            --text: #2b2f33;
+            --border: #dde3e8;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow-x: hidden; }
+        body {
+            font-family: 'Lexend', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: #f4f6f8;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .navbar {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--dark) 100%);
+            color: white;
+            padding: 1rem 1.25rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .navbar-title-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            overflow: hidden;
+            min-width: 0;
+        }
+        .navbar-text strong {
+            font-size: 1.05rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+        }
+        .navbar .subtitle {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .navbar .brand-tag {
+            display: inline-block;
+            background: var(--secondary);
+            color: #fff;
+            font-size: 0.65rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-weight: 700;
+            margin-right: 0.25rem;
+            flex-shrink: 0;
+        }
+        .navbar .navbar-text { display: flex; flex-direction: column; line-height: 1.3; overflow: hidden; flex: 1; min-width: 0; }
+        .menu-toggle {
+            display: none;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: #fff;
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-progress {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #ddd;
+            z-index: 999;
+        }
+        .nav-progress-bar {
+            height: 100%;
+            background: var(--secondary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 64px;
+            width: 280px;
+            height: calc(100vh - 64px);
+            background: white;
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 1.5rem 0;
+            z-index: 998;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            top: 64px;
+            background: rgba(0,0,0,0.4);
+            z-index: 997;
+        }
+        .sidebar-overlay.show { display: block; }
+        .sidebar-section { margin-bottom: 1.5rem; }
+        .sidebar-title {
+            padding: 0.5rem 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+        .sidebar-item {
+            padding: 0.7rem 1.5rem 0.7rem 2rem;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .sidebar-item:hover { background: var(--light); color: var(--primary); }
+        .sidebar-item.active {
+            background: #e8f4f8;
+            border-left-color: var(--accent);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .sidebar-item.completed::after {
+            content: " ✓";
+            color: var(--success);
+            font-weight: bold;
+        }
+        .main-content {
+            margin-left: 280px;
+            margin-top: 64px;
+            padding: 2rem;
+            max-width: 900px;
+        }
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: none;
+        }
+        .section.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h2 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--secondary);
+            font-size: 1.8rem;
+        }
+        h3 {
+            color: var(--dark);
+            margin: 1.5rem 0 0.8rem;
+            font-size: 1.3rem;
+        }
+        h4 {
+            color: var(--accent);
+            margin: 1.2rem 0 0.5rem;
+            font-size: 1.1rem;
+        }
+        p { margin-bottom: 1rem; }
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid var(--accent);
+            padding: 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid var(--warning);
+            padding: 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .danger-box {
+            background: #f8d7da;
+            border-left: 4px solid var(--danger);
+            padding: 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .success-box {
+            background: #d1e7dd;
+            border-left: 4px solid var(--success);
+            padding: 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .box-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        ul, ol { margin: 1rem 0 1rem 1.5rem; }
+        li { margin-bottom: 0.5rem; }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .data-table th {
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        .data-table td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .data-table tr:nth-child(even) { background: #f8f9fa; }
+        .data-table tr:hover { background: #e8f4f8; }
+        .step-container {
+            counter-reset: step;
+            margin: 1.5rem 0;
+        }
+        .step {
+            position: relative;
+            padding-left: 3rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px dashed var(--border);
+        }
+        .step:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2rem;
+            height: 2rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .step-title {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        .checklist {
+            list-style: none;
+            margin: 1rem 0;
+        }
+        .checklist li {
+            padding: 0.8rem 1rem 0.8rem 2.5rem;
+            position: relative;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+            margin-bottom: 0.5rem;
+        }
+        .checklist li:hover { background: var(--light); }
+        .checklist li::before {
+            content: "☐";
+            position: absolute;
+            left: 0.8rem;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+        .checklist li.checked {
+            background: #d1e7dd;
+            border-color: var(--success);
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+        .checklist li.checked::before {
+            content: "☑";
+            color: var(--success);
+        }
+        .quiz-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .quiz-question {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        .quiz-options label {
+            display: block;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quiz-options label:hover { border-color: var(--accent); }
+        .quiz-options input[type="radio"] { margin-right: 0.5rem; }
+        .quiz-options label.correct {
+            border-color: var(--success);
+            background: #d1e7dd;
+        }
+        .quiz-options label.incorrect {
+            border-color: var(--danger);
+            background: #f8d7da;
+        }
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+        .btn:hover { background: var(--dark); transform: translateY(-1px); }
+        .btn-secondary { background: var(--secondary); }
+        .btn-danger { background: var(--danger); }
+        .btn-success { background: var(--success); }
+        .scenario-card {
+            background: linear-gradient(135deg, var(--secondary) 0%, #a32800 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .scenario-card::before {
+            content: "🎭";
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            font-size: 3rem;
+            opacity: 0.2;
+        }
+        .scenario-card h4 { color: white; margin-top: 0; }
+        .vital-sim {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+        .vital-display {
+            display: inline-block;
+            margin: 1rem;
+            padding: 1.5rem;
+            background: var(--light);
+            border-radius: 12px;
+            min-width: 150px;
+        }
+        .vital-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .vital-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .vital-status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+        .status-normal { background: #d1e7dd; color: #0f5132; }
+        .status-warning { background: #fff3cd; color: #664d03; }
+        .status-danger { background: #f8d7da; color: #842029; }
+        .accordion { margin: 1rem 0; }
+        .accordion-item {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+        .accordion-header {
+            padding: 1rem 1.5rem;
+            background: var(--light);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .accordion-header:hover { background: #e8f4f8; }
+        .accordion-header::after {
+            content: "+";
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        .accordion-header.active::after { content: "−"; }
+        .accordion-body {
+            padding: 0 1.5rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        .accordion-body.open {
+            padding: 1rem 1.5rem;
+            max-height: 500px;
+        }
+        .flowchart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            margin: 2rem 0;
+        }
+        .flow-box {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            max-width: 300px;
+            width: 100%;
+            position: relative;
+        }
+        .flow-start { background: var(--primary); color: white; }
+        .flow-decision { background: var(--warning); color: var(--dark); border-radius: 50%; width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; }
+        .flow-action { background: var(--secondary); color: white; }
+        .flow-end { background: var(--success); color: white; }
+        .flow-emergency { background: var(--danger); color: white; }
+        .flow-arrow {
+            width: 2px;
+            height: 30px;
+            background: var(--dark);
+            position: relative;
+        }
+        .flow-arrow::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: -4px;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 8px solid var(--dark);
+        }
+        .ndis-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        @media print {
+            .sidebar, .sidebar-overlay, .navbar, .nav-progress, .btn, .quiz-container, .menu-toggle { display: none !important; }
+            .main-content { margin-left: 0; margin-top: 0; }
+            .section { display: block !important; page-break-inside: avoid; }
+        }
+        @media (max-width: 900px) {
+            .menu-toggle { display: flex; }
+            .sidebar {
+                top: 60px;
+                height: calc(100vh - 60px);
+                width: 82%;
+                max-width: 320px;
+                transform: translateX(-100%);
+                box-shadow: 4px 0 18px rgba(0,0,0,0.15);
+            }
+            .sidebar.open { transform: translateX(0); }
+            .main-content {
+                margin-left: 0;
+                margin-top: 68px;
+                padding: 1.1rem;
+                max-width: 100%;
+            }
+            .navbar { top: 0; padding: 0.75rem 1rem; }
+            .navbar-text strong { font-size: 0.95rem; }
+            .navbar .subtitle { font-size: 0.72rem; }
+            .nav-progress { top: 60px; }
+            .section { padding: 1.4rem 1.1rem; border-radius: 10px; }
+            h2 { font-size: 1.35rem; }
+            h3 { font-size: 1.08rem; }
+            .data-table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+            .data-table th, .data-table td { padding: 0.6rem 0.7rem; font-size: 0.82rem; }
+            .step { padding-left: 2.4rem; }
+            .step::before { width: 1.7rem; height: 1.7rem; font-size: 0.8rem; }
+            .quick-ref-grid { grid-template-columns: 1fr; }
+            .quiz-container { padding: 1.2rem; }
+            .btn { width: 100%; text-align: center; margin: 0.4rem 0; }
+            .flow-box { max-width: 100%; }
+            .completion-badge { width: 88%; padding: 2rem 1.4rem; }
+        }
+        @media (max-width: 420px) {
+            h2 { font-size: 1.2rem; }
+            .section { padding: 1.1rem 0.9rem; }
+        }
+        .completion-badge {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            z-index: 2000;
+            animation: popIn 0.5s ease;
+            max-width: 420px;
+            width: 90%;
+        }
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        .completion-badge.show { display: block; }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1999; }
+        .overlay.show { display: block; }
+        .badge-icon { font-size: 4rem; margin-bottom: 1rem; }
+        .quick-ref {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--dark) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+        }
+        .quick-ref h4 { color: white; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 0.5rem; }
+        .quick-ref-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .quick-ref-item {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .quick-ref-item strong { display: block; margin-bottom: 0.3rem; }
+
+        /* ---- Auth gate & completion tracking (added for training tracker) ---- */
+        #authGate{
+            min-height:100vh;display:flex;align-items:center;justify-content:center;
+            padding:24px;background:linear-gradient(135deg, var(--primary) 0%, var(--dark) 100%);
+        }
+        #authGate .gate-card{
+            background:#fff;border-radius:12px;box-shadow:0 30px 60px -20px rgba(0,0,0,.4);
+            padding:32px;max-width:400px;text-align:center;
+        }
+        #authGate h2{color:var(--primary);font-size:19px;margin:0 0 10px;border-bottom:none;padding-bottom:0;}
+        #authGate p{color:#666;font-size:14px;line-height:1.6;margin:0 0 18px;}
+        #authGate a.gate-link{
+            display:inline-block;background:var(--primary);color:#fff;text-decoration:none;
+            font-weight:600;font-size:13.5px;padding:11px 22px;border-radius:8px;
+        }
+        #authGate a.gate-link:hover{background:var(--dark);}
+        .completion-status{
+            font-size:13.5px;margin-top:10px;min-height:16px;font-weight:500;color:#666;
+        }
+        .completion-status.saving{color:#666;}
+        .completion-status.ok{color:var(--success);font-weight:700;}
+        .completion-status.err{color:var(--danger);}
+        .completion-status.err button{
+            background:var(--danger);color:#fff;border:none;padding:7px 16px;border-radius:8px;
+            font-family:inherit;font-weight:600;font-size:12.5px;cursor:pointer;margin-top:8px;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+
+<div id="authGate" style="display:none;">
+  <div class="gate-card">
+    <h2>Sign in required</h2>
+    <p>You need to be signed in to the ACP Training Tracker to complete this course and have it recorded against your name.</p>
+    <a class="gate-link" href="../index.html">Go to the Training Tracker</a>
+  </div>
+</div>
+
+<div id="courseContent" style="display:none;">
+
+    <nav class="navbar">
+        <button class="menu-toggle" id="menuToggle" data-action="toggle-menu" aria-label="Toggle menu">☰</button>
+        <div class="navbar-text">
+            <span class="navbar-title-row"><span class="brand-tag">ACP Training</span><strong>NDIS Support Worker Training</strong></span>
+            <span class="subtitle">Vital Signs & Emergency Response | Community Setting</span>
+        </div>
+    </nav>
+    <div class="nav-progress">
+        <div class="nav-progress-bar" id="progressBar"></div>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay" data-action="close-menu"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-title">Module 1: Introduction</div>
+            <div class="sidebar-item active" data-action="nav" data-section="intro">Course Overview</div>
+            <div class="sidebar-item" data-action="nav" data-section="ndis-context">NDIS Context & Duty of Care</div>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Module 2: Vital Signs</div>
+            <div class="sidebar-item" data-action="nav" data-section="vitals-overview">Understanding Vital Signs</div>
+            <div class="sidebar-item" data-action="nav" data-section="temp">Body Temperature</div>
+            <div class="sidebar-item" data-action="nav" data-section="pulse">Pulse & Heart Rate</div>
+            <div class="sidebar-item" data-action="nav" data-section="respiration">Respiration Rate</div>
+            <div class="sidebar-item" data-action="nav" data-section="bp">Blood Pressure</div>
+            <div class="sidebar-item" data-action="nav" data-section="spo2">Oxygen Saturation (SpO₂)</div>
+            <div class="sidebar-item" data-action="nav" data-section="blood-sugar">Blood Glucose</div>
+            <div class="sidebar-item" data-action="nav" data-section="pain">Pain Assessment</div>
+            <div class="sidebar-item" data-action="nav" data-section="recording">Recording & Reporting</div>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Module 3: Emergency Response</div>
+            <div class="sidebar-item" data-action="nav" data-section="emergency-overview">Emergency Principles</div>
+            <div class="sidebar-item" data-action="nav" data-section="drabcd">DRABCD Action Plan</div>
+            <div class="sidebar-item" data-action="nav" data-section="cpr">CPR & AED</div>
+            <div class="sidebar-item" data-action="nav" data-section="choking">Choking Response</div>
+            <div class="sidebar-item" data-action="nav" data-section="seizures">Seizure Management</div>
+            <div class="sidebar-item" data-action="nav" data-section="falls">Falls & Head Injuries</div>
+            <div class="sidebar-item" data-action="nav" data-section="anaphylaxis">Anaphylaxis</div>
+            <div class="sidebar-item" data-action="nav" data-section="diabetes-emergency">Diabetic Emergency</div>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Module 4: Safeguarding</div>
+            <div class="sidebar-item" data-action="nav" data-section="safeguarding">Safeguarding Principles</div>
+            <div class="sidebar-item" data-action="nav" data-section="reporting-concerns">Reporting Concerns</div>
+            <div class="sidebar-item" data-action="nav" data-section="incident-reporting">Incident Reporting</div>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Module 5: Communication</div>
+            <div class="sidebar-item" data-action="nav" data-section="emergency-services">Contacting Emergency Services</div>
+            <div class="sidebar-item" data-action="nav" data-section="handover">Clinical Handover (ISBAR)</div>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Assessment</div>
+            <div class="sidebar-item" data-action="nav" data-section="scenarios">Practical Scenarios</div>
+            <div class="sidebar-item" data-action="nav" data-section="final-quiz">Final Assessment</div>
+            <div class="sidebar-item" data-action="nav" data-section="quick-reference">Quick Reference Guide</div>
+        </div>
+    </aside>
+    <main class="main-content">
+
+        <!-- SECTION: INTRO -->
+        <section id="intro" class="section active">
+            <h2>🎓 Course Overview</h2>
+            <div class="info-box">
+                <div class="box-title">📋 Welcome, Support Worker</div>
+                <p>This comprehensive training course is designed specifically for <strong>NDIS support workers operating in community settings</strong>. You will learn how to safely monitor vital signs, recognise emergencies, respond appropriately, and safeguard the clients you support.</p>
+            </div>
+            <h3>Learning Objectives</h3>
+            <p>By the end of this course, you will be able to:</p>
+            <ol>
+                <li>Accurately measure and interpret the six key vital signs in adults with disability</li>
+                <li>Recognise abnormal vital sign readings and know when to escalate</li>
+                <li>Execute the DRABCD emergency action plan confidently</li>
+                <li>Perform basic life support (CPR) and use an AED (not a replacement for an Accredited CPR or First Aid Training)</li>
+                <li>Respond appropriately to common medical emergencies in community settings</li>
+                <li>Apply safeguarding principles to protect client dignity and safety</li>
+                <li>Communicate effectively with emergency services using ISBAR</li>
+                <li>Complete accurate incident reports and documentation</li>
+            </ol>
+            <h3>Course Structure</h3>
+            <table class="data-table">
+                <thead><tr><th>Module</th><th>Topic</th><th>Duration</th><th>Format</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>Introduction & NDIS Context</td><td>30 min</td><td>Reading + Quiz</td></tr>
+                    <tr><td>2</td><td>Vital Signs Monitoring</td><td>2 hours</td><td>Interactive + Simulator</td></tr>
+                    <tr><td>3</td><td>Emergency Response</td><td>2.5 hours</td><td>Scenarios + Practical</td></tr>
+                    <tr><td>4</td><td>Safeguarding & Reporting</td><td>1 hour</td><td>Case Studies</td></tr>
+                    <tr><td>5</td><td>Communication & Handover</td><td>45 min</td><td>Role-play + Quiz</td></tr>
+                    <tr><td>6</td><td>Final Assessment</td><td>45 min</td><td>Quiz + Scenarios</td></tr>
+                </tbody>
+            </table>
+            <div class="warning-box">
+                <div class="box-title">⚠️ Important Notice</div>
+                <p>This course supplements — but does not replace — formal First Aid (HLTAID011) and CPR (HLTAID009) certification. You must maintain current certifications to work as an NDIS support worker. Always follow your organisation's policies and procedures, which take precedence over this training.</p>
+            </div>
+            <h3>Key Terms</h3>
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header" data-action="accordion">NDIS (National Disability Insurance Scheme)</div>
+                    <div class="accordion-body"><p>Australian government scheme providing funding and support to people with permanent and significant disability. As a support worker, you deliver funded supports under the NDIS Practice Standards.</p></div>
+                </div>
+                <div class="accordion-item">
+                    <div class="accordion-header" data-action="accordion">Duty of Care</div>
+                    <div class="accordion-body"><p>Your legal obligation to take reasonable care to avoid causing foreseeable harm to clients. This includes monitoring health, acting on concerns, and maintaining safe environments.</p></div>
+                </div>
+                <div class="accordion-item">
+                    <div class="accordion-header" data-action="accordion">Dignity of Risk</div>
+                    <div class="accordion-body"><p>The right of people with disability to make choices and take risks. Your role is to support informed decision-making while minimising harm — not to eliminate all risk.</p></div>
+                </div>
+                <div class="accordion-item">
+                    <div class="accordion-header" data-action="accordion">Person-Centred Practice</div>
+                    <div class="accordion-body"><p>Placing the client at the centre of all decisions. Their preferences, goals, and cultural background guide how you deliver support, including during emergencies.</p></div>
+                </div>
+            </div>
+            <button class="btn" data-action="nav" data-section="ndis-context">Next: NDIS Context →</button>
+        </section>
+
+        <!-- SECTION: NDIS CONTEXT -->
+        <section id="ndis-context" class="section">
+            <h2>NDIS Context & Duty of Care</h2>
+            <h3>Your Role in the Community</h3>
+            <p>As a community-based NDIS support worker, you often work alone in clients' homes, shared accommodations, or community venues. Unlike hospital settings, you may not have immediate clinical backup. This makes your ability to recognise deterioration and respond appropriately <strong>critical</strong>.</p>
+            <div class="info-box">
+                <div class="box-title">🏠 Community Setting Realities</div>
+                <ul>
+                    <li>You may be the only person present during an emergency</li>
+                    <li>Clients may have complex health conditions, communication difficulties, or sensory impairments</li>
+                    <li>Equipment and space may be limited</li>
+                    <li>Emergency services may take longer to arrive in remote areas</li>
+                    <li>Client consent and dignity must be maintained even in crisis</li>
+                </ul>
+            </div>
+            <h3>NDIS Practice Standards Relevant to This Training</h3>
+            <table class="data-table">
+                <thead><tr><th>Standard</th><th>What It Means for You</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Provider Governance</strong></td><td>You must know your organisation's emergency procedures and escalation pathways</td></tr>
+                    <tr><td><strong>Participant's Life</strong></td><td>You must act to preserve life and prevent serious harm</td></tr>
+                    <tr><td><strong>Provision of Supports</strong></td><td>Supports must be delivered safely, including health monitoring</td></tr>
+                    <tr><td><strong>Safe Environment</strong></td><td>You must identify and manage environmental risks</td></tr>
+                    <tr><td><strong>Incident Management</strong></td><td>All incidents must be reported, recorded, and reviewed</td></tr>
+                </tbody>
+            </table>
+            <h3>Scope of Practice — What You Can and Cannot Do</h3>
+            <div class="success-box">
+                <div class="box-title">✅ Within Your Scope</div>
+                <ul>
+                    <li>Monitor and record vital signs as per care plan</li>
+                    <li>Recognise abnormal signs and escalate to supervisor/nurse</li>
+                    <li>Administer basic first aid and CPR</li>
+                    <li>Call emergency services (000)</li>
+                    <li>Follow documented emergency action plans</li>
+                    <li>Administer prescribed emergency medication (e.g., EpiPen, Glucagon) if trained and authorised</li>
+                </ul>
+            </div>
+            <div class="danger-box">
+                <div class="box-title">❌ Outside Your Scope</div>
+                <ul>
+                    <li>Diagnose medical conditions</li>
+                    <li>Prescribe or adjust medications</li>
+                    <li>Perform invasive procedures (unless specifically trained and delegated)</li>
+                    <li>Ignore abnormal readings hoping they "will sort themselves out"</li>
+                    <li>Share client information with unauthorised persons</li>
+                </ul>
+            </div>
+            <h3>Documentation Requirements</h3>
+            <p>Every interaction involving vital signs or health concerns must be documented. In community settings, if you don't document it, it didn't happen.</p>
+            <ul class="checklist" id="doc-checklist">
+                <li data-action="check-item">Date and time of observation</li>
+                <li data-action="check-item">Vital sign readings with units</li>
+                <li data-action="check-item">Client's appearance and behaviour</li>
+                <li data-action="check-item">Any symptoms reported by client</li>
+                <li data-action="check-item">Actions taken</li>
+                <li data-action="check-item">Who was notified and when</li>
+                <li data-action="check-item">Your full name and signature</li>
+            </ul>
+            <button class="btn" data-action="nav" data-section="vitals-overview">Next: Understanding Vital Signs →</button>
+        </section>
+
+        <!-- SECTION: VITALS OVERVIEW -->
+        <section id="vitals-overview" class="section">
+            <h2>Understanding Vital Signs</h2>
+            <p>Vital signs are measurements of the body's basic functions. Changes in vital signs are often the <strong>first indicator</strong> that a person's health is deteriorating. Early recognition allows for early intervention.</p>
+            <h3>The Six Key Vital Signs</h3>
+            <table class="data-table">
+                <thead><tr><th>Vital Sign</th><th>What It Measures</th><th>Normal Range (Adult)</th><th>Tool Needed</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Body Temperature</strong></td><td>Body's ability to generate and dissipate heat</td><td>36.1°C – 37.2°C</td><td>Thermometer</td></tr>
+                    <tr><td><strong>Pulse / Heart Rate</strong></td><td>Heart beats per minute</td><td>60 – 100 bpm</td><td>Fingers or pulse oximeter</td></tr>
+                    <tr><td><strong>Respiration Rate</strong></td><td>Breaths per minute</td><td>12 – 20 breaths/min</td><td>Observation only</td></tr>
+                    <tr><td><strong>Blood Pressure</strong></td><td>Force of blood against artery walls</td><td>90/60 – 120/80 mmHg</td><td>Sphygmomanometer + stethoscope</td></tr>
+                    <tr><td><strong>Oxygen Saturation (SpO₂)</strong></td><td>Percentage of oxygen in blood</td><td>95% – 100%</td><td>Pulse oximeter</td></tr>
+                    <tr><td><strong>Blood Glucose</strong></td><td>Sugar level in blood</td><td>4.0 – 7.8 mmol/L</td><td>Glucose meter + test strips</td></tr>
+                </tbody>
+            </table>
+            <div class="warning-box">
+                <div class="box-title">⚠️ Baseline Variations</div>
+                <p>People with disability may have <strong>different baseline vital signs</strong> due to their condition, medications, or autonomic dysfunction. Always compare readings to the client's <em>usual</em> baseline, not just population norms. Check the care plan for individual parameters.</p>
+            </div>
+            <h3>When to Take Vital Signs</h3>
+            <ul>
+                <li>As scheduled in the client's care plan</li>
+                <li>When the client reports feeling unwell</li>
+                <li>Before and after administering certain medications</li>
+                <li>After a fall, seizure, or other incident</li>
+                <li>When you notice a change in behaviour, consciousness, or appearance</li>
+                <li>Before transferring to hospital or clinic</li>
+            </ul>
+            <h3>General Principles for All Measurements</h3>
+            <div class="step-container">
+                <div class="step">
+                    <div class="step-title">Ensure Privacy and Dignity</div>
+                    <p>Explain what you are doing, why, and gain consent. Ensure the environment is private. Be mindful of cultural or gender preferences.</p>
+                </div>
+                <div class="step">
+                    <div class="step-title">Check Equipment</div>
+                    <p>Ensure devices are clean, charged, calibrated, and within expiry dates. Use the correct cuff size for BP, correct probe size for SpO₂.</p>
+                </div>
+                <div class="step">
+                    <div class="step-title">Position the Client Correctly</div>
+                    <p>Most vitals are taken with the client seated or lying comfortably. Blood pressure should be taken with the arm supported at heart level.</p>
+                </div>
+                <div class="step">
+                    <div class="step-title">Allow Rest Period</div>
+                    <p>Wait 5 minutes after activity, eating, drinking hot/cold beverages, or smoking before taking vitals. Anxiety can also affect readings.</p>
+                </div>
+                <div class="step">
+                    <div class="step-title">Take Multiple Readings</div>
+                    <p>If a reading is abnormal, wait 2-3 minutes and repeat. Use the same arm for blood pressure comparisons.</p>
+                </div>
+                <div class="step">
+                    <div class="step-title">Document Immediately</div>
+                    <p>Record all readings with date, time, and any relevant context. Never rely on memory.</p>
+                </div>
+            </div>
+            <button class="btn" data-action="nav" data-section="temp">Next: Body Temperature →</button>
+        </section>
+
+        <!-- SECTION: TEMPERATURE -->
+        <section id="temp" class="section">
+            <h2>🌡️ Body Temperature</h2>
+            <p>Body temperature reflects the balance between heat production and heat loss. It is controlled by the hypothalamus in the brain.</p>
+            <h3>Normal Ranges by Site</h3>
+            <table class="data-table">
+                <thead><tr><th>Measurement Site</th><th>Normal Range</th><th>Notes</th></tr></thead>
+                <tbody>
+                    <tr><td>Oral (mouth)</td><td>35.8°C – 37.3°C</td><td>Wait 15 min after eating/drinking</td></tr>
+                    <tr><td>Axillary (armpit)</td><td>34.8°C – 36.5°C</td><td>Less accurate; add ~0.5°C for core estimate</td></tr>
+                    <tr><td>Tympanic (ear)</td><td>35.8°C – 37.5°C</td><td>Fast; ensure proper probe placement</td></tr>
+                    <tr><td>Temporal (forehead)</td><td>35.8°C – 37.5°C</td><td>Non-invasive; affected by sweat/environment</td></tr>
+                    <tr><td>Rectal</td><td>36.3°C – 37.8°C</td><td>Most accurate core temp; rarely used in community</td></tr>
+                </tbody>
+            </table>
+            <h3>How to Take an Oral Temperature</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Prepare</div><p>Wash hands. Check thermometer is clean and functional. Ensure client has not eaten, drunk, or smoked in the last 15 minutes.</p></div>
+                <div class="step"><div class="step-title">Explain and Position</div><p>Tell the client what you are doing. Ask them to sit comfortably. Place the probe under the tongue in the sublingual pocket.</p></div>
+                <div class="step"><div class="step-title">Instruct the Client</div><p>Ask them to close lips gently around the probe (do not bite down) and breathe through the nose. Keep still until the thermometer beeps.</p></div>
+                <div class="step"><div class="step-title">Read and Record</div><p>Remove the probe, read the display, and record the temperature with the site (e.g., "37.1°C oral"). Clean the probe with alcohol wipe.</p></div>
+            </div>
+            <h3>Interpreting Temperature Readings</h3>
+            <table class="data-table">
+                <thead><tr><th>Reading</th><th>Classification</th><th>Action</th></tr></thead>
+                <tbody>
+                    <tr><td>Below 35.0°C</td><td>Hypothermia</td><td><strong>URGENT:</strong> Warm gradually, call supervisor, consider 000 if severe</td></tr>
+                    <tr><td>35.0°C – 36.0°C</td><td>Low / Mild hypothermia</td><td>Monitor closely, re-check in 30 min, notify supervisor</td></tr>
+                    <tr><td>36.1°C – 37.2°C</td><td>Normal</td><td>Continue routine monitoring</td></tr>
+                    <tr><td>37.3°C – 38.0°C</td><td>Low-grade fever</td><td>Monitor, increase fluid intake, notify supervisor if persistent</td></tr>
+                    <tr><td>38.1°C – 39.0°C</td><td>Moderate fever</td><td>Notify supervisor immediately; may need GP review</td></tr>
+                    <tr><td>Above 39.0°C</td><td>High fever</td><td><strong>URGENT:</strong> Call supervisor; consider 000 if accompanied by confusion, stiff neck, or rash</td></tr>
+                </tbody>
+            </table>
+            <div class="danger-box">
+                <div class="box-title">🚨 Febrile Seizure Risk</div>
+                <p>Rapid temperature rise can trigger seizures in some clients (especially those with epilepsy or certain neurological conditions). If a client has a seizure, follow seizure first aid and call 000.</p>
+            </div>
+            <button class="btn" data-action="nav" data-section="pulse">Next: Pulse & Heart Rate →</button>
+        </section>
+
+        <!-- SECTION: PULSE -->
+        <section id="pulse" class="section">
+            <h2>💓 Pulse & Heart Rate</h2>
+            <p>The pulse reflects how many times the heart beats per minute (bpm). It indicates cardiovascular function and how well blood is circulating oxygen and nutrients.</p>
+            <h3>Pulse Sites</h3>
+            <table class="data-table">
+                <thead><tr><th>Site</th><th>Location</th><th>Best Used For</th></tr></thead>
+                <tbody>
+                    <tr><td>Radial</td><td>Wrist, thumb side</td><td>Routine monitoring; easiest for beginners</td></tr>
+                    <tr><td>Carotid</td><td>Neck, either side of windpipe</td><td>Emergency pulse check; CPR assessment</td></tr>
+                    <tr><td>Brachial</td><td>Inner elbow</td><td>Infants; blood pressure measurement</td></tr>
+                    <tr><td>Apical</td><td>Chest, 5th intercostal space</td><td>Most accurate; irregular rhythms</td></tr>
+                </tbody>
+            </table>
+            <h3>How to Take a Radial Pulse</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Position</div><p>Ask the client to sit or lie comfortably. Support their arm, palm facing up, wrist slightly extended.</p></div>
+                <div class="step"><div class="step-title">Locate the Pulse</div><p>Place your index and middle fingers (never thumb — it has its own pulse) on the thumb side of the wrist, just below the base of the thumb. Press lightly until you feel the beat.</p></div>
+                <div class="step"><div class="step-title">Count for 30 or 60 Seconds</div><p>If regular: count for 30 seconds and multiply by 2. If irregular: count for a full 60 seconds. Note the rhythm (regular/irregular) and strength (strong/weak/bounding).</p></div>
+                <div class="step"><div class="step-title">Record</div><p>Document rate, rhythm, and strength. Example: "72 bpm, regular, strong."</p></div>
+            </div>
+            <h3>Interpreting Heart Rate</h3>
+            <table class="data-table">
+                <thead><tr><th>Rate</th><th>Term</th><th>Possible Causes</th><th>Action</th></tr></thead>
+                <tbody>
+                    <tr><td>Below 60 bpm</td><td>Bradycardia</td><td>Athletic fitness, medications (beta-blockers), hypothyroidism, heart block, hypothermia</td><td>Check if this is baseline. If new onset, or with dizziness/fainting → notify supervisor</td></tr>
+                    <tr><td>60 – 100 bpm</td><td>Normal</td><td>Normal resting rate</td><td>Continue routine monitoring</td></tr>
+                    <tr><td>100 – 120 bpm</td><td>Mild Tachycardia</td><td>Anxiety, pain, fever, mild dehydration, caffeine</td><td>Re-check after rest. Notify supervisor if persistent or with other symptoms</td></tr>
+                    <tr><td>120 – 150 bpm</td><td>Moderate Tachycardia</td><td>Infection, significant dehydration, heart conditions, blood loss</td><td><strong>Notify supervisor immediately</strong></td></tr>
+                    <tr><td>Above 150 bpm</td><td>Severe Tachycardia</td><td>Medical emergency — shock, severe infection, cardiac event</td><td><strong>Call 000</strong> and begin first aid</td></tr>
+                </tbody>
+            </table>
+            <div class="warning-box">
+                <div class="box-title">⚠️ Special Considerations for Clients with Disability</div>
+                <ul>
+                    <li><strong>Autonomic Dysreflexia</strong> (spinal cord injury T6+): Sudden severe headache, sweating, goosebumps, and HR changes. <strong>Medical emergency — call 000 immediately.</strong></li>
+                    <li><strong>Postural Orthostatic Tachycardia Syndrome (POTS)</strong>: HR increases >30 bpm on standing. Take vitals lying and standing.</li>
+                    <li><strong>Down Syndrome</strong>: Higher risk of congenital heart defects. Baseline may differ.</li>
+                </ul>
+            </div>
+            <button class="btn" data-action="nav" data-section="respiration">Next: Respiration Rate →</button>
+        </section>
+
+        <!-- SECTION: RESPIRATION -->
+        <section id="respiration" class="section">
+            <h2>🫁 Respiration Rate</h2>
+            <p>Respiration rate is the number of breaths per minute. It is one of the most important early warning signs of deterioration — yet it is often the least accurately measured vital sign.</p>
+            <div class="danger-box">
+                <div class="box-title">🚨 Critical Fact</div>
+                <p>Changes in respiratory rate are often the <strong>first sign</strong> of clinical deterioration. A rise from 18 to 24 breaths/min may indicate pneumonia, sepsis, or heart failure before other signs appear.</p>
+            </div>
+            <h3>Normal Respiratory Rates</h3>
+            <table class="data-table">
+                <thead><tr><th>Age Group</th><th>Normal Range</th></tr></thead>
+                <tbody>
+                    <tr><td>Adult (12+ years)</td><td>12 – 20 breaths/min</td></tr>
+                    <tr><td>Older Adult (65+)</td><td>12 – 28 breaths/min (may be slightly higher)</td></tr>
+                </tbody>
+            </table>
+            <h3>How to Count Respirations</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Do Not Tell the Client</div><p>People unconsciously alter their breathing if they know it is being watched. After taking the pulse, keep your fingers on the wrist and watch the chest rise and fall.</p></div>
+                <div class="step"><div class="step-title">Observe for 60 Seconds</div><p>Count one full breath as one rise AND fall of the chest. Count for a full minute — respiratory rate is often irregular and 30-second counts are unreliable.</p></div>
+                <div class="step"><div class="step-title">Assess Quality</div><p>Note depth (shallow/normal/deep), rhythm (regular/irregular), and any sounds (wheezing, crackling, grunting, stridor).</p></div>
+                <div class="step"><div class="step-title">Record</div><p>Document rate and quality. Example: "18 breaths/min, regular, normal depth, no abnormal sounds."</p></div>
+            </div>
+            <h3>Abnormal Breathing Patterns</h3>
+            <table class="data-table">
+                <thead><tr><th>Pattern</th><th>Description</th><th>Possible Cause</th><th>Action</th></tr></thead>
+                <tbody>
+                    <tr><td>Tachypnoea</td><td>Fast breathing (&gt;20/min)</td><td>Fever, infection, anxiety, pain, metabolic acidosis</td><td>Monitor; notify supervisor if &gt;24 or with other symptoms</td></tr>
+                    <tr><td>Bradypnoea</td><td>Slow breathing (&lt;10/min)</td><td>Drug overdose, head injury, hypothermia, sleep apnoea</td><td><strong>Notify supervisor immediately</strong>; check consciousness</td></tr>
+                    <tr><td>Apnoea</td><td>Pauses in breathing &gt;10 seconds</td><td>Sleep apnoea, opioid overdose, brain injury</td><td><strong>Call 000</strong> if awake; position on side; monitor</td></tr>
+                    <tr><td>Cheyne-Stokes</td><td>Cycles of deep then shallow breathing, then apnoea</td><td>Heart failure, brain injury, end-of-life</td><td><strong>Urgent medical review required</strong></td></tr>
+                    <tr><td>Kussmaul</td><td>Deep, rapid, laboured breathing</td><td>Diabetic ketoacidosis (DKA), severe metabolic acidosis</td><td><strong>Call 000</strong> — check blood glucose immediately</td></tr>
+                    <tr><td>Stridor</td><td>Harsh, high-pitched sound on inhalation</td><td>Upper airway obstruction (allergic reaction, foreign body)</td><td><strong>Call 000 immediately</strong> — potential airway emergency</td></tr>
+                </tbody>
+            </table>
+            <div class="info-box">
+                <div class="box-title">💡 Pro Tip for Community Workers</div>
+                <p>If a client has a <strong>tracheostomy</strong> or uses <strong>non-invasive ventilation (BiPAP/CPAP)</strong>, you must still monitor their respiratory rate and effort. Check the care plan for specific parameters and emergency protocols.</p>
+            </div>
+            <button class="btn" data-action="nav" data-section="bp">Next: Blood Pressure →</button>
+        </section>
+
+        <!-- SECTION: BLOOD PRESSURE -->
+        <section id="bp" class="section">
+            <h2>🩺 Blood Pressure</h2>
+            <p>Blood pressure (BP) measures the force of blood against artery walls. It is recorded as two numbers: <strong>systolic</strong> (heart contracting) over <strong>diastolic</strong> (heart relaxing).</p>
+            <h3>Understanding the Numbers</h3>
+            <table class="data-table">
+                <thead><tr><th>Category</th><th>Systolic (mmHg)</th><th>Diastolic (mmHg)</th><th>Action</th></tr></thead>
+                <tbody>
+                    <tr><td>Hypotension</td><td>Below 90</td><td>Below 60</td><td>Monitor for dizziness; notify supervisor if symptomatic</td></tr>
+                    <tr><td>Normal</td><td>90 – 120</td><td>60 – 80</td><td>Continue routine monitoring</td></tr>
+                    <tr><td>Elevated</td><td>120 – 129</td><td>Below 80</td><td>Monitor; lifestyle factors</td></tr>
+                    <tr><td>Stage 1 Hypertension</td><td>130 – 139</td><td>80 – 89</td><td>Notify supervisor; may need GP review</td></tr>
+                    <tr><td>Stage 2 Hypertension</td><td>140 or above</td><td>90 or above</td><td><strong>Notify supervisor immediately</strong></td></tr>
+                    <tr><td>Hypertensive Crisis</td><td>Above 180</td><td>Above 120</td><td><strong>Call 000</strong> — risk of stroke/heart attack</td></tr>
+                </tbody>
+            </table>
+            <h3>How to Measure Blood Pressure (Manual)</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Prepare the Client</div><p>Ensure they have rested for 5 minutes. No caffeine, exercise, or smoking in the last 30 minutes. Ask them to empty their bladder.</p></div>
+                <div class="step"><div class="step-title">Position Correctly</div><p>Client seated with back supported, feet flat on floor, legs uncrossed. Arm supported at heart level, palm facing up. Ensure cuff will go on bare arm (remove tight clothing).</p></div>
+                <div class="step"><div class="step-title">Apply the Cuff</div><p>Wrap cuff snugly around upper arm, 2-3 cm above the elbow crease. The bladder should be centred over the brachial artery. Cuff width should cover 80% of arm circumference.</p></div>
+                <div class="step"><div class="step-title">Locate the Brachial Pulse</div><p>Palpate the brachial artery in the antecubital fossa (inner elbow). Place the stethoscope diaphragm over this point — do not tuck it under the cuff.</p></div>
+                <div class="step"><div class="step-title">Inflate the Cuff</div><p>Close the valve and inflate rapidly to 180 mmHg (or 20-30 mmHg above expected systolic). If you cannot palpate the pulse, inflate to 200 mmHg.</p></div>
+                <div class="step"><div class="step-title">Deflate Slowly</div><p>Open the valve slightly and deflate at 2-3 mmHg per second. Listen for the first tapping sound (Korotkoff Phase 1) — this is the systolic pressure.</p></div>
+                <div class="step"><div class="step-title">Record Diastolic</div><p>Continue deflating. The point where sounds disappear completely (Korotkoff Phase 5) is the diastolic pressure. If sounds do not disappear, note the muffling point (Phase 4).</p></div>
+                <div class="step"><div class="step-title">Deflate Fully and Record</div><p>Deflate completely, remove cuff, and record both numbers with arm used and position. Wait 1-2 minutes before repeating on the other arm.</p></div>
+            </div>
+            <div class="warning-box">
+                <div class="box-title">⚠️ Common Errors That Give False Readings</div>
+                <ul>
+                    <li>Cuff too small → falsely HIGH reading</li>
+                    <li>Cuff too large → falsely LOW reading</li>
+                    <li>Arm below heart level → falsely HIGH reading</li>
+                    <li>Arm above heart level → falsely LOW reading</li>
+                    <li>Legs crossed → falsely HIGH reading</li>
+                    <li>Talking during measurement → falsely HIGH reading</li>
+                    <li>Deflating too quickly → inaccurate reading</li>
+                </ul>
+            </div>
+            <h3>Using an Automated (Digital) BP Monitor</h3>
+            <ol>
+                <li>Ensure batteries are charged and device is calibrated</li>
+                <li>Follow positioning steps above</li>
+                <li>Press start and remain still and silent</li>
+                <li>Record the displayed reading</li>
+                <li>If reading seems abnormal, wait 2 minutes and repeat</li>
+                <li>Never rely solely on automated readings in emergencies — cross-check manually if trained</li>
+            </ol>
+            <button class="btn" data-action="nav" data-section="spo2">Next: Oxygen Saturation →</button>
+        </section>
+
+        <!-- SECTION: SPO2 -->
+        <section id="spo2" class="section">
+            <h2>🔴 Oxygen Saturation (SpO₂)</h2>
+            <p>Oxygen saturation measures the percentage of haemoglobin in the blood that is carrying oxygen. It is measured using a pulse oximeter — a small device that clips onto a finger, toe, or earlobe.</p>
+            <h3>Normal SpO₂ Ranges</h3>
+            <table class="data-table">
+                <thead><tr><th>SpO₂ Reading</th><th>Interpretation</th><th>Action</th></tr></thead>
+                <tbody>
+                    <tr><td>95% – 100%</td><td>Normal</td><td>Continue routine monitoring</td></tr>
+                    <tr><td>90% – 94%</td><td>Mild hypoxaemia</td><td>Monitor closely; notify supervisor; check for respiratory symptoms</td></tr>
+                    <tr><td>85% – 89%</td><td>Moderate hypoxaemia</td><td><strong>Urgent:</strong> Notify supervisor immediately; prepare for oxygen if prescribed</td></tr>
+                    <tr><td>Below 85%</td><td>Severe hypoxaemia</td><td><strong>Call 000 immediately</strong> — life-threatening</td></tr>
+                </tbody>
+            </table>
+            <h3>How to Use a Pulse Oximeter</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Prepare</div><p>Ensure hands are warm. Remove nail polish or artificial nails from the finger you will use. Rest the client for 5 minutes.</p></div>
+                <div class="step"><div class="step-title">Apply the Probe</div><p>Clip the oximeter onto a finger (index or middle finger preferred). Ensure the sensor is directly opposite the light emitter. The finger should be at heart level.</p></div>
+                <div class="step"><div class="step-title">Wait for Reading</div><p>Keep the hand still. Wait for the waveform to stabilise and the reading to stop fluctuating (usually 10-30 seconds).</p></div>
+                <div class="step"><div class="step-title">Record Both Numbers</div><p>Record SpO₂ % AND pulse rate. The oximeter displays both. If the pulse rate differs significantly from your manual count, re-check.</p></div>
+            </div>
+            <div class="danger-box">
+                <div class="box-title">🚨 Factors That Give False SpO₂ Readings</div>
+                <ul>
+                    <li><strong>Cold hands / poor circulation</strong> → falsely LOW or no reading</li>
+                    <li><strong>Nail polish / acrylic nails</strong> → falsely LOW</li>
+                    <li><strong>Movement / shivering</strong> → inaccurate reading</li>
+                    <li><strong>Bright ambient light</strong> → falsely HIGH</li>
+                    <li><strong>Anaemia</strong> → may read normal even if oxygen content is low</li>
+                    <li><strong>Carbon monoxide poisoning</strong> → falsely HIGH (oximeter cannot distinguish CO from O₂)</li>
+                </ul>
+            </div>
+            <h3>When SpO₂ Drops: Immediate Actions</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Re-check the Reading</div><p>Ensure the probe is correctly positioned, the hand is warm and still, and there is no nail polish.</p></div>
+                <div class="step"><div class="step-title">Assess the Client</div><p>Check colour (blue lips/fingertips = cyanosis), breathing effort, consciousness level, and ability to speak.</p></div>
+                <div class="step"><div class="step-title">Position for Breathing</div><p>Sit the client upright (if conscious and not contraindicated). Loosen tight clothing around the neck and chest.</p></div>
+                <div class="step"><div class="step-title">Administer Oxygen if Prescribed</div><p>If the client has prescribed oxygen (e.g., nasal prongs at 2L/min), apply it now. Do NOT adjust flow rates beyond what is prescribed without instruction.</p></div>
+                <div class="step"><div class="step-title">Call for Help</div><p>If SpO₂ remains below 90% or the client is distressed: <strong>call 000</strong>. Notify your supervisor immediately.</p></div>
+            </div>
+            <button class="btn" data-action="nav" data-section="blood-sugar">Next: Blood Glucose →</button>
+        </section>
+
+        <!-- SECTION: BLOOD SUGAR -->
+        <section id="blood-sugar" class="section">
+            <h2>🩸 Blood Glucose</h2>
+            <p>Blood glucose monitoring is essential for clients with diabetes or those at risk of hypoglycaemia (low blood sugar). Both high and low glucose can be life-threatening.</p>
+            <h3>Normal Blood Glucose Ranges (mmol/L)</h3>
+            <table class="data-table">
+                <thead><tr><th>Reading</th><th>Classification</th><th>Action</th></tr></thead>
+                <tbody>
+                    <tr><td>Below 4.0</td><td>Hypoglycaemia (LOW)</td><td><strong>Treat immediately</strong> — see Hypoglycaemia protocol below</td></tr>
+                    <tr><td>4.0 – 7.8</td><td>Normal (fasting/random)</td><td>Continue routine monitoring</td></tr>
+                    <tr><td>7.9 – 11.0</td><td>Elevated</td><td>Monitor; notify supervisor if persistent or with symptoms</td></tr>
+                    <tr><td>11.1 – 15.0</td><td>High</td><td>Notify supervisor; check for ketones if protocol requires</td></tr>
+                    <tr><td>Above 15.0</td><td>Very High / DKA Risk</td><td><strong>Notify supervisor immediately</strong>; check for ketones; call 000 if vomiting, confusion, or Kussmaul breathing</td></tr>
+                </tbody>
+            </table>
+            <h3>How to Measure Blood Glucose</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Prepare Equipment</div><p>Wash hands thoroughly. Gather glucose meter, test strips (check expiry), lancet device, and sharps container. Calibrate meter if required.</p></div>
+                <div class="step"><div class="step-title">Prepare the Site</div><p>Wash the client's hands with warm water (or use alcohol swab and let dry completely). Massage the finger gently to increase blood flow.</p></div>
+                <div class="step"><div class="step-title">Perform the Finger Prick</div><p>Load the lancet. Prick the SIDE of the fingertip (less painful than the pad). Allow a drop of blood to form naturally — do not squeeze excessively.</p></div>
+                <div class="step"><div class="step-title">Apply Blood to Test Strip</div><p>Touch the blood drop to the test strip (follow meter instructions — some require the strip to be in the meter first). Ensure enough blood fills the sample area.</p></div>
+                <div class="step"><div class="step-title">Read and Record</div><p>Wait for the meter to display the result. Record the reading with date, time, and any symptoms. Dispose of lancet in sharps container immediately.</p></div>
+            </div>
+            <div class="danger-box">
+                <div class="box-title">🚨 Hypoglycaemia Emergency — The "Rule of 15"</div>
+                <p>If blood glucose is <strong>below 4.0 mmol/L</strong> and the client is conscious and able to swallow:</p>
+                <ol>
+                    <li>Give <strong>15 grams of fast-acting carbohydrate</strong> immediately:
+                        <ul>
+                            <li>3-4 glucose tablets, OR</li>
+                            <li>150ml fruit juice, OR</li>
+                            <li>1 tablespoon honey or sugar, OR</li>
+                            <li>5-6 jelly beans</li>
+                        </ul>
+                    </li>
+                    <li>Wait <strong>15 minutes</strong>, then re-check blood glucose</li>
+                    <li>If still below 4.0, repeat step 1</li>
+                    <li>Once above 4.0, give a snack with longer-acting carbohydrate (e.g., crackers, sandwich)</li>
+                </ol>
+                <p><strong>If unconscious, having a seizure, or unable to swallow: DO NOT give food or drink. Place in recovery position. Call 000 immediately. Administer Glucagon if trained and prescribed.</strong></p>
+            </div>
+            <div class="warning-box">
+                <div class="box-title">⚠️ Hyperglycaemia & DKA Warning Signs</div>
+                <ul>
+                    <li>Excessive thirst and urination</li>
+                    <li>Fruity-smelling breath</li>
+                    <li>Nausea and vomiting</li>
+                    <li>Abdominal pain</li>
+                    <li>Confusion or drowsiness</li>
+                    <li>Kussmaul breathing (deep, rapid, laboured)</li>
+                </ul>
+                <p><strong>If any of these are present with high glucose: Call 000 immediately.</strong></p>
+            </div>
+            <button class="btn" data-action="nav" data-section="pain">Next: Pain Assessment →</button>
+        </section>
+
+        <!-- SECTION: PAIN -->
+        <section id="pain" class="section">
+            <h2>😣 Pain Assessment</h2>
+            <p>Pain is considered the "fifth vital sign." Uncontrolled pain affects all other vital signs and significantly impacts quality of life. Many clients with disability may have difficulty communicating pain — your observational skills are critical.</p>
+            <h3>Why Pain Matters</h3>
+            <ul>
+                <li>Pain increases heart rate, blood pressure, and respiratory rate</li>
+                <li>Chronic pain leads to depression, anxiety, and social withdrawal</li>
+                <li>Untreated pain can mask other serious conditions</li>
+                <li>Some clients with intellectual disability may not localise or describe pain verbally</li>
+            </ul>
+            <h3>Pain Assessment Tools</h3>
+            <table class="data-table">
+                <thead><tr><th>Tool</th><th>Best For</th><th>How to Use</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Numerical Rating Scale (NRS)</strong></td><td>Clients who can count and understand numbers</td><td>Ask "On a scale of 0-10, where 0 is no pain and 10 is the worst pain imaginable, what is your pain?"</td></tr>
+                    <tr><td><strong>Wong-Baker FACES</strong></td><td>Children, clients with intellectual disability, or those with limited verbal skills</td><td>Show 6 faces ranging from smiling (0) to crying (10). Ask client to point to the face that matches their pain.</td></tr>
+                    <tr><td><strong>FLACC Scale</strong></td><td>Non-verbal clients or those with severe communication impairment</td><td>Score 0-2 on each: Face, Legs, Activity, Cry, Consolability. Total 0-10. Used for clients who cannot self-report.</td></tr>
+                    <tr><td><strong>Abbey Pain Scale</strong></td><td>Clients with dementia or severe cognitive impairment</td><td>Observe vocalisation, facial expression, body language, behavioural changes, physiological changes, and physical changes. Score each 0-3.</td></tr>
+                    <tr><td><strong>PainAD Scale</strong></td><td>Clients with advanced dementia</td><td>Score breathing, negative vocalisation, facial expression, body language, and consolability. 0-2 each, total 0-10.</td></tr>
+                </tbody>
+            </table>
+            <h3>Behavioural Signs of Pain in Non-Verbal Clients</h3>
+            <div class="warning-box">
+                <div class="box-title">👀 Watch For These Signs</div>
+                <ul>
+                    <li><strong>Facial expressions:</strong> Grimacing, frowning, clenched jaw, rapid blinking</li>
+                    <li><strong>Vocalisation:</strong> Moaning, groaning, crying, screaming, or unusually quiet</li>
+                    <li><strong>Body language:</strong> Guarding an area, rocking, pacing, or being very still</li>
+                    <li><strong>Changes in behaviour:</strong> Aggression, withdrawal, refusing activities they usually enjoy</li>
+                    <li><strong>Changes in vital signs:</strong> Increased HR, BP, RR, or temperature</li>
+                    <li><strong>Sleep disturbance:</strong> Difficulty falling or staying asleep</li>
+                    <li><strong>Appetite changes:</strong> Refusing food or drink</li>
+                </ul>
+            </div>
+            <h3>When to Escalate Pain Concerns</h3>
+            <ul>
+                <li>New onset pain (especially chest, abdominal, or severe headache)</li>
+                <li>Pain score increasing despite prescribed analgesia</li>
+                <li>Pain accompanied by fever, vomiting, or changes in consciousness</li>
+                <li>Any sudden, severe pain — always notify supervisor</li>
+            </ul>
+            <div class="info-box">
+                <div class="box-title">💡 Remember</div>
+                <p><strong>"If they could tell us, they would."</strong> For clients who cannot communicate verbally, assume pain is present if you observe behavioural changes, and act accordingly. Document your observations in detail.</p>
+            </div>
+            <button class="btn" data-action="nav" data-section="recording">Next: Recording & Reporting →</button>
+        </section>
+
+        <!-- SECTION: RECORDING -->
+        <section id="recording" class="section">
+            <h2>📝 Recording & Reporting Vital Signs</h2>
+            <p>Accurate documentation is a legal and professional requirement. It ensures continuity of care, supports clinical decision-making, and protects both you and the client.</p>
+            <h3>The Vital Signs Record</h3>
+            <table class="data-table">
+                <thead><tr><th>Element</th><th>What to Record</th><th>Example</th></tr></thead>
+                <tbody>
+                    <tr><td>Date & Time</td><td>Exact date and 24-hour time</td><td>03/07/2026, 14:30</td></tr>
+                    <tr><td>Temperature</td><td>Value, site, and unit</td><td>37.2°C (oral)</td></tr>
+                    <tr><td>Pulse</td><td>Rate, rhythm, strength, site</td><td>78 bpm, regular, strong (radial)</td></tr>
+                    <tr><td>Respirations</td><td>Rate, depth, rhythm, sounds</td><td>16/min, normal depth, regular, no added sounds</td></tr>
+                    <tr><td>Blood Pressure</td><td>Systolic/Diastolic, arm, position</td><td>128/82 mmHg, right arm, seated</td></tr>
+                    <tr><td>SpO₂</td><td>Percentage and any oxygen delivery</td><td>97% on room air</td></tr>
+                    <tr><td>Blood Glucose</td><td>Value, unit, and time relative to meals</td><td>6.4 mmol/L (pre-lunch)</td></tr>
+                    <tr><td>Pain</td><td>Score, tool used, location, character</td><td>3/10 (NRS), lower back, dull ache</td></tr>
+                    <tr><td>Client Appearance</td><td>General impression, colour, behaviour</td><td>Alert, pale, appears anxious</td></tr>
+                    <tr><td>Actions Taken</td><td>What you did in response</td><td>Re-checked BP after 10 min rest; notified RN</td></tr>
+                    <tr><td>Notifications</td><td>Who you told and when</td><td>RN Sarah called at 14:45</td></tr>
+                    <tr><td>Your Details</td><td>Full name, signature, designation</td><td>John Smith, NDIS SW, signed</td></tr>
+                </tbody>
+            </table>
+            <h3>Escalation Pathways</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Green — Routine</div><p>All vital signs within normal range or client's usual baseline. Continue scheduled monitoring. Document in client file.</p></div>
+                <div class="step"><div class="step-title">Yellow — Caution</div><p>One vital sign slightly abnormal but client appears well. Re-check in 15-30 minutes. Notify supervisor (phone call or message). Document and continue monitoring.</p></div>
+                <div class="step"><div class="step-title">Orange — Urgent</div><p>Multiple vital signs abnormal OR one significantly abnormal OR client looks unwell. <strong>Call supervisor immediately.</strong> Stay with client. Prepare for possible 000 call. Document all actions.</p></div>
+                <div class="step"><div class="step-title">Red — Emergency</div><p>Life-threatening vital signs OR unconsciousness OR severe distress. <strong>Call 000 immediately.</strong> Then notify supervisor. Begin first aid/CPR as needed. Do NOT leave client alone.</p></div>
+            </div>
+            <div class="danger-box">
+                <div class="box-title">🚨 When in Doubt, Call It Out</div>
+                <p>It is always better to notify your supervisor and be told "that's fine, just monitor" than to NOT notify and have the client deteriorate. You are not expected to diagnose — you are expected to <strong>recognise and escalate</strong>.</p>
+            </div>
+            <button class="btn" data-action="nav" data-section="emergency-overview">Next: Emergency Principles →</button>
+        </section>
+
+        <!-- SECTION: EMERGENCY OVERVIEW -->
+        <section id="emergency-overview" class="section">
+            <h2>🚨 Emergency Response Principles</h2>
+            <p>Medical emergencies can happen at any time in community settings. Your calm, systematic response can save lives. Remember: <strong>you are not expected to be a paramedic</strong> — you are expected to recognise emergencies, keep the client safe, and get professional help.</p>
+            <h3>The Golden Rules of Emergency Response</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Stay Calm</div><p>Your calmness reassures the client and anyone else present. Take a deep breath. Panic clouds judgment.</p></div>
+                <div class="step"><div class="step-title">Assess the Scene for Danger</div><p>Before approaching, check for hazards: traffic, fire, electrical risks, aggressive animals, or violent individuals. Do NOT become a second casualty.</p></div>
+                <div class="step"><div class="step-title">Assess the Client</div><p>Check responsiveness, breathing, and circulation. Use the DRABCD action plan (next section).</p></div>
+                <div class="step"><div class="step-title">Call for Help Early</div><p>If in doubt, call 000. It is better to call and cancel than to delay. In cardiac arrest, every minute without CPR reduces survival by 10%.</p></div>
+                <div class="step"><div class="step-title">Do No Further Harm</div><p>Only perform actions you are trained and authorised to do. Do not move a client with suspected spinal injury unless absolutely necessary.</p></div>
+                <div class="step"><div class="step-title">Document Everything</div><p>As soon as the emergency is stable, document times, actions, observations, and who was notified.</p></div>
+            </div>
+            <h3>When to Call 000 Immediately</h3>
+            <div class="danger-box">
+                <div class="box-title">🚨 Call 000 NOW If You See:</div>
+                <ul>
+                    <li>Unconsciousness or unresponsiveness</li>
+                    <li>Difficulty breathing or stopped breathing</li>
+                    <li>Chest pain or pressure</li>
+                    <li>Severe bleeding that won't stop</li>
+                    <li>Signs of stroke (FAST: Face drooping, Arm weakness, Speech difficulty, Time to call)</li>
+                    <li>Seizure lasting more than 5 minutes or repeated seizures without recovery</li>
+                    <li>Severe allergic reaction (anaphylaxis)</li>
+                    <li>Suspected spinal or head injury with altered consciousness</li>
+                    <li>Drug or alcohol overdose</li>
+                    <li>Severe burns (especially to face, hands, genitals, or larger than the person's palm)</li>
+                    <li>Any situation where you feel "something is seriously wrong" — trust your instincts</li>
+                </ul>
+            </div>
+            <h3>NDIS-Specific Emergency Considerations</h3>
+            <div class="info-box">
+                <div class="box-title">🏠 Community Realities</div>
+                <ul>
+                    <li><strong>Communication barriers:</strong> Some clients may not be able to tell you what is wrong. Learn their baseline behaviour and non-verbal cues.</li>
+                    <li><strong>Mobility aids:</strong> Wheelchairs, hoists, and specialised equipment may complicate positioning or evacuation. Know how to use them safely.</li>
+                    <li><strong>Medication:</strong> Some clients take medications that mask symptoms (e.g., beta-blockers hide tachycardia). Be extra vigilant.</li>
+                    <li><strong>Behavioural support:</strong> A client in pain or distress may exhibit challenging behaviour. Stay calm and use de-escalation techniques.</li>
+                    <li><strong>Consent:</strong> In an emergency where the client cannot consent, you may provide necessary first aid under implied consent. Document this.</li>
+                </ul>
+            </div>
+            <button class="btn" data-action="nav" data-section="drabcd">Next: DRABCD Action Plan →</button>
+        </section>
+
+        <!-- SECTION: DRABCD -->
+        <section id="drabcd" class="section">
+            <h2>🆘 DRABCD Action Plan</h2>
+            <p>DRABCD is the systematic approach to assessing and managing any unconscious or collapsed person. It is the foundation of all emergency first aid.</p>
+            <div class="flowchart">
+                <div class="flow-box flow-start">D — Danger</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-box flow-start">R — Response</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-box flow-start">A — Airway</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-box flow-start">B — Breathing</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-box flow-start">C — CPR</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-box flow-start">D — Defibrillation</div>
+            </div>
+            <h3>D — Danger</h3>
+            <p>Before approaching the casualty, scan the area for hazards:</p>
+            <ul>
+                <li>Traffic, fire, smoke, electrical wires</li>
+                <li>Hazardous substances or gases</li>
+                <li>Hostile individuals or animals</li>
+                <li>Unsafe structures or surfaces</li>
+            </ul>
+            <p><strong>Do NOT put yourself at risk.</strong> If the scene is unsafe, call 000 and wait for emergency services.</p>
+            <h3>R — Response</h3>
+            <p>Check if the person is responsive:</p>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Talk to Them</div><p>"Hello, can you hear me? Open your eyes." Speak loudly and clearly.</p></div>
+                <div class="step"><div class="step-title">Touch Them</div><p>Gently squeeze their shoulders. For clients with sensory issues, be mindful of touch sensitivity.</p></div>
+                <div class="step"><div class="step-title">Observe</div><p>Do they move, make sounds, or open their eyes?</p></div>
+            </div>
+            <p><strong>If responsive:</strong> Ask what happened. Check for injuries. Monitor vital signs. Call 000 if needed.</p>
+            <p><strong>If unresponsive:</strong> Call 000 immediately (or send someone to call). Place on their back on a firm surface and proceed to Airway.</p>
+            <h3>A — Airway</h3>
+            <p>An open airway is essential for breathing. An unconscious person's tongue can fall back and block the airway.</p>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Open the Mouth</div><p>Look inside for obvious obstructions (food, vomit, dentures). Remove visible objects with gloved fingers — do NOT do blind finger sweeps.</p></div>
+                <div class="step"><div class="step-title">Tilt Head, Lift Chin</div><p>Place one hand on the forehead and two fingers under the chin. Gently tilt the head back and lift the chin. For infants, use only a slight head tilt.</p></div>
+                <div class="step"><div class="step-title">Jaw Thrust (if spinal injury suspected)</div><p>If you suspect neck/spinal injury, do NOT tilt the head. Instead, place fingers behind the jaw angles and thrust forward to open the airway without moving the neck.</p></div>
+            </div>
+            <div class="warning-box">
+                <div class="box-title">⚠️ Caution</div>
+                <p>If the client has a <strong>tracheostomy</strong>, check that the tube is patent (not blocked or dislodged). Suction if trained and equipment is available. Call 000 immediately.</p>
+            </div>
+            <h3>B — Breathing</h3>
+            <p>Look, listen, and feel for normal breathing for up to 10 seconds:</p>
+            <ul>
+                <li><strong>LOOK</strong> for rise and fall of the chest</li>
+                <li><strong>LISTEN</strong> for breath sounds at the mouth/nose</li>
+                <li><strong>FEEL</strong> for air movement on your cheek</li>
+            </ul>
+            <p><strong>Gasping or occasional breaths are NOT normal breathing.</strong> If the person is not breathing normally, start CPR immediately.</p>
+            <p><strong>If breathing normally:</strong> Place in the recovery position (see below), monitor breathing, and wait for emergency services.</p>
+            <h3>C — CPR (Cardiopulmonary Resuscitation)</h3>
+            <p>If the person is unresponsive and not breathing normally, start CPR immediately. See the CPR & AED module for detailed instructions.</p>
+            <h3>D — Defibrillation</h3>
+            <p>If an AED (Automated External Defibrillator) is available, apply it as soon as possible and follow the voice prompts. See the CPR & AED module.</p>
+            <h3>The Recovery Position</h3>
+            <p>Use the recovery position for an unconscious person who IS breathing normally. It keeps the airway open and prevents aspiration of vomit.</p>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Kneel Beside the Person</div><p>Ensure they are on their back on a firm, flat surface.</p></div>
+                <div class="step"><div class="step-title">Position the Arm</div><p>Place the arm nearest to you at a right angle to their body, with the palm facing up.</p></div>
+                <div class="step"><div class="step-title">Bend the Far Leg</div><p>Bring the far leg up at the knee so the foot is flat on the floor.</p></div>
+                <div class="step"><div class="step-title">Roll Them Toward You</div><p>Support the head and neck with one hand. Grasp the far knee with your other hand and roll them toward you onto their side.</p></div>
+                <div class="step"><div class="step-title">Position the Head</div><p>Tilt the head back slightly to ensure the airway remains open. Adjust the top leg so both hip and knee are bent at right angles.</p></div>
+                <div class="step"><div class="step-title">Monitor</div><p>Stay with them, monitor breathing, and be prepared to roll them back and start CPR if breathing stops.</p></div>
+            </div>
+            <div class="danger-box">
+                <div class="box-title">🚨 Do NOT Use Recovery Position If:</div>
+                <ul>
+                    <li>You suspect spinal injury (keep them still, support head and neck)</li>
+                    <li>They have major injuries to the side you would roll them onto</li>
+                    <li>They are in cardiac arrest (start CPR instead)</li>
+                </ul>
+            </div>
+            <button class="btn" data-action="nav" data-section="cpr">Next: CPR & AED →</button>
+        </section>
+
+        <!-- SECTION: CPR -->
+        <section id="cpr" class="section">
+            <h2>❤️ CPR & AED</h2>
+            <p>Cardiac arrest means the heart has stopped pumping blood effectively. Without immediate CPR and defibrillation, the person will die. In Australia, survival rates drop by approximately 10% for every minute without CPR.</p>
+            <div class="danger-box">
+                <div class="box-title">🚨 Cardiac Arrest vs Heart Attack</div>
+                <p><strong>Cardiac arrest</strong> = The heart stops pumping. The person is unresponsive and not breathing normally. <strong>CPR needed immediately.</strong></p>
+                <p><strong>Heart attack</strong> = A blocked artery reduces blood flow to the heart. The person is usually conscious, with chest pain, sweating, and nausea. <strong>Call 000 immediately.</strong> A heart attack CAN lead to cardiac arrest.</p>
+            </div>
+            <h3>Adult CPR — Step by Step</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Ensure Safety and Call 000</div><p>Check for danger. If the person is unresponsive and not breathing normally, call 000 immediately. Put the phone on speaker so you can talk to the operator while doing CPR.</p></div>
+                <div class="step"><div class="step-title">Start Chest Compressions</div><p>Place the heel of one hand in the centre of the chest (lower half of the sternum/breastbone). Place your other hand on top and interlock fingers. Keep arms straight and shoulders directly over hands.</p></div>
+                <div class="step"><div class="step-title">Push Hard and Fast</div><p>Compress the chest to a depth of approximately one-third of the chest depth (about 5-6 cm for adults). Rate: 100-120 compressions per minute. Allow the chest to recoil fully between compressions. Do NOT lean on the chest.</p></div>
+                <div class="step"><div class="step-title">Give Rescue Breaths (if trained)</div><p>After 30 compressions, open the airway (head tilt, chin lift). Pinch the nose shut. Take a normal breath, seal your mouth over theirs, and blow steadily for about 1 second until the chest rises. Give 2 breaths. If the chest does not rise, re-tilt the head and try again.</p></div>
+                <div class="step"><div class="step-title">Continue Cycles</div><p>Continue 30 compressions : 2 breaths. If you are unwilling or unable to give rescue breaths, do compression-only CPR. Do not stop until: an AED is ready, the person shows signs of life, emergency services take over, or you are physically exhausted.</p></div>
+            </div>
+            <div class="info-box">
+                <div class="box-title">🎵 Compression Timing Tip</div>
+                <p>Push to the beat of "Stayin' Alive" by the Bee Gees (approximately 100-120 bpm). This helps maintain the correct rate.</p>
+            </div>
+            <h3>Using an AED (Automated External Defibrillator)</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Turn On the AED</div><p>Press the power button. Follow the voice prompts.</p></div>
+                <div class="step"><div class="step-title">Expose the Chest</div><p>Remove clothing from the chest. If the chest is wet, dry it. If there is excessive chest hair, quickly shave or use a razor (some AED kits include one). Do NOT delay CPR for this.</p></div>
+                <div class="step"><div class="step-title">Apply the Pads</div><p>Peel off backing and stick pads firmly to bare skin:
+                    <ul>
+                        <li>One pad on the upper right chest, below the collarbone</li>
+                        <li>One pad on the lower left side, below the armpit</li>
+                    </ul>
+                    If pads touch (e.g., small child), place one on the front and one on the back.
+                </p></div>
+                <div class="step"><div class="step-title">Analyse Rhythm</div><p>The AED will say "Analysing — do not touch the patient." Ensure no one is touching the person. If a shock is advised, the AED will charge and say "Stand clear."</p></div>
+                <div class="step"><div class="step-title">Deliver Shock</div><p>Ensure everyone is clear (loudly say "Stand clear!"). Press the shock button when prompted. Some AEDs deliver the shock automatically.</p></div>
+                <div class="step"><div class="step-title">Resume CPR</div><p>Immediately resume CPR for 2 minutes (about 5 cycles of 30:2). The AED will re-analyse after 2 minutes. Continue until emergency services arrive or the person shows signs of life.</p></div>
+            </div>
+            <div class="warning-box">
+                <div class="box-title">⚠️ AED Safety</div>
+                <ul>
+                    <li>Do NOT use an AED in standing water. Move the person to a dry area if safe.</li>
+                    <li>Remove medication patches from the chest before applying pads.</li>
+                    <li>Do NOT place pads over implanted devices (pacemaker/ICD) — place at least 8cm away.</li>
+                    <li>Do NOT touch the person during analysis or shock delivery.</li>
+                </ul>
+            </div>
+            <h3>Special Considerations for Clients with Disability</h3>
+            <ul>
+                <li><strong>Obesity:</strong> You may need to push deeper. Do not be afraid to push hard — broken ribs can heal; brain death cannot.</li>
+                <li><strong>Pregnancy:</strong> If the woman is visibly pregnant and on her back, place a firm object under her right hip to tilt her slightly to the left. This prevents the uterus from compressing major blood vessels.</li>
+                <li><strong>Frail/osteoporotic clients:</strong> Push as hard as needed for effective compressions. Fractures may occur but are acceptable given the alternative.</li>
+                <li><strong>Clients with tracheostomies:</strong> If the tracheostomy tube is patent, you can give rescue breaths through the tube using a bag-valve mask if trained. Otherwise, seal your mouth over the stoma and breathe.</li>
+            </ul>
+            <button class="btn" data-action="nav" data-section="choking">Next: Choking Response →</button>
+        </section>
+
+        <!-- SECTION: CHOKING -->
+        <section id="choking" class="section">
+            <h2>😮 Choking Response</h2>
+            <p>Choking occurs when the airway is partially or completely blocked by a foreign object (usually food). It is a medical emergency that can rapidly become fatal.</p>
+            <h3>Recognising Choking</h3>
+            <table class="data-table">
+                <thead><tr><th>Sign</th><th>Mild Obstruction (Can Cough)</th><th>Severe Obstruction (Cannot Cough)</th></tr></thead>
+                <tbody>
+                    <tr><td>Coughing</td><td>Effective, forceful cough</td><td>Weak or absent cough; silent</td></tr>
+                    <tr><td>Breathing</td><td>Some air movement</td><td>No air movement; high-pitched noise or silent</td></tr>
+                    <tr><td>Skin colour</td><td>Normal or slightly flushed</td><td>Blue lips, face, or fingertips (cyanosis)</td></tr>
+                    <tr><td>Consciousness</td><td>Alert, distressed</td><td>May become unconscious quickly</td></tr>
+                    <tr><td><strong>Your Action</strong></td><td><strong>Encourage coughing</strong>. Do NOT slap back.</td><td><strong>Back blows + chest thrusts</strong>. Call 000.</td></tr>
+                </tbody>
+            </table>
+            <h3>Adult Choking First Aid — Severe Obstruction</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Call 000</div><p>If someone else is present, send them to call 000 immediately. If alone, call 000 on speakerphone before starting first aid.</p></div>
+                <div class="step"><div class="step-title">Give 5 Back Blows</div><p>Stand slightly behind and to the side. Support the chest with one hand. Lean the person forward. Give 5 sharp back blows between the shoulder blades with the heel of your other hand.</p></div>
+                <div class="step"><div class="step-title">Give 5 Chest Thrusts</div><p>Stand behind the person. Place one hand in the centre of their chest (same position as CPR). Give 5 sharp inward thrusts. Each thrust should be separate and distinct.</p></div>
+                <div class="step"><div class="step-title">Alternate</div><p>Continue alternating 5 back blows and 5 chest thrusts until the object is expelled or the person becomes unconscious.</p></div>
+            </div>
+            <h3>If the Person Becomes Unconscious</h3>
+            <div class="danger-box">
+                <div class="box-title">🚨 Start CPR Immediately</div>
+                <ol>
+                    <li>Lower them carefully to the ground</li>
+                    <li>Call 000 (if not already done)</li>
+                    <li>Begin CPR — the chest compressions may dislodge the object</li>
+                    <li>Each time you open the airway to give breaths, look in the mouth and remove any visible object</li>
+                    <li>Do NOT do blind finger sweeps</li>
+                </ol>
+            </div>
+            <h3>Special Considerations for Clients with Disability</h3>
+            <ul>
+                <li><strong>Dysphagia (swallowing difficulties):</strong> Common in cerebral palsy, stroke, and some neurological conditions. These clients are at higher risk of choking. Know their texture-modified diet requirements and supervise eating.</li>
+                <li><strong>Wheelchair users:</strong> If the person cannot lean forward, support them as best you can. Chest thrusts can be performed while they are seated.</li>
+                <li><strong>Clients with limited neck mobility:</strong> Be cautious with positioning. Do NOT force the head into positions that cause pain or injury.</li>
+                <li><strong>Pica (eating non-food items):</strong> Some clients with intellectual disability may ingest foreign objects. Be vigilant and remove hazardous items from the environment.</li>
+            </ul>
+            <button class="btn" data-action="nav" data-section="seizures">Next: Seizure Management →</button>
+        </section>
+
+        <!-- SECTION: SEIZURES -->
+        <section id="seizures" class="section">
+            <h2>⚡ Seizure Management</h2>
+            <p>Seizures are common in people with epilepsy, brain injury, or certain genetic conditions. Most seizures are self-limiting, but some require emergency intervention.</p>
+            <h3>Types of Seizures</h3>
+            <table class="data-table">
+                <thead><tr><th>Type</th><th>What You See</th><th>First Aid</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Tonic-Clonic (Grand Mal)</strong></td><td>Loss of consciousness, stiffening (tonic), jerking (clonic), possible incontinence, tongue biting, cyanosis</td><td>Protect from injury, time the seizure, place in recovery position after, DO NOT restrain or put anything in mouth</td></tr>
+                    <tr><td><strong>Absence (Petit Mal)</strong></td><td>Brief staring spell, unresponsive for seconds, may blink or have minor movements</td><td>Guide away from danger, time it, reassure after. Notify supervisor if new or increasing.</td></tr>
+                    <tr><td><strong>Focal (Partial)</strong></td><td>One part of body jerks, person may be aware or confused, may have unusual sensations</td><td>Stay calm, protect from injury, do NOT restrain, time the seizure, reassure after</td></tr>
+                    <tr><td><strong>Myoclonic</strong></td><td>Sudden brief jerks of arms/legs, person usually conscious</td><td>Protect from injury, time episodes, notify supervisor if increasing</td></tr>
+                    <tr><td><strong>Atonic (Drop Attack)</strong></td><td>Sudden loss of muscle tone, person collapses</td><td>Protect head, check for injuries, place in recovery position if unconscious</td></tr>
+                    <tr><td><strong>Status Epilepticus</strong></td><td>Seizure lasting &gt;5 minutes OR repeated seizures without full recovery between</td><td><strong>Call 000 immediately</strong>. This is a medical emergency.</td></tr>
+                </tbody>
+            </table>
+            <h3>First Aid for Tonic-Clonic Seizures</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Stay Calm and Time It</div><p>Note the start time. Most tonic-clonic seizures last 1-3 minutes.</p></div>
+                <div class="step"><div class="step-title">Protect from Injury</div><p>Clear nearby objects (furniture, sharp items). Place something soft under their head (jacket, pillow). Do NOT restrain their movements or try to hold them down.</p></div>
+                <div class="step"><div class="step-title">Do NOT Put Anything in Their Mouth</div><p>They cannot swallow their tongue. Putting objects in the mouth can break teeth, cause aspiration, or injure you.</p></div>
+                <div class="step"><div class="step-title">Roll Onto Side (If Safe)</div><p>Once the jerking stops and they are breathing, gently roll them onto their side (recovery position) to keep the airway clear. This also helps saliva or vomit drain.</p></div>
+                <div class="step"><div class="step-title">Stay With Them</div><p>They may be confused, sleepy, or agitated for minutes to hours (post-ictal state). Reassure them calmly. Do NOT give food or drink until fully alert.</p></div>
+                <div class="step"><div class="step-title">Call 000 If:</div>
+                    <ul>
+                        <li>Seizure lasts more than 5 minutes</li>
+                        <li>They have repeated seizures without recovering</li>
+                        <li>They are injured during the seizure</li>
+                        <li>They have difficulty breathing after the seizure</li>
+                        <li>This is their first known seizure</li>
+                        <li>They are pregnant or have diabetes</li>
+                        <li>The seizure occurs in water</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info-box">
+                <div class="box-title">💡 After a Seizure (Post-Ictal Phase)</div>
+                <ul>
+                    <li>The person may be confused, sleepy, or have a headache</li>
+                    <li>They may not remember the seizure</li>
+                    <li>They may be embarrassed or emotional</li>
+                    <li>Offer reassurance in a calm, quiet environment</li>
+                    <li>Do NOT leave them alone until fully recovered</li>
+                    <li>Document the seizure: type, duration, body parts involved, incontinence, injuries, recovery time</li>
+                </ul>
+            </div>
+            <h3>Rescue Medication for Seizures</h3>
+            <p>Some clients have prescribed emergency seizure medication (e.g., Midazolam). You must be specifically trained and authorised to administer this. Check the care plan.</p>
+            <div class="success-box">
+                <div class="box-title">✅ If Administering Midazolam (Buccal or Intranasal)</div>
+                <ol>
+                    <li>Call 000 FIRST</li>
+                    <li>Check the care plan and medication chart</li>
+                    <li>Confirm the dose and expiry date</li>
+                    <li>Administer as trained (usually between gum and cheek, or into the nose)</li>
+                    <li>Time the seizure — if it continues 5 minutes after medication, a second dose may be given per care plan</li>
+                    <li>Monitor breathing and airway. Be prepared to give rescue breaths if breathing stops</li>
+                </ol>
+            </div>
+            <button class="btn" data-action="nav" data-section="falls">Next: Falls & Head Injuries →</button>
+        </section>
+
+        <!-- SECTION: FALLS -->
+        <section id="falls" class="section">
+            <h2>🦴 Falls & Head Injuries</h2>
+            <p>Falls are one of the most common incidents in community disability support. While many falls result in minor injuries, some can cause serious harm — especially head injuries in clients taking anticoagulant medications (blood thinners).</p>
+            <h3>Immediate Response to a Fall</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Stay Calm and Approach</div><p>Do NOT rush to lift the person. First, check for hazards (broken glass, electrical cords, wet floors).</p></div>
+                <div class="step"><div class="step-title">Assess Responsiveness</div><p>Talk to them: "Are you okay? Can you hear me?" Check for responsiveness, breathing, and severe bleeding.</p></div>
+                <div class="step"><div class="step-title">Do NOT Move Them (Initially)</div><p>If they are unconscious, have severe pain, or you suspect spinal injury, keep them still and call 000. Moving them could worsen injuries.</p></div>
+                <div class="step"><div class="step-title">Check for Injuries</div><p>Look for visible injuries: bleeding, deformities, swelling, bruising. Ask where it hurts. Check for head injuries especially.</p></div>
+                <div class="step"><div class="step-title">If Conscious and No Serious Injury</div><p>Help them to a comfortable position. Use a hoist or assistive device if available and you are trained. Do NOT lift alone if they are heavy or you are unsure.</p></div>
+                <div class="step"><div class="step-title">Take Vital Signs</div><p>Check temperature, pulse, respirations, BP, and SpO₂. Look for signs of shock (pale, clammy skin, rapid pulse, low BP).</p></div>
+                <div class="step"><div class="step-title">Notify Supervisor</div><p>Report the fall immediately, even if there are no visible injuries. Some complications (like internal bleeding or concussion) may not appear immediately.</p></div>
+            </div>
+            <h3>Head Injury — When to Call 000</h3>
+            <div class="danger-box">
+                <div class="box-title">🚨 Call 000 Immediately If:</div>
+                <ul>
+                    <li>Loss of consciousness (even brief)</li>
+                    <li>Confusion, disorientation, or memory loss (cannot remember the fall)</li>
+                    <li>Severe headache or worsening headache</li>
+                    <li>Vomiting (especially more than once)</li>
+                    <li>Seizure</li>
+                    <li>Weakness, numbness, or tingling in limbs</li>
+                    <li>Difficulty speaking, seeing, or walking</li>
+                    <li>Blood or clear fluid leaking from ears or nose</li>
+                    <li>Bruising around eyes or behind ears ("raccoon eyes" or Battle's sign)</li>
+                    <li>Deep cut or laceration to the head</li>
+                    <li>The person is taking blood thinners (warfarin, apixaban, rivaroxaban, dabigatran) — even minor head bumps can cause serious bleeding</li>
+                </ul>
+            </div>
+            <h3>Concussion Signs and Symptoms</h3>
+            <table class="data-table">
+                <thead><tr><th>Physical</th><th>Cognitive</th><th>Emotional</th><th>Sleep</th></tr></thead>
+                <tbody>
+                    <tr><td>Headache, dizziness, nausea, balance problems, sensitivity to light/noise, blurred vision, fatigue</td><td>Confusion, memory problems, difficulty concentrating, feeling "foggy", slowed responses</td><td>Irritability, sadness, nervousness, emotional changes</td><td>Drowsiness, sleeping more or less than usual, difficulty falling asleep</td></tr>
+                </tbody>
+            </table>
+            <p><strong>If concussion is suspected:</strong> The person must be medically assessed. Do NOT let them sleep for the first few hours after a head injury unless a doctor has assessed them. Monitor closely for deteriorating symptoms.</p>
+            <h3>Preventing Falls</h3>
+            <ul class="checklist" id="fall-prevention">
+                <li data-action="check-item">Keep walkways clear of clutter, cords, and loose rugs</li>
+                <li data-action="check-item">Ensure adequate lighting, especially at night</li>
+                <li data-action="check-item">Install grab bars in bathrooms</li>
+                <li data-action="check-item">Use non-slip mats in showers and baths</li>
+                <li data-action="check-item">Ensure footwear fits well and has non-slip soles</li>
+                <li data-action="check-item">Review medications that may cause dizziness or drowsiness</li>
+                <li data-action="check-item">Use appropriate mobility aids (walkers, frames) and ensure they are maintained</li>
+                <li data-action="check-item">Address vision and hearing issues promptly</li>
+                <li data-action="check-item">Conduct regular home safety assessments</li>
+            </ul>
+            <button class="btn" data-action="nav" data-section="anaphylaxis">Next: Anaphylaxis →</button>
+        </section>
+
+        <!-- SECTION: ANAPHYLAXIS -->
+        <section id="anaphylaxis" class="section">
+            <h2>🐝 Anaphylaxis</h2>
+            <p>Anaphylaxis is a severe, life-threatening allergic reaction that can occur within minutes of exposure to an allergen. It requires immediate treatment with adrenaline (epinephrine).</p>
+            <h3>Recognising Anaphylaxis</h3>
+            <div class="danger-box">
+                <div class="box-title">🚨 Signs of Anaphylaxis (Any ONE of these is enough to treat)</div>
+                <ul>
+                    <li><strong>Difficult or noisy breathing</strong> (wheezing, stridor, hoarse voice)</li>
+                    <li><strong>Swelling of tongue</strong> or throat</li>
+                    <li><strong>Tightness in throat</strong> or difficulty swallowing</li>
+                    <li><strong>Persistent cough</strong> or change in voice</li>
+                    <li><strong>Dizziness, collapse, or loss of consciousness</strong></li>
+                    <li><strong>Pale and floppy</strong> (in younger clients)</li>
+                </ul>
+                <p><strong>PLUS</strong> any of these skin/mucosal symptoms:
+                <ul>
+                    <li>Hives (urticaria) — raised, itchy welts</li>
+                    <li>Swelling of lips, face, or eyes</li>
+                    <li>Flushing or generalised redness</li>
+                    <li>Abdominal pain, vomiting (especially after insect sting or food)</li>
+                </ul>
+                </p>
+            </div>
+            <h3>EpiPen Administration — Step by Step</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Call 000 Immediately</div><p>Anaphylaxis is a medical emergency. Call 000 first, or have someone else call while you administer the EpiPen.</p></div>
+                <div class="step"><div class="step-title">Hold the EpiPen Correctly</div><p>Form a fist around the EpiPen with the orange tip pointing down. Remove the blue safety cap by pulling straight up (do NOT bend or twist).</p></div>
+                <div class="step"><div class="step-title">Inject Into Outer Thigh</div><p>Place the orange tip against the outer mid-thigh (through clothing if necessary — it will go through jeans). Push down firmly until you hear a click. Hold for 3 seconds (count "1, 2, 3").</p></div>
+                <div class="step"><div class="step-title">Remove and Massage</div><p>Remove the EpiPen and massage the injection site for 10 seconds. The needle will be visible — be careful.</p></div>
+                <div class="step"><div class="step-title">Note the Time</div><p>Record the time of administration. A second dose may be needed after 5 minutes if symptoms persist or worsen.</p></div>
+                <div class="step"><div class="step-title">Position the Person</div><p>If breathing is difficult: sit them up. If dizzy or collapsed: lie them flat with legs elevated. If pregnant: lie on left side. Do NOT stand or walk them.</p></div>
+                <div class="step"><div class="step-title">Monitor and Wait</div><p>Stay with them. Monitor breathing and consciousness. Be prepared to give CPR if they stop breathing. Give a second EpiPen after 5 minutes if no improvement and ambulance not yet arrived.</p></div>
+            </div>
+            <div class="warning-box">
+                <div class="box-title">⚠️ Important EpiPen Notes</div>
+                <ul>
+                    <li>Do NOT inject into buttocks, hands, or feet — thigh only</li>
+                    <li>Do NOT hesitate to use the EpiPen — it is safe and necessary in anaphylaxis</li>
+                    <li>Even if symptoms improve after EpiPen, the person MUST still go to hospital — biphasic reactions can occur hours later</li>
+                    <li>Check expiry dates regularly and store EpiPens at room temperature (not in cars or fridges)</li>
+                    <li>Always carry two EpiPens if prescribed</li>
+                </ul>
+            </div>
+            <h3>Common Triggers in Community Settings</h3>
+            <ul>
+                <li><strong>Foods:</strong> Peanuts, tree nuts, shellfish, eggs, milk, wheat, sesame, soy</li>
+                <li><strong>Insect stings:</strong> Bees, wasps, ants (especially jack jumper ants in Australia)</li>
+                <li><strong>Medications:</strong> Penicillin, aspirin, NSAIDs, anaesthetics</li>
+                <li><strong>Latex:</strong> Gloves, balloons, elastic bands</li>
+            </ul>
+            <button class="btn" data-action="nav" data-section="diabetes-emergency">Next: Diabetic Emergency →</button>
+        </section>
+
+        <!-- SECTION: DIABETES EMERGENCY -->
+        <section id="diabetes-emergency" class="section">
+            <h2>🍬 Diabetic Emergency</h2>
+            <p>Clients with diabetes can experience two main emergencies: <strong>hypoglycaemia</strong> (blood sugar too low) and <strong>hyperglycaemia/DKA</strong> (blood sugar too high). Both can be life-threatening.</p>
+            <h3>Hypoglycaemia (LOW Blood Sugar) — The Most Common Emergency</h3>
+            <div class="danger-box">
+                <div class="box-title">🚨 Recognise Hypoglycaemia ("Hypo")</div>
+                <p><strong>Blood glucose below 4.0 mmol/L</strong></p>
+                <p><strong>Symptoms:</strong> Shaking, sweating, hunger, dizziness, confusion, irritability, weakness, headache, blurred vision, pale skin, rapid heartbeat. Severe: seizures, unconsciousness.</p>
+            </div>
+            <h3>Treating Hypoglycaemia — The Rule of 15</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Check Blood Glucose</div><p>If the client has symptoms of a hypo, check blood glucose immediately. If below 4.0 mmol/L, treat.</p></div>
+                <div class="step"><div class="step-title">Give 15g Fast-Acting Carbohydrate</div><p>Choose ONE of:
+                    <ul>
+                        <li>3-4 glucose tablets</li>
+                        <li>150ml fruit juice or regular soft drink (NOT diet)</li>
+                        <li>1 tablespoon honey or sugar</li>
+                        <li>5-6 jelly beans</li>
+                    </ul>
+                </p></div>
+                <div class="step"><div class="step-title">Wait 15 Minutes</div><p>Stay with the client. Keep them safe. Do NOT give insulin or exercise.</p></div>
+                <div class="step"><div class="step-title">Re-check Blood Glucose</div><p>If still below 4.0, repeat step 2. If above 4.0, proceed to step 5.</p></div>
+                <div class="step"><div class="step-title">Give Longer-Acting Carbohydrate</div><p>Once blood glucose is above 4.0, give a snack with complex carbs and protein to prevent another drop:
+                    <ul>
+                        <li>Crackers with cheese or peanut butter</li>
+                        <li>Sandwich</li>
+                        <li>Glass of milk and a piece of fruit</li>
+                    </ul>
+                </p></div>
+            </div>
+            <div class="danger-box">
+                <div class="box-title">🚨 Severe Hypoglycaemia — Unconscious or Seizing</div>
+                <ol>
+                    <li><strong>Call 000 immediately</strong></li>
+                    <li>Place in recovery position</li>
+                    <li>Do NOT give food or drink (risk of choking/aspiration)</li>
+                    <li>Administer Glucagon injection if trained, prescribed, and available (usually into thigh or buttock muscle)</li>
+                    <li>Monitor breathing. Be prepared to give rescue breaths if breathing stops</li>
+                    <li>Once conscious and able to swallow, give fast-acting carbohydrate</li>
+                </ol>
+            </div>
+            <h3>Hyperglycaemia & Diabetic Ketoacidosis (DKA)</h3>
+            <div class="warning-box">
+                <div class="box-title">⚠️ Recognise DKA — Medical Emergency</div>
+                <p><strong>Blood glucose usually above 15.0 mmol/L</strong> with ketones present</p>
+                <p><strong>Symptoms:</strong> Excessive thirst and urination, fruity-smelling breath, nausea and vomiting, abdominal pain, deep rapid breathing (Kussmaul), confusion, drowsiness, weakness.</p>
+                <p><strong>Action: Call 000 immediately.</strong> Give water if conscious and able to swallow. Do NOT give insulin unless you are specifically trained and authorised.</p>
+            </div>
+            <h3>Preventing Diabetic Emergencies</h3>
+            <ul>
+                <li>Ensure meals are on time and balanced</li>
+                <li>Monitor blood glucose as per care plan</li>
+                <li>Recognise early signs of highs and lows</li>
+                <li>Ensure fast-acting carbs are always accessible</li>
+                <li>Know the client's insulin/medication schedule</li>
+                <li>Be aware that illness, stress, and infection can affect blood glucose</li>
+            </ul>
+            <button class="btn" data-action="nav" data-section="safeguarding">Next: Safeguarding Principles →</button>
+        </section>
+
+        <!-- SECTION: SAFEGUARDING -->
+        <section id="safeguarding" class="section">
+            <h2>🛡️ Safeguarding Principles</h2>
+            <p>Safeguarding means protecting clients from abuse, neglect, and harm while respecting their rights, dignity, and autonomy. As an NDIS support worker, you are a mandatory reporter of suspected abuse.</p>
+            <h3>The 6 Principles of Safeguarding</h3>
+            <table class="data-table">
+                <thead><tr><th>Principle</th><th>What It Means in Practice</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Empowerment</strong></td><td>Support clients to make their own decisions. Provide information and options, not directives. Respect their choices even when you disagree.</td></tr>
+                    <tr><td><strong>Prevention</strong></td><td>Identify risks before harm occurs. Create safe environments. Train staff. Screen workers. Have clear policies.</td></tr>
+                    <tr><td><strong>Proportionality</strong></td><td>Respond to risks in a way that is appropriate to the level of risk. Do not over-restrict or under-protect.</td></tr>
+                    <tr><td><strong>Protection</strong></td><td>Act immediately when abuse or neglect is suspected. Prioritise the client's safety.</td></tr>
+                    <tr><td><strong>Partnership</strong></td><td>Work with clients, families, advocates, and other services. Share information appropriately.</td></tr>
+                    <tr><td><strong>Accountability</strong></td><td>Take responsibility for your actions. Report concerns. Document thoroughly. Be transparent.</td></tr>
+                </tbody>
+            </table>
+            <h3>Types of Abuse to Recognise</h3>
+            <table class="data-table">
+                <thead><tr><th>Type</th><th>Signs to Watch For</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Physical</strong></td><td>Unexplained bruises, burns, fractures, restraint marks, fear of specific people, flinching</td></tr>
+                    <tr><td><strong>Sexual</strong></td><td>Unexplained STIs, genital injuries, changes in behaviour around specific people, sexualised behaviour that is out of character</td></tr>
+                    <tr><td><strong>Emotional/Psychological</strong></td><td>Withdrawal, anxiety, depression, low self-esteem, fearfulness, changes in eating/sleeping, self-harm</td></tr>
+                    <tr><td><strong>Financial</strong></td><td>Missing money or possessions, unpaid bills despite adequate funds, sudden changes to wills, unauthorised use of bank cards</td></tr>
+                    <tr><td><strong>Neglect</strong></td><td>Poor hygiene, untreated medical conditions, malnutrition, dehydration, unsafe living conditions, lack of appropriate clothing</td></tr>
+                    <tr><td><strong>Institutional</strong></td><td>Rigid routines, lack of choice, disrespectful treatment, poor staff training, failure to follow care plans</td></tr>
+                </tbody>
+            </table>
+            <h3>Your Role in Safeguarding</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Be Observant</div><p>Know your client's normal appearance, behaviour, and environment. Notice changes.</p></div>
+                <div class="step"><div class="step-title">Listen</div><p>Take disclosures seriously. Do NOT dismiss or minimise what a client tells you. Believe them.</p></div>
+                <div class="step"><div class="step-title">Do NOT Investigate</div><p>Your role is to report concerns, not to investigate or confront the alleged abuser. Leave investigation to trained professionals.</p></div>
+                <div class="step"><div class="step-title">Report Immediately</div><p>Report any suspicion of abuse to your supervisor, manager, or the NDIS Commission. Do not wait for "proof."</p></div>
+                <div class="step"><div class="step-title">Document</div><p>Write down exactly what you saw, heard, or were told. Use the client's own words in quotes. Include dates, times, and witnesses.</p></div>
+                <div class="step"><div class="step-title">Maintain Confidentiality</div><p>Share information only with those who need to know to protect the client. Do NOT gossip or discuss with colleagues who are not involved.</p></div>
+            </div>
+            <div class="danger-box">
+                <div class="box-title">🚨 Immediate Reporting Required For:</div>
+                <ul>
+                    <li>Any suspicion of sexual abuse</li>
+                    <li>Serious physical injury</li>
+                    <li>Neglect that poses immediate risk</li>
+                    <li>Financial abuse involving significant sums</li>
+                    <li>Any abuse by another worker or service provider</li>
+                </ul>
+                <p><strong>Report to:</strong> Your supervisor/manager → NDIS Quality and Safeguards Commission (1800 035 544) → Police (if criminal) → Adult Safeguarding (state-based)</p>
+            </div>
+            <button class="btn" data-action="nav" data-section="reporting-concerns">Next: Reporting Concerns →</button>
+        </section>
+
+        <!-- SECTION: REPORTING CONCERNS -->
+        <section id="reporting-concerns" class="section">
+            <h2>📢 Reporting Concerns</h2>
+            <p>Knowing how and when to report concerns is a critical skill. Delays in reporting can allow harm to continue.</p>
+            <h3>Internal Reporting Pathway</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Immediate Supervisor/Manager</div><p>Your first point of contact for most concerns. They will guide next steps and escalate as needed.</p></div>
+                <div class="step"><div class="step-title">Nurse/Clinical Lead</div><p>For health-related concerns, medication errors, or deterioration in condition.</p></div>
+                <div class="step"><div class="step-title">HR or Compliance Officer</div><p>For concerns about staff conduct, workplace safety, or policy breaches.</p></div>
+            </div>
+            <h3>External Reporting Pathways</h3>
+            <table class="data-table">
+                <thead><tr><th>Concern</th><th>Who to Contact</th><th>Contact</th></tr></thead>
+                <tbody>
+                    <tr><td>Suspected abuse/neglect by NDIS provider</td><td>NDIS Quality and Safeguards Commission</td><td>1800 035 544</td></tr>
+                    <tr><td>Criminal activity (assault, theft, fraud)</td><td>Police</td><td>000 (emergency) or 131 444 (non-urgent)</td></tr>
+                    <tr><td>Serious injury or death</td><td>NDIS Commission + Police (if suspicious)</td><td>1800 035 544 + 000</td></tr>
+                    <tr><td>Worker misconduct</td><td>NDIS Commission + Your employer</td><td>1800 035 544</td></tr>
+                    <tr><td>Adult safeguarding (vulnerable adult)</td><td>State/Territory Adult Safeguarding body</td><td>Varies by state — check with supervisor</td></tr>
+                </tbody>
+            </table>
+            <h3>What to Include in a Report</h3>
+            <ul>
+                <li><strong>Who:</strong> Names of people involved (client, alleged perpetrator, witnesses)</li>
+                <li><strong>What:</strong> Exactly what happened or what you observed/suspect</li>
+                <li><strong>When:</strong> Date and time of incident or observation</li>
+                <li><strong>Where:</strong> Location</li>
+                <li><strong>Why:</strong> Any context or background that may be relevant</li>
+                <li><strong>Action taken:</strong> What you did and who you notified</li>
+                <li><strong>Evidence:</strong> Photos (if appropriate and consented), documents, physical evidence</li>
+            </ul>
+            <div class="info-box">
+                <div class="box-title">💡 Whistleblower Protections</div>
+                <p>If you report concerns in good faith, you are protected by law from retaliation. You cannot be dismissed, demoted, or bullied for making a genuine report. If you experience retaliation, report it to the NDIS Commission and Fair Work Ombudsman.</p>
+            </div>
+            <button class="btn" data-action="nav" data-section="incident-reporting">Next: Incident Reporting →</button>
+        </section>
+
+        <!-- SECTION: INCIDENT REPORTING -->
+        <section id="incident-reporting" class="section">
+            <h2>📝 Incident Reporting</h2>
+            <p>Under the NDIS, all reportable incidents must be recorded and reported to the NDIS Commission. Understanding what constitutes a reportable incident and how to document it is essential.</p>
+            <h3>What is a Reportable Incident?</h3>
+            <div class="danger-box">
+                <div class="box-title">🚨 NDIS Reportable Incidents Include:</div>
+                <ul>
+                    <li>Death of a participant</li>
+                    <li>Serious injury to a participant</li>
+                    <li>Abuse or neglect of a participant</li>
+                    <li>Unlawful sexual or physical contact with a participant</li>
+                    <li>Sexual misconduct committed against, or in the presence of, a participant</li>
+                    <li>Use of a restrictive practice without authorisation</li>
+                    <li>Use of a prohibited restrictive practice</li>
+                </ul>
+            </div>
+            <h3>Writing an Effective Incident Report</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">Write Objectively</div><p>Use facts, not opinions. "Client fell while transferring from wheelchair to bed" — NOT "Client was clumsy and fell."</p></div>
+                <div class="step"><div class="step-title">Be Specific</div><p>Include exact times, measurements, and descriptions. "BP 180/110 mmHg" — NOT "BP was high."</p></div>
+                <div class="step"><div class="step-title">Use the Client's Words</div><p>If the client said something relevant, put it in quotation marks. "Client stated: 'I felt dizzy before I fell.'"</p></div>
+                <div class="step"><div class="step-title">Include All Actions Taken</div><p>What first aid was given? Who was notified? What time? What was their response?</p></div>
+                <div class="step"><div class="step-title">Note Witnesses</div><p>Record names and contact details of anyone who saw the incident.</p></div>
+                <div class="step"><div class="step-title">Sign and Date</div><p>Every report must be signed and dated. Electronic signatures are acceptable if your system uses them.</p></div>
+            </div>
+            <h3>Example of a Good Incident Report</h3>
+            <div class="info-box">
+                <p><strong>Date/Time:</strong> 03/07/2026, 09:15<br>
+                <strong>Client:</strong> Jane Doe<br>
+                <strong>Location:</strong> Client's bedroom, 123 Main St<br>
+                <strong>Incident:</strong> At approximately 09:10, I was assisting Jane with her morning routine. As she stood from her bed using the bed rail, she stated "I feel dizzy" and began to sway. I attempted to support her but she lost balance and fell backward onto the carpeted floor. She did not hit her head. She was conscious and responsive immediately.<br><br>
+                <strong>Injuries:</strong> Small abrasion (approx. 2cm) on left elbow. No swelling or deformity to limbs. No head injury observed.<br><br>
+                <strong>Vital Signs (taken at 09:15):</strong><br>
+                - BP: 142/88 mmHg (right arm, seated)<br>
+                - HR: 92 bpm, regular<br>
+                - RR: 18/min, normal depth<br>
+                - SpO2: 96% on room air<br>
+                - Temp: 36.8°C (tympanic)<br><br>
+                <strong>Actions Taken:</strong><br>
+                - Cleaned abrasion with sterile saline and applied dressing<br>
+                - Assisted Jane back to bed. She remained alert and oriented.<br>
+                - Called RN Sarah at 09:20. Advised to monitor for 2 hours and re-check vitals.<br>
+                - Notified Jane's sister (emergency contact) at 09:25.<br><br>
+                <strong>Witness:</strong> None<br>
+                <strong>Reported by:</strong> John Smith, NDIS Support Worker<br>
+                <strong>Signature:</strong> J. Smith ___ Date: 03/07/2026</p>
+            </div>
+            <button class="btn" data-action="nav" data-section="emergency-services">Next: Contacting Emergency Services →</button>
+        </section>
+
+        <!-- SECTION: EMERGENCY SERVICES -->
+        <section id="emergency-services" class="section">
+            <h2>📞 Contacting Emergency Services</h2>
+            <p>Calling 000 is a critical skill. The information you provide determines how quickly and appropriately emergency services respond.</p>
+            <h3>What Happens When You Call 000</h3>
+            <div class="step-container">
+                <div class="step"><div class="step-title">You Will Be Asked: "Emergency. Police, Fire, or Ambulance?"</div><p>State clearly: <strong>"Ambulance"</strong> (or Police/Fire if applicable). You may be transferred.</p></div>
+                <div class="step"><div class="step-title">Provide Your Location FIRST</div><p>This is the most important piece of information. Give the exact address, including unit number, building name, and any access instructions (e.g., "Gate code 1234", "Use side entrance").</p></div>
+                <div class="step"><div class="step-title">Describe the Emergency</div><p>Be concise and factual. "My client is unconscious and not breathing. I am doing CPR." OR "My client is having a seizure that has lasted 7 minutes."</p></div>
+                <div class="step"><div class="step-title">Answer Questions</div><p>The operator will ask follow-up questions. Stay on the line. Do NOT hang up until told to do so. The operator can guide you through first aid procedures.</p></div>
+                <div class="step"><div class="step-title">Follow Instructions</div><p>The operator may give you specific instructions (e.g., "Continue CPR", "Do NOT move them", "Unlock the front door"). Follow them exactly.</p></div>
+                <div class="step"><div class="step-title">Send Someone to Meet the Ambulance</div><p>If possible, have another person wait at the entrance to guide paramedics. Turn on outdoor lights if it is dark.</p></div>
+            </div>
+            <h3>Key Information to Have Ready</h3>
+            <ul class="checklist" id="emergency-info">
+                <li data-action="check-item">Exact address and location details</li>
+                <li data-action="check-item">Client's full name and date of birth</li>
+                <li data-action="check-item">Client's known medical conditions and allergies</li>
+                <li data-action="check-item">Current medications (especially blood thinners, insulin, epilepsy meds)</li>
+                <li data-action="check-item">Emergency contact details</li>
+                <li data-action="check-item">NDIS provider name and contact</li>
+                <li data-action="check-item">Any advance care directives or resuscitation plans</li>
+                <li data-action="check-item">Access information (gate codes, parking, stairs/elevator)</li>
+            </ul>
+            <h3>Non-Urgent Medical Advice: HealthDirect</h3>
+            <div class="info-box">
+                <div class="box-title">📱 1800 022 222 (HealthDirect)</div>
+                <p>For non-life-threatening concerns where you are unsure whether to call an ambulance. A registered nurse will assess the situation and advise. Available 24/7.</p>
+            </div>
+            <h3>NDIS Incident Management System</h3>
+            <p>After calling 000 and stabilising the client, you must also report the incident through your organisation's incident management system and notify the NDIS Commission if it is a reportable incident.</p>
+            <button class="btn" data-action="nav" data-section="handover">Next: Clinical Handover (ISBAR) →</button>
+        </section>
+
+        <!-- SECTION: HANDOVER -->
+        <section id="handover" class="section">
+            <h2>🗣️ Clinical Handover (ISBAR)</h2>
+            <p>ISBAR is a structured communication tool used to ensure clear, concise, and complete handovers — whether to emergency services, nurses, doctors, or the next shift worker.</p>
+            <h3>The ISBAR Framework</h3>
+            <table class="data-table">
+                <thead><tr><th>Letter</th><th>Stands For</th><th>What to Include</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>I</strong></td><td>Introduction</td><td>Your name, role, and the organisation you work for</td></tr>
+                    <tr><td><strong>S</strong></td><td>Situation</td><td>Why you are calling/handovering. What is happening right now?</td></tr>
+                    <tr><td><strong>B</strong></td><td>Background</td><td>Relevant medical history, current conditions, medications, allergies</td></tr>
+                    <tr><td><strong>A</strong></td><td>Assessment</td><td>Your observations, vital signs, and what you think is happening</td></tr>
+                    <tr><td><strong>R</strong></td><td>Recommendation/Request</td><td>What you need from the person you are handovering to</td></tr>
+                </tbody>
+            </table>
+            <h3>ISBAR Example: Handover to Ambulance</h3>
+            <div class="scenario-card">
+                <h4>Example Handover</h4>
+                <p><strong>I — Introduction:</strong> "My name is John Smith. I am an NDIS Support Worker with ABC Disability Services."</p>
+                <p><strong>S — Situation:</strong> "I am with Jane Doe, a 34-year-old female with cerebral palsy and epilepsy. She had a seizure at 14:10 that lasted approximately 8 minutes. She has not fully regained consciousness and her breathing is shallow."</p>
+                <p><strong>B — Background:</strong> "Jane has a history of tonic-clonic seizures, usually controlled with Levetiracetam 500mg twice daily. She had a chest infection last week and has been on antibiotics. She has no known allergies."</p>
+                <p><strong>A — Assessment:</strong> "Current vital signs: HR 110 bpm, BP 145/95, RR 22 shallow, SpO2 91% on room air, Temp 37.8°C. She is unresponsive to voice but withdraws from pain. I have placed her in the recovery position."</p>
+                <p><strong>R — Recommendation:</strong> "I need an ambulance urgently. The address is 123 Main Street, Unit 4. The gate code is 5678. I will meet you at the front entrance."</p>
+            </div>
+            <h3>ISBAR Example: Shift Handover to Next Worker</h3>
+            <div class="info-box">
+                <p><strong>I:</strong> "Hi, I'm John. I'm handing over to you for the afternoon shift with Jane Doe."</p>
+                <p><strong>S:</strong> "Jane had a fall this morning at 09:15 while transferring from bed. She has a small abrasion on her left elbow, cleaned and dressed. RN Sarah reviewed her at 10:00. Jane has been resting since and appears comfortable."</p>
+                <p><strong>B:</strong> "Jane is 34, has cerebral palsy (non-verbal, wheelchair user), epilepsy, and mild asthma. She takes Levetiracetam, Salbutamol PRN, and Vitamin D. No allergies. Her mother is the emergency contact: 0412 345 678."</p>
+                <p><strong>A:</strong> "Her vitals at 12:00 were all within normal range: T 36.9°C, HR 76, RR 16, BP 118/78, SpO2 98%. She ate 80% of her lunch and drank 500ml water. She has been quiet but responsive to touch."</p>
+                <p><strong>R:</strong> "Please re-check her elbow dressing at 18:00 and monitor for any signs of pain or distress. Her evening medications are due at 19:00. Call RN Sarah if you have any concerns."</p>
+            </div>
+            <div class="success-box">
+                <div class="box-title">✅ Tips for Effective Handover</div>
+                <ul>
+                    <li>Prepare your information before calling or meeting</li>
+                    <li>Speak clearly and at a moderate pace</li>
+                    <li>Use specific numbers — not vague descriptions</li>
+                    <li>Confirm the receiver has understood ("Do you have any questions?")</li>
+                    <li>Document the handover in the client file</li>
+                    <li>Never assume the other person knows the client — provide full context</li>
+                </ul>
+            </div>
+            <button class="btn" data-action="nav" data-section="scenarios">Next: Practical Scenarios →</button>
+        </section>
+
+        <!-- SECTION: SCENARIOS -->
+        <section id="scenarios" class="section">
+            <h2>🎭 Practical Scenarios</h2>
+            <p>Test your knowledge with these realistic community-based scenarios. Read each scenario, decide your actions, then reveal the answer.</p>
+
+            <div class="scenario-card">
+                <h4>Scenario 1: The Quiet Morning</h4>
+                <p>You arrive at 08:00 to support Tom, a 45-year-old man with Down syndrome and Type 2 diabetes. He is usually cheerful and chatty, but today he is very quiet, pale, and says he feels "funny." You check his blood glucose: 3.2 mmol/L. He is conscious and can swallow.</p>
+                <p><strong>What do you do?</strong></p>
+                <button class="btn" data-action="reveal" data-target="scenario1-answer">Reveal Answer</button>
+                <div id="scenario1-answer" style="display:none; margin-top:1rem; background:rgba(255,255,255,0.15); padding:1rem; border-radius:8px;">
+                    <p><strong>Answer:</strong> Tom is having a hypoglycaemic episode (blood glucose below 4.0 mmol/L). Follow the Rule of 15:</p>
+                    <ol>
+                        <li>Give 15g fast-acting carbohydrate immediately (e.g., 150ml fruit juice, 3-4 glucose tablets, or 1 tablespoon honey)</li>
+                        <li>Wait 15 minutes</li>
+                        <li>Re-check blood glucose</li>
+                        <li>If still below 4.0, repeat</li>
+                        <li>Once above 4.0, give a longer-acting snack (e.g., crackers with cheese)</li>
+                    </ol>
+                    <p>Document the episode, actions taken, and notify your supervisor. Review Tom's meal timing and medication with the care team to prevent recurrence.</p>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <h4>Scenario 2: The Fall in the Bathroom</h4>
+                <p>You hear a thud from the bathroom. You find Maria, a 62-year-old woman with multiple sclerosis, on the floor next to her walker. She is conscious but confused and says her head hurts. There is a small amount of blood on the floor tiles. She takes warfarin for a heart condition.</p>
+                <p><strong>What do you do?</strong></p>
+                <button class="btn" data-action="reveal" data-target="scenario2-answer">Reveal Answer</button>
+                <div id="scenario2-answer" style="display:none; margin-top:1rem; background:rgba(255,255,255,0.15); padding:1rem; border-radius:8px;">
+                    <p><strong>Answer:</strong> This is a high-risk situation due to the head injury AND warfarin use (increased bleeding risk).</p>
+                    <ol>
+                        <li><strong>Call 000 immediately</strong> — head injury + anticoagulant = high risk of intracranial bleeding</li>
+                        <li>Do NOT move Maria unless absolutely necessary (risk of spinal injury)</li>
+                        <li>Apply gentle pressure to any bleeding wound with a clean cloth</li>
+                        <li>Monitor consciousness, breathing, and vital signs</li>
+                        <li>Keep her warm and reassured</li>
+                        <li>Notify supervisor and emergency contact</li>
+                        <li>Document everything: time of fall, observations, actions, 000 call time</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <h4>Scenario 3: The Seizure at Lunch</h4>
+                <p>You are having lunch with David, a 28-year-old man with epilepsy. Suddenly his eyes roll back, his body goes stiff, and he falls sideways off his chair. He begins jerking violently. Lunch was pasta with tomato sauce. You start your watch: the jerking continues.</p>
+                <p><strong>What do you do?</strong></p>
+                <button class="btn" data-action="reveal" data-target="scenario3-answer">Reveal Answer</button>
+                <div id="scenario3-answer" style="display:none; margin-top:1rem; background:rgba(255,255,255,0.15); padding:1rem; border-radius:8px;">
+                    <p><strong>Answer:</strong> David is having a tonic-clonic seizure.</p>
+                    <ol>
+                        <li>Note the time the seizure started</li>
+                        <li>Clear nearby objects to prevent injury</li>
+                        <li>Place something soft under his head</li>
+                        <li>Do NOT restrain his movements</li>
+                        <li>Do NOT put anything in his mouth</li>
+                        <li>Turn him onto his side (recovery position) once jerking stops, if safe to do so</li>
+                        <li>If the seizure lasts more than 5 minutes, or if he has repeated seizures without recovering: <strong>Call 000</strong></li>
+                        <li>Check his care plan for prescribed emergency medication (e.g., Midazolam) and administer if trained and authorised</li>
+                        <li>Stay with him during the post-ictal phase. Do NOT give food or drink until fully alert</li>
+                        <li>Document: start time, duration, body parts involved, incontinence, injuries, recovery time</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <h4>Scenario 4: The Allergic Reaction</h4>
+                <p>Sarah, a 19-year-old woman with autism, eats a biscuit at a community event. Within 2 minutes, she starts coughing, her lips swell, and she develops hives on her neck. She points to her throat and looks frightened. You know she has a peanut allergy and carries an EpiPen in her bag.</p>
+                <p><strong>What do you do?</strong></p>
+                <button class="btn" data-action="reveal" data-target="scenario4-answer">Reveal Answer</button>
+                <div id="scenario4-answer" style="display:none; margin-top:1rem; background:rgba(255,255,255,0.15); padding:1rem; border-radius:8px;">
+                    <p><strong>Answer:</strong> Sarah is having anaphylaxis — a life-threatening allergic reaction.</p>
+                    <ol>
+                        <li><strong>Call 000 immediately</strong></li>
+                        <li>Locate her EpiPen and administer it into the outer mid-thigh (can go through clothing)</li>
+                        <li>Hold for 3 seconds, then remove</li>
+                        <li>Note the time of administration</li>
+                        <li>Lay her flat with legs elevated (or sit if breathing is difficult)</li>
+                        <li>Stay with her and monitor breathing and consciousness</li>
+                        <li>If no improvement after 5 minutes and ambulance not arrived, give a second EpiPen if available</li>
+                        <li>Even if she improves, she MUST go to hospital for observation (risk of biphasic reaction)</li>
+                        <li>Notify supervisor, family, and document everything</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <h4>Scenario 5: The Unusual Bruising</h4>
+                <p>During a shower, you notice several bruises on Peter's upper arms and thighs — areas not usually injured. The bruises are in various stages of healing. Peter, who has an intellectual disability, becomes very quiet when you ask about them and looks toward the door. His mother was the only other person with him this week.</p>
+                <p><strong>What do you do?</strong></p>
+                <button class="btn" data-action="reveal" data-target="scenario5-answer">Reveal Answer</button>
+                <div id="scenario5-answer" style="display:none; margin-top:1rem; background:rgba(255,255,255,0.15); padding:1rem; border-radius:8px;">
+                    <p><strong>Answer:</strong> This is a safeguarding concern requiring immediate action.</p>
+                    <ol>
+                        <li>Do NOT confront the mother or accuse anyone</li>
+                        <li>Document exactly what you observed: location, size, colour, and Peter's reaction. Take photos if your policy allows and Peter consents</li>
+                        <li>Report to your supervisor/manager <strong>immediately</strong></li>
+                        <li>Your organisation will investigate and may report to the NDIS Commission and/or police</li>
+                        <li>Continue to support Peter normally. Do not let him know you have reported concerns</li>
+                        <li>Monitor for further injuries or behavioural changes</li>
+                        <li>Remember: you are not investigating — you are reporting observations in good faith</li>
+                    </ol>
+                </div>
+            </div>
+            <button class="btn" data-action="nav" data-section="final-quiz">Next: Final Assessment →</button>
+        </section>
+
+        <!-- SECTION: FINAL QUIZ -->
+        <section id="final-quiz" class="section">
+            <h2>📝 Final Assessment</h2>
+            <p>Complete this quiz to test your knowledge. You need 80% to pass. Good luck!</p>
+
+            <div class="quiz-container" id="quiz1">
+                <div class="quiz-question">1. What is the normal resting heart rate range for an adult?</div>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q1" value="a"> a) 40 – 60 bpm</label>
+                    <label><input type="radio" name="q1" value="b"> b) 60 – 100 bpm</label>
+                    <label><input type="radio" name="q1" value="c"> c) 100 – 140 bpm</label>
+                    <label><input type="radio" name="q1" value="d"> d) 120 – 160 bpm</label>
+                </div>
+                <div class="quiz-feedback" id="feedback1"></div>
+                <button class="btn" data-action="check-answer" data-qnum="1">Check Answer</button>
+            </div>
+
+            <div class="quiz-container" id="quiz2">
+                <div class="quiz-question">2. A client's blood pressure is 185/125 mmHg. What should you do?</div>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q2" value="a"> a) Re-check in 30 minutes</label>
+                    <label><input type="radio" name="q2" value="b"> b) Notify supervisor at end of shift</label>
+                    <label><input type="radio" name="q2" value="c"> c) Call 000 immediately — this is a hypertensive crisis</label>
+                    <label><input type="radio" name="q2" value="d"> d) Give them water and rest</label>
+                </div>
+                <div class="quiz-feedback" id="feedback2"></div>
+                <button class="btn" data-action="check-answer" data-qnum="2">Check Answer</button>
+            </div>
+
+            <div class="quiz-container" id="quiz3">
+                <div class="quiz-question">3. During a tonic-clonic seizure, which action is CORRECT?</div>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q3" value="a"> a) Put a spoon in their mouth to prevent tongue biting</label>
+                    <label><input type="radio" name="q3" value="b"> b) Restrain their arms and legs to stop the jerking</label>
+                    <label><input type="radio" name="q3" value="c"> c) Clear nearby objects, time the seizure, and place in recovery position after</label>
+                    <label><input type="radio" name="q3" value="d"> d) Give them water to help them recover faster</label>
+                </div>
+                <div class="quiz-feedback" id="feedback3"></div>
+                <button class="btn" data-action="check-answer" data-qnum="3">Check Answer</button>
+            </div>
+
+            <div class="quiz-container" id="quiz4">
+                <div class="quiz-question">4. A client's SpO₂ reading is 88%. What is your FIRST action?</div>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q4" value="a"> a) Wait 15 minutes and re-check</label>
+                    <label><input type="radio" name="q4" value="b"> b) Call 000 immediately and notify supervisor</label>
+                    <label><input type="radio" name="q4" value="c"> c) Give them a glass of water</label>
+                    <label><input type="radio" name="q4" value="d"> d) Tell them to take deep breaths and monitor</label>
+                </div>
+                <div class="quiz-feedback" id="feedback4"></div>
+                <button class="btn" data-action="check-answer" data-qnum="4">Check Answer</button>
+            </div>
+
+            <div class="quiz-container" id="quiz5">
+                <div class="quiz-question">5. You suspect a client is being financially abused by a family member. What should you do?</div>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q5" value="a"> a) Confront the family member directly</label>
+                    <label><input type="radio" name="q5" value="b"> b) Wait until you have absolute proof before reporting</label>
+                    <label><input type="radio" name="q5" value="c"> c) Report your concerns to your supervisor immediately — you do not need proof</label>
+                    <label><input type="radio" name="q5" value="d"> d) Ask the client to confirm the abuse before you act</label>
+                </div>
+                <div class="quiz-feedback" id="feedback5"></div>
+                <button class="btn" data-action="check-answer" data-qnum="5">Check Answer</button>
+            </div>
+
+            <div class="quiz-container" id="quiz6">
+                <div class="quiz-question">6. What does the "R" in DRABCD stand for?</div>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q6" value="a"> a) Rescue breathing</label>
+                    <label><input type="radio" name="q6" value="b"> b) Response (checking if the person is responsive)</label>
+                    <label><input type="radio" name="q6" value="c"> c) Recovery position</label>
+                    <label><input type="radio" name="q6" value="d"> d) Resuscitation</label>
+                </div>
+                <div class="quiz-feedback" id="feedback6"></div>
+                <button class="btn" data-action="check-answer" data-qnum="6">Check Answer</button>
+            </div>
+
+            <div class="quiz-container" id="quiz7">
+                <div class="quiz-question">7. A client with diabetes has a blood glucose of 3.5 mmol/L and is conscious. What is the FIRST step?</div>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q7" value="a"> a) Call 000 immediately</label>
+                    <label><input type="radio" name="q7" value="b"> b) Give 15g of fast-acting carbohydrate</label>
+                    <label><input type="radio" name="q7" value="c"> c) Give them their insulin injection</label>
+                    <label><input type="radio" name="q7" value="d"> d) Tell them to exercise to raise blood sugar</label>
+                </div>
+                <div class="quiz-feedback" id="feedback7"></div>
+                <button class="btn" data-action="check-answer" data-qnum="7">Check Answer</button>
+            </div>
+
+            <div class="quiz-container" id="quiz8">
+                <div class="quiz-question">8. When calling 000, what is the MOST important information to give FIRST?</div>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q8" value="a"> a) The person's medical history</label>
+                    <label><input type="radio" name="q8" value="b"> b) Your name and role</label>
+                    <label><input type="radio" name="q8" value="c"> c) The exact location/address</label>
+                    <label><input type="radio" name="q8" value="d"> d) A description of what happened</label>
+                </div>
+                <div class="quiz-feedback" id="feedback8"></div>
+                <button class="btn" data-action="check-answer" data-qnum="8">Check Answer</button>
+            </div>
+
+            <div class="quiz-container" id="quiz9">
+                <div class="quiz-question">9. A client falls and hits their head. They are conscious but confused. They take warfarin. What should you do?</div>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q9" value="a"> a) Apply ice and monitor at home</label>
+                    <label><input type="radio" name="q9" value="b"> b) Call 000 immediately — anticoagulants increase bleeding risk</label>
+                    <label><input type="radio" name="q9" value="c"> c) Give them pain medication and rest</label>
+                    <label><input type="radio" name="q9" value="d"> d) Wait to see if symptoms worsen over the next few hours</label>
+                </div>
+                <div class="quiz-feedback" id="feedback9"></div>
+                <button class="btn" data-action="check-answer" data-qnum="9">Check Answer</button>
+            </div>
+
+            <div class="quiz-container" id="quiz10">
+                <div class="quiz-question">10. In ISBAR handover, what does the "B" stand for?</div>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q10" value="a"> a) Blood pressure</label>
+                    <label><input type="radio" name="q10" value="b"> b) Breathing assessment</label>
+                    <label><input type="radio" name="q10" value="c"> c) Background (relevant medical history)</label>
+                    <label><input type="radio" name="q10" value="d"> d) Baseline vital signs</label>
+                </div>
+                <div class="quiz-feedback" id="feedback10"></div>
+                <button class="btn" data-action="check-answer" data-qnum="10">Check Answer</button>
+            </div>
+
+            <div style="text-align:center; margin-top:2rem;">
+                <button class="btn btn-success" data-action="calc-score">Calculate My Score</button>
+                <div id="score-display" style="margin-top:1rem; font-size:1.2rem; font-weight:700;"></div>
+                <div class="completion-status" id="completionStatus"></div>
+            </div>
+            <button class="btn" data-action="nav" data-section="quick-reference">Next: Quick Reference Guide →</button>
+        </section>
+
+        <!-- SECTION: QUICK REFERENCE -->
+        <section id="quick-reference" class="section">
+            <h2>📋 Quick Reference Guide</h2>
+            <p>Print or bookmark this page for quick access during shifts.</p>
+
+            <div class="quick-ref">
+                <h4>🚨 EMERGENCY NUMBERS</h4>
+                <div class="quick-ref-grid">
+                    <div class="quick-ref-item"><strong>Ambulance/Fire/Police</strong>000</div>
+                    <div class="quick-ref-item"><strong>HealthDirect (24/7 Nurse)</strong>1800 022 222</div>
+                    <div class="quick-ref-item"><strong>NDIS Commission</strong>1800 035 544</div>
+                    <div class="quick-ref-item"><strong>Poison Information</strong>13 11 26</div>
+                </div>
+            </div>
+
+            <div class="quick-ref">
+                <h4>🌡️ VITAL SIGNS — NORMAL RANGES</h4>
+                <div class="quick-ref-grid">
+                    <div class="quick-ref-item"><strong>Temperature</strong>36.1 – 37.2°C (oral)</div>
+                    <div class="quick-ref-item"><strong>Heart Rate</strong>60 – 100 bpm</div>
+                    <div class="quick-ref-item"><strong>Respirations</strong>12 – 20 /min</div>
+                    <div class="quick-ref-item"><strong>Blood Pressure</strong>90/60 – 120/80 mmHg</div>
+                    <div class="quick-ref-item"><strong>SpO₂</strong>95 – 100%</div>
+                    <div class="quick-ref-item"><strong>Blood Glucose</strong>4.0 – 7.8 mmol/L</div>
+                </div>
+            </div>
+
+            <div class="quick-ref">
+                <h4>🆘 WHEN TO CALL 000</h4>
+                <div class="quick-ref-grid">
+                    <div class="quick-ref-item"><strong>Unconscious</strong>Not responding</div>
+                    <div class="quick-ref-item"><strong>Not Breathing</strong>Or gasping only</div>
+                    <div class="quick-ref-item"><strong>Chest Pain</strong>Or pressure</div>
+                    <div class="quick-ref-item"><strong>Severe Bleeding</strong>Won't stop</div>
+                    <div class="quick-ref-item"><strong>Seizure &gt;5 min</strong>Or repeated</div>
+                    <div class="quick-ref-item"><strong>Anaphylaxis</strong>Swelling, breathing difficulty</div>
+                    <div class="quick-ref-item"><strong>Stroke Signs</strong>FAST symptoms</div>
+                    <div class="quick-ref-item"><strong>SpO₂ &lt;90%</strong>Severe hypoxaemia</div>
+                    <div class="quick-ref-item"><strong>BP &gt;180/120</strong>Hypertensive crisis</div>
+                    <div class="quick-ref-item"><strong>Head Injury + Anticoagulant</strong>Any head bump</div>
+                </div>
+            </div>
+
+            <div class="quick-ref">
+                <h4>💓 CPR QUICK STEPS</h4>
+                <div class="quick-ref-grid">
+                    <div class="quick-ref-item"><strong>1. Call 000</strong>Put on speaker</div>
+                    <div class="quick-ref-item"><strong>2. Push Hard & Fast</strong>Centre of chest, 100-120/min</div>
+                    <div class="quick-ref-item"><strong>3. Depth</strong>1/3 chest depth (~5-6cm)</div>
+                    <div class="quick-ref-item"><strong>4. 30:2 Ratio</strong>30 compressions : 2 breaths</div>
+                    <div class="quick-ref-item"><strong>5. Don't Stop</strong>Until AED ready, signs of life, or exhausted</div>
+                    <div class="quick-ref-item"><strong>6. AED</strong>Apply as soon as available, follow voice prompts</div>
+                </div>
+            </div>
+
+            <div class="quick-ref">
+                <h4>🍬 HYPOGLYCAEMIA — RULE OF 15</h4>
+                <div class="quick-ref-grid">
+                    <div class="quick-ref-item"><strong>Give</strong>15g fast carbs</div>
+                    <div class="quick-ref-item"><strong>Wait</strong>15 minutes</div>
+                    <div class="quick-ref-item"><strong>Re-check</strong>BG level</div>
+                    <div class="quick-ref-item"><strong>Repeat</strong>If still &lt;4.0</div>
+                    <div class="quick-ref-item"><strong>Then</strong>Long-acting snack</div>
+                    <div class="quick-ref-item"><strong>Unconscious?</strong>Call 000, recovery position, Glucagon if trained</div>
+                </div>
+            </div>
+
+            <div class="quick-ref">
+                <h4>🐝 ANAPHYLAXIS — EPIPEN</h4>
+                <div class="quick-ref-grid">
+                    <div class="quick-ref-item"><strong>1. Call 000</strong>Immediately</div>
+                    <div class="quick-ref-item"><strong>2. Inject</strong>Outer mid-thigh, through clothes if needed</div>
+                    <div class="quick-ref-item"><strong>3. Hold</strong>3 seconds</div>
+                    <div class="quick-ref-item"><strong>4. Massage</strong>Injection site 10 seconds</div>
+                    <div class="quick-ref-item"><strong>5. Position</strong>Flat with legs up (or sit if breathing difficulty)</div>
+                    <div class="quick-ref-item"><strong>6. Monitor</strong>Second dose after 5 min if no improvement</div>
+                </div>
+            </div>
+
+            <div class="quick-ref">
+                <h4>🗣️ ISBAR HANDOVER</h4>
+                <div class="quick-ref-grid">
+                    <div class="quick-ref-item"><strong>I</strong>Introduction — Your name, role, organisation</div>
+                    <div class="quick-ref-item"><strong>S</strong>Situation — What is happening NOW</div>
+                    <div class="quick-ref-item"><strong>B</strong>Background — Relevant history, meds, allergies</div>
+                    <div class="quick-ref-item"><strong>A</strong>Assessment — Your observations and vital signs</div>
+                    <div class="quick-ref-item"><strong>R</strong>Recommendation — What you need from them</div>
+                </div>
+            </div>
+
+            <div style="text-align:center; margin-top:2rem;">
+                <button class="btn btn-success" data-action="show-badge">🎉 I Have Completed the Course</button>
+            </div>
+        </section>
+    </main>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="completion-badge" id="completionBadge">
+        <div class="badge-icon">🏆</div>
+        <h2>Congratulations!</h2>
+        <p>You have completed the NDIS Support Worker Training on Vital Signs and Emergency Response.</p>
+        <p style="margin-top:1rem; color:#666;">Remember: This course supplements formal First Aid and CPR certification. Always follow your organisation's policies and maintain current certifications.</p>
+        <button class="btn" data-action="hide-badge" style="margin-top:1.5rem;">Close</button>
+    </div>
+
+</div>
+
+    <script>
+        /* ---------------------------------------------------------
+           TRAINING TRACKER INTEGRATION
+           COURSE_ID for this course, copied from the Courses tab in
+           the training tracker. SUPABASE_URL/ANON_KEY are the same
+           for every course page (same edu project as index.html).
+        --------------------------------------------------------- */
+        var COURSE_ID = "3009c2c6-b3e9-4e2d-a728-c01f6233efd7";
+        var SUPABASE_URL = "https://unomkggpwiugvkovdjto.supabase.co";
+        var SUPABASE_ANON_KEY = "sb_publishable_rakZ0iLM1Tncok00y6HFPA_Xlls_Mwc";
+        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        var currentAuthUser = null;
+
+        function initAuthGate() {
+            sb.auth.getSession().then(function(res) {
+                var session = res.data.session;
+                if (!session) {
+                    document.getElementById("authGate").style.display = "flex";
+                    return;
+                }
+                currentAuthUser = session.user;
+                document.getElementById("courseContent").style.display = "block";
+            });
+        }
+
+        function recordCompletion(resultText) {
+            var el = document.getElementById("completionStatus");
+            if (!el) return;
+            if (!currentAuthUser) {
+                el.textContent = "Not signed in — this attempt was not saved.";
+                el.className = "completion-status err";
+                return;
+            }
+            el.textContent = "Saving your completion...";
+            el.className = "completion-status saving";
+            sb.from("completions").insert({
+                staff_id: currentAuthUser.id,
+                course_id: COURSE_ID,
+                completion_date: new Date().toISOString().slice(0, 10),
+                result: resultText,
+                recorded_by: currentAuthUser.id
+            }).then(function(res) {
+                if (res.error) {
+                    el.innerHTML = "Couldn't save your completion. <br><button data-action=\"retry-completion\" data-result=\"" + resultText.replace(/"/g, '&quot;') + "\">Retry</button>";
+                    el.className = "completion-status err";
+                    return;
+                }
+                el.textContent = "✓ Saved to your training record.";
+                el.className = "completion-status ok";
+            });
+        }
+
+        const QUESTIONS = {
+            1: { correct: 'b', explanation: 'The normal resting heart rate for adults is 60-100 bpm. Below 60 is bradycardia; above 100 is tachycardia.' },
+            2: { correct: 'c', explanation: 'BP above 180/120 mmHg is a hypertensive crisis — a medical emergency. Call 000 immediately. Risk of stroke, heart attack, or organ damage.' },
+            3: { correct: 'c', explanation: 'Correct: Clear hazards, time the seizure, protect the head, and place in recovery position once jerking stops. Never put objects in the mouth, restrain, or give food/drink during/after until fully alert.' },
+            4: { correct: 'b', explanation: 'SpO₂ below 90% is severe hypoxaemia — a life-threatening emergency. Call 000 immediately. While waiting, ensure airway is open, sit them upright if conscious, and apply prescribed oxygen if available.' },
+            5: { correct: 'c', explanation: 'Correct: You are a mandatory reporter. Report suspicions in good faith — you do not need proof. Your organisation will investigate. Do NOT confront the alleged abuser or delay reporting.' },
+            6: { correct: 'b', explanation: 'R = Response. After checking for Danger, you check if the person is responsive by talking to them and gently touching their shoulders.' },
+            7: { correct: 'b', explanation: 'Correct: Blood glucose below 4.0 mmol/L = hypoglycaemia. If conscious and able to swallow, give 15g fast-acting carbs immediately (Rule of 15). Call 000 only if unconscious, seizing, or not improving after treatment.' },
+            8: { correct: 'c', explanation: 'Correct: The exact location is the most critical first piece of information. Emergency services cannot help if they cannot find you. Include unit numbers, gate codes, and access instructions.' },
+            9: { correct: 'b', explanation: 'Correct: Head injury + anticoagulant (warfarin, apixaban, etc.) = HIGH risk of intracranial bleeding. Even minor head bumps require urgent medical assessment. Call 000 immediately.' },
+            10: { correct: 'c', explanation: 'B = Background. This includes relevant medical history, current conditions, medications, allergies, and any context that helps the receiver understand the situation.' }
+        };
+
+        // Track completed sections
+        const completedSections = new Set();
+        const totalSections = 27;
+
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(id);
+            if (target) {
+                target.classList.add('active');
+                window.scrollTo(0, 0);
+            }
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            const sidebarItem = document.querySelector(`.sidebar-item[data-section="${id}"]`);
+            if (sidebarItem) sidebarItem.classList.add('active');
+
+            completedSections.add(id);
+            if (sidebarItem) sidebarItem.classList.add('completed');
+            updateProgress();
+
+            if (window.innerWidth <= 900) toggleSidebar(false);
+        }
+
+        function toggleSidebar(forceState) {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const shouldOpen = typeof forceState === 'boolean' ? forceState : !sidebar.classList.contains('open');
+            sidebar.classList.toggle('open', shouldOpen);
+            overlay.classList.toggle('show', shouldOpen);
+        }
+
+        function updateProgress() {
+            const progress = Math.min((completedSections.size / totalSections) * 100, 100);
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function toggleAccordion(header) {
+            header.classList.toggle('active');
+            const body = header.nextElementSibling;
+            body.classList.toggle('open');
+        }
+
+        function toggleCheck(item) {
+            item.classList.toggle('checked');
+        }
+
+        function checkAnswer(qNum) {
+            const q = QUESTIONS[qNum];
+            if (!q) return;
+            const correctAnswer = q.correct;
+            const explanation = q.explanation;
+            const selected = document.querySelector(`input[name="q${qNum}"]:checked`);
+            const feedback = document.getElementById(`feedback${qNum}`);
+            const options = document.querySelectorAll(`#quiz${qNum} .quiz-options label`);
+
+            if (!selected) {
+                feedback.style.display = 'block';
+                feedback.className = 'quiz-feedback warning-box';
+                feedback.innerHTML = '<strong>Please select an answer first.</strong>';
+                return;
+            }
+
+            options.forEach(opt => {
+                opt.classList.remove('correct', 'incorrect');
+                const input = opt.querySelector('input');
+                if (input.value === correctAnswer) {
+                    opt.classList.add('correct');
+                } else if (input.checked) {
+                    opt.classList.add('incorrect');
+                }
+            });
+
+            feedback.style.display = 'block';
+            if (selected.value === correctAnswer) {
+                feedback.className = 'quiz-feedback success-box';
+                feedback.innerHTML = '<strong>✅ Correct!</strong> ' + explanation;
+            } else {
+                feedback.className = 'quiz-feedback danger-box';
+                feedback.innerHTML = '<strong>❌ Incorrect.</strong> ' + explanation;
+            }
+        }
+
+        function calculateScore() {
+            let score = 0;
+            for (let i = 1; i <= 10; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                if (selected && QUESTIONS[i] && selected.value === QUESTIONS[i].correct) score++;
+            }
+            const percentage = (score / 10) * 100;
+            const display = document.getElementById('score-display');
+            const pass = percentage >= 80;
+            if (pass) {
+                display.innerHTML = `<span style="color:var(--success)">🎉 Congratulations! You scored ${score}/10 (${percentage}%). You have passed!</span>`;
+            } else {
+                display.innerHTML = `<span style="color:var(--danger)">You scored ${score}/10 (${percentage}%). You need 80% to pass. Please review the material and try again.</span>`;
+            }
+            recordCompletion(score + '/10 (' + percentage + '%) — ' + (pass ? 'PASS' : 'NOT YET COMPLETE'));
+        }
+
+        function showCompletionBadge() {
+            document.getElementById('overlay').classList.add('show');
+            document.getElementById('completionBadge').classList.add('show');
+        }
+
+        function hideCompletionBadge() {
+            document.getElementById('overlay').classList.remove('show');
+            document.getElementById('completionBadge').classList.remove('show');
+        }
+
+        // Single delegated click handler - avoids relying on inline onclick attributes,
+        // which some website builders strip out for security when saving pasted HTML.
+        document.addEventListener('click', function(e) {
+            const el = e.target.closest('[data-action]');
+            if (!el) return;
+            const action = el.getAttribute('data-action');
+
+            switch (action) {
+                case 'nav':
+                    showSection(el.getAttribute('data-section'));
+                    break;
+                case 'toggle-menu':
+                    toggleSidebar();
+                    break;
+                case 'close-menu':
+                    toggleSidebar(false);
+                    break;
+                case 'accordion':
+                    toggleAccordion(el);
+                    break;
+                case 'check-item':
+                    toggleCheck(el);
+                    break;
+                case 'reveal': {
+                    const targetEl = document.getElementById(el.getAttribute('data-target'));
+                    if (targetEl) targetEl.style.display = 'block';
+                    break;
+                }
+                case 'check-answer':
+                    checkAnswer(el.getAttribute('data-qnum'));
+                    break;
+                case 'calc-score':
+                    calculateScore();
+                    break;
+                case 'show-badge':
+                    showCompletionBadge();
+                    break;
+                case 'hide-badge':
+                    hideCompletionBadge();
+                    break;
+                case 'retry-completion':
+                    recordCompletion(el.getAttribute('data-result'));
+                    break;
+            }
+        });
+
+        // Initialize progress
+        updateProgress();
+        initAuthGate();
+    </script>
+</body>
+</html>
