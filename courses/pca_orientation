@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New PCA Induction & Core Compliance | ACP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --red:#cc3300; --red-dark:#a32900; --red-tint:#fdeeea;
+  --blue:#336699; --blue-dark:#264d73; --blue-tint:#eaf1f7;
+  --ink:#1e2328; --ink-soft:#4a5259; --line:#e2e6ea; --bg:#f7f8fa; --white:#fff;
+  --amber:#b8860b; --amber-tint:#fff8e6;
+  --green:#2e7d4f; --green-tint:#eaf6ee;
+  --radius:12px; --shadow:0 1px 2px rgba(30,35,40,.06), 0 4px 14px rgba(30,35,40,.06);
+}
+*{box-sizing:border-box;}
+body{margin:0; font-family:'Lexend',system-ui,sans-serif; color:var(--ink); background:var(--bg); line-height:1.6;}
+h1,h2,h3,h4{font-family:'Lexend',sans-serif; font-weight:700; color:var(--ink); line-height:1.25; margin:0;}
+p{margin:0 0 .85rem;}
+ul,ol{margin:0 0 1rem 1.3rem;}
+li{margin-bottom:.4rem;}
+strong{color:var(--blue-dark);}
+
+/* ---- topbar ---- */
+.topbar{position:fixed; top:0; left:0; right:0; z-index:1000; background:linear-gradient(90deg,var(--blue) 0%,var(--blue-dark) 100%); color:#fff; padding:12px 16px; display:flex; align-items:center; gap:12px; box-shadow:var(--shadow);}
+.topbar .brand{display:flex; align-items:center; gap:10px; min-width:0;}
+.topbar .mark{width:34px;height:34px;border-radius:8px;background:var(--red);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;}
+.topbar .brand-text{display:flex; flex-direction:column; line-height:1.15; min-width:0;}
+.topbar .brand-text .t1{font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.topbar .brand-text .t2{font-weight:300; font-size:11.5px; opacity:.85; letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.topbar .spacer{flex:1;}
+.topbar .tag{font-size:11px; background:rgba(255,255,255,.14); padding:5px 10px; border-radius:999px; white-space:nowrap; flex-shrink:0;}
+.menu-toggle{display:none; background:rgba(255,255,255,.15); border:none; color:#fff; width:36px; height:36px; border-radius:8px; font-size:1.05rem; cursor:pointer; flex-shrink:0; align-items:center; justify-content:center;}
+.progress-track{position:absolute; left:0; right:0; bottom:0; height:3px; background:rgba(255,255,255,.18);}
+.progress-fill{height:100%; width:0%; background:var(--green); transition:width .3s ease;}
+
+.sidebar-overlay{display:none; position:fixed; inset:0; top:60px; background:rgba(0,0,0,.4); z-index:997;}
+.sidebar-overlay.show{display:block;}
+
+.layout{display:flex; max-width:1180px; margin:0 auto; padding-top:60px;}
+
+/* ---- sidebar ---- */
+.sidebar{width:270px; flex-shrink:0; position:sticky; top:60px; height:calc(100vh - 60px); overflow-y:auto; padding:18px 12px 40px;}
+.sidebar-section{margin-bottom:1.3rem;}
+.sidebar-title{padding:.4rem .7rem; font-weight:700; color:var(--blue-dark); text-transform:uppercase; font-size:.68rem; letter-spacing:.08em;}
+.sidebar-item{padding:.6rem .8rem; margin:0 .2rem; cursor:pointer; border-radius:9px; transition:all .15s; font-size:.86rem; color:var(--ink-soft);}
+.sidebar-item:hover{background:var(--blue-tint); color:var(--blue-dark);}
+.sidebar-item.active{background:var(--blue); color:#fff; font-weight:600;}
+.sidebar-item.completed::after{content:" \2713"; color:var(--green); font-weight:bold;}
+.sidebar-item.active.completed::after{color:#fff;}
+
+/* ---- main ---- */
+main{flex:1; min-width:0; padding:28px 24px 90px;}
+.section{display:none; animation:fade .25s ease;}
+.section.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+.card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:30px 32px; box-shadow:var(--shadow); margin-bottom:22px;}
+.card h2{font-size:1.4rem; border-bottom:3px solid var(--red); padding-bottom:.6rem; margin-bottom:1.1rem;}
+.card h3{color:var(--blue-dark); font-size:1.05rem; margin:1.4rem 0 .7rem;}
+
+.eyebrow{font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--red);}
+
+/* ---- callout boxes ---- */
+.box{border-radius:10px; padding:1.05rem 1.25rem; margin:1.1rem 0; border-left:5px solid;}
+.box-title{font-weight:700; margin-bottom:.35rem; color:var(--ink);}
+.box p:last-child{margin-bottom:0;}
+.box.info{background:var(--blue-tint); border-color:var(--blue);}
+.box.warning{background:var(--amber-tint); border-color:var(--amber);}
+.box.danger{background:var(--red-tint); border-color:var(--red);}
+.box.success{background:var(--green-tint); border-color:var(--green);}
+
+/* ---- table ---- */
+table.data-table{width:100%; border-collapse:collapse; margin:1rem 0; font-size:.87rem;}
+table.data-table th{background:var(--blue); color:#fff; text-align:left; padding:9px 12px; font-weight:600; font-size:.72rem; text-transform:uppercase; letter-spacing:.03em;}
+table.data-table th:first-child{border-radius:8px 0 0 0;} table.data-table th:last-child{border-radius:0 8px 0 0;}
+table.data-table td{padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+table.data-table tr:nth-child(even) td{background:var(--bg);}
+
+/* ---- accordion ---- */
+.accordion-item{border:1.5px solid var(--line); border-radius:10px; margin-bottom:.6rem; overflow:hidden;}
+.accordion-header{padding:.8rem 1.05rem; background:var(--bg); cursor:pointer; font-weight:600; color:var(--blue-dark); display:flex; justify-content:space-between; align-items:center; font-size:.92rem; transition:background .15s;}
+.accordion-header:hover{background:var(--blue-tint);}
+.accordion-header::after{content:"+"; font-size:1.15rem; color:var(--blue);}
+.accordion-header.open::after{content:"\2013";}
+.accordion-body{max-height:0; overflow:hidden; transition:max-height .25s ease;}
+.accordion-body p{padding:0 1.05rem; margin-top:.8rem;}
+.accordion-body.open{max-height:400px; padding-bottom:.8rem;}
+
+/* ---- steps ---- */
+.step{background:var(--bg); border:1px solid var(--line); border-left:4px solid var(--blue); border-radius:9px; padding:.85rem 1.05rem; margin-bottom:.6rem;}
+.step-title{font-weight:700; color:var(--blue-dark); margin-bottom:.15rem; font-size:.92rem;}
+.step p{margin-bottom:0; font-size:.87rem;}
+
+/* ---- checklist ---- */
+.checklist-item{display:flex; align-items:flex-start; gap:.6rem; padding:.5rem 0; cursor:pointer;}
+.checklist-box{width:20px;height:20px;border:2px solid var(--blue);border-radius:5px;flex-shrink:0;margin-top:.15rem;display:flex;align-items:center;justify-content:center;}
+.checklist-item.checked .checklist-box{background:var(--green); border-color:var(--green);}
+.checklist-item.checked .checklist-box::after{content:"\2713"; color:#fff; font-size:.75rem;}
+.checklist-item.checked span.label{text-decoration:line-through; color:#9aa2a8;}
+
+/* ---- quick-ref ---- */
+.quick-ref{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-dark) 100%); color:#fff; padding:1.4rem 1.5rem; border-radius:12px; margin:1.3rem 0;}
+.quick-ref h4{color:#fff; border-bottom:2px solid rgba(255,255,255,.3); padding-bottom:.4rem; margin-bottom:.8rem; font-size:.98rem;}
+.quick-ref-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:.9rem;}
+.quick-ref-item{background:rgba(255,255,255,.12); padding:.85rem; border-radius:8px; font-size:.83rem;}
+.quick-ref-item strong{display:block; margin-bottom:.25rem; color:#fff;}
+
+/* ---- buttons ---- */
+.btn{display:inline-flex; align-items:center; gap:8px; border:none; border-radius:10px; padding:12px 22px; font-family:'Lexend',sans-serif; font-weight:600; font-size:14px; cursor:pointer; transition:transform .1s ease, background .15s ease; margin-top:1rem;}
+.btn:disabled{opacity:.4; cursor:not-allowed;}
+.btn-primary{background:var(--red); color:#fff;}
+.btn-primary:hover:not(:disabled){background:var(--red-dark);}
+.btn-secondary{background:var(--blue-tint); color:var(--blue-dark);}
+.btn-secondary:hover:not(:disabled){background:var(--blue); color:#fff;}
+.btn-ghost{background:transparent; color:var(--ink-soft); border:1.5px solid var(--line);}
+.btn-ghost:hover{border-color:var(--blue); color:var(--blue-dark);}
+.btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;}
+
+/* ---- quiz gate ---- */
+label{display:block; font-size:12px; font-weight:600; color:var(--blue-dark); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;}
+input[type="text"], select{width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:9px; font-family:'Lexend',sans-serif; font-size:14.5px; color:var(--ink); margin-bottom:18px; background:var(--bg);}
+input[type="text"]:focus, select:focus{outline:none; border-color:var(--blue); background:#fff;}
+
+/* ---- quiz ---- */
+.quiz-meta{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px;}
+.q-counter{font-size:12.5px; color:var(--ink-soft); font-weight:600;}
+.q-progress-outer{height:6px; background:var(--line); border-radius:4px; overflow:hidden; margin-bottom:22px;}
+.q-progress-inner{height:100%; background:var(--red); width:0%; transition:width .25s ease;}
+.q-text{font-size:17px; font-weight:600; margin-bottom:20px; line-height:1.4; color:var(--ink);}
+.options{display:flex; flex-direction:column; gap:10px;}
+.option{display:flex; align-items:flex-start; gap:12px; padding:13px 16px; border:1.5px solid var(--line); border-radius:10px; cursor:pointer; font-size:13.8px; transition:background .12s ease, border-color .12s ease;}
+.option:hover{border-color:var(--blue); background:var(--blue-tint);}
+.option .bullet{width:22px;height:22px;border-radius:50%;border:1.5px solid #b9c0c6;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:transparent;margin-top:1px;}
+.option.selected .bullet{border-color:var(--blue); background:var(--blue); color:#fff;}
+.option.selected{border-color:var(--blue); background:var(--blue-tint);}
+.option.correct{border-color:var(--green); background:var(--green-tint);}
+.option.correct .bullet{border-color:var(--green); background:var(--green); color:#fff;}
+.option.incorrect{border-color:var(--red); background:var(--red-tint);}
+.option.incorrect .bullet{border-color:var(--red); background:var(--red); color:#fff;}
+.option.disabled{cursor:default;}
+.feedback{margin-top:16px; padding:14px 16px; border-radius:10px; font-size:13.5px; border:1px solid; display:none;}
+.feedback.show{display:block;}
+.feedback.ok{background:var(--green-tint); border-color:#bfe3cc; color:#1b5c38;}
+.feedback.bad{background:var(--red-tint); border-color:#f3c8ba; color:#7a2400;}
+.feedback b{display:block; margin-bottom:3px; font-size:13px;}
+
+/* ---- results ---- */
+.verdict-banner{border-radius:14px; padding:26px 28px; margin-bottom:22px; color:#fff; text-align:center;}
+.verdict-banner.pass{background:linear-gradient(135deg,var(--green) 0%, #1e5c38 100%);}
+.verdict-banner.fail{background:linear-gradient(135deg,var(--red) 0%, var(--red-dark) 100%);}
+.verdict-banner .score-big{font-size:44px; font-weight:800; margin:4px 0;}
+.verdict-banner .verdict-label{font-size:16px; font-weight:700; letter-spacing:.02em;}
+.verdict-banner .verdict-sub{font-size:12.5px; opacity:.92; margin-top:6px;}
+
+/* ---- certificate ---- */
+.cert-wrap{padding:14px; background:#e9ebee; border-radius:14px; margin-top:6px;}
+.cert{background:#fffdfa; border-radius:8px; padding:38px 40px; position:relative; overflow:hidden; border:3px solid var(--red); box-shadow:0 8px 30px rgba(0,0,0,.12);}
+.cert::before, .cert::after{content:""; position:absolute; left:14px; right:14px; height:2px; background:var(--blue);}
+.cert::before{top:12px;} .cert::after{bottom:12px;}
+.cert-inner{text-align:center; position:relative; z-index:1;}
+.cert-mark{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--red),var(--red-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;margin:0 auto 14px; box-shadow:0 4px 14px rgba(204,51,0,.3);}
+.cert-org{font-size:11.5px; text-transform:uppercase; letter-spacing:.14em; color:var(--blue-dark); font-weight:700;}
+.cert-title{font-family:'Playfair Display',serif; font-weight:700; font-size:28px; color:var(--ink); margin:10px 0 4px;}
+.cert-sub{font-size:12.5px; color:var(--ink-soft); margin-bottom:22px;}
+.cert-presented{font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;}
+.cert-name{font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:32px; color:var(--red-dark); margin:8px 0 18px; border-bottom:1.5px solid var(--line); display:inline-block; padding-bottom:10px; min-width:60%;}
+.cert-body{font-size:13.5px; color:var(--ink); max-width:520px; margin:0 auto 22px; line-height:1.7;}
+.cert-score-row{display:flex; justify-content:center; gap:34px; margin:10px 0 26px; flex-wrap:wrap;}
+.cert-score-item{text-align:center;}
+.cert-score-item .n{font-size:22px; font-weight:800; color:var(--blue-dark);}
+.cert-score-item .l{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft);}
+.cert-sign-row{display:flex; justify-content:space-between; align-items:flex-end; margin-top:30px; gap:20px; flex-wrap:wrap;}
+.cert-sign{text-align:left; font-size:11.5px; color:var(--ink-soft);}
+.cert-sign .line{border-top:1.5px solid var(--ink); width:190px; margin-bottom:6px; padding-top:6px; font-family:'Playfair Display',serif; font-style:italic; font-size:15px; color:var(--ink);}
+.cert-id{font-size:10px; color:#9aa2a8; margin-top:20px; letter-spacing:.03em;}
+
+.hidden{display:none !important;}
+
+footer{max-width:1180px; margin:0 auto; padding:20px 24px; color:var(--ink-soft); font-size:12px; text-align:center;}
+
+/* ---- Auth gate & completion tracking (added for training tracker) ---- */
+#authGate{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:linear-gradient(120deg,var(--blue) 0%,var(--blue-dark) 100%);
+}
+#authGate .gate-card{
+  background:#fff;border-radius:var(--radius);box-shadow:0 30px 60px -20px rgba(0,0,0,.4);
+  padding:32px;max-width:400px;text-align:center;
+}
+#authGate h2{color:var(--blue-dark);font-size:19px;margin:0 0 10px;border-bottom:none;}
+#authGate p{color:var(--ink-soft);font-size:14px;line-height:1.6;margin:0 0 18px;}
+#authGate a.gate-link{
+  display:inline-block;background:var(--blue);color:#fff;text-decoration:none;
+  font-weight:600;font-size:13.5px;padding:11px 22px;border-radius:999px;
+}
+#authGate a.gate-link:hover{background:var(--blue-dark);}
+.completion-status{
+  font-size:13.5px;margin-top:14px;min-height:16px;font-weight:500;color:var(--ink-soft);
+}
+.completion-status.saving{color:var(--ink-soft);}
+.completion-status.ok{color:var(--green);font-weight:700;}
+.completion-status.err{color:var(--red);}
+.completion-status.err button{
+  background:var(--red);color:#fff;border:none;padding:7px 16px;border-radius:999px;
+  font-family:inherit;font-weight:600;font-size:12.5px;cursor:pointer;margin-top:8px;
+}
+
+@media (max-width:900px){
+  .menu-toggle{display:flex;}
+  .sidebar{position:fixed; left:0; top:60px; width:270px; height:calc(100vh - 60px); background:#fff; z-index:998; transform:translateX(-100%); transition:transform .25s ease; box-shadow:2px 0 14px rgba(0,0,0,.12);}
+  .sidebar.show{transform:translateX(0);}
+  main{padding:20px 14px 70px;}
+  .card{padding:22px 18px;}
+  .cert{padding:26px 18px;}
+  .cert-name{font-size:24px;}
+  .cert-title{font-size:21px;}
+  .verdict-banner .score-big{font-size:34px;}
+  .cert-sign-row{flex-direction:column; align-items:flex-start;}
+}
+@media (max-width:420px){
+  .topbar .tag{display:none;}
+  .topbar .brand-text .t1{font-size:13.5px;}
+  .topbar .brand-text .t2{font-size:10.5px;}
+}
+</style>
+</head>
+<body>
+
+<div id="authGate" style="display:none;">
+  <div class="gate-card">
+    <h2>Sign in required</h2>
+    <p>You need to be signed in to the ACP Training Tracker to complete this course and have it recorded against your name.</p>
+    <a class="gate-link" href="../index.html">Go to the Training Tracker</a>
+  </div>
+</div>
+
+<div id="courseContent" style="display:none;">
+
+<div class="topbar">
+  <button class="menu-toggle" data-action="toggle-sidebar" aria-label="Toggle menu">&#9776;</button>
+  <div class="brand">
+    <div class="mark">ACP</div>
+    <div class="brand-text">
+      <span class="t1">New PCA Induction</span>
+      <span class="t2">Core Compliance, Safety & Duty of Care</span>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div class="tag">13 sections &middot; 8-question assessment</div>
+  <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressBar"></div></div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" data-action="close-sidebar"></div>
+
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-title">Getting Started</div>
+    <div class="sidebar-item active" data-action="show-section" data-target="intro">Welcome & Your Role</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-title">Module 1: Foundations</div>
+    <div class="sidebar-item" data-action="show-section" data-target="duty-of-care">Duty of Care & Scope of Practice</div>
+    <div class="sidebar-item" data-action="show-section" data-target="quality-standards">Quality Standards & Code of Conduct</div>
+    <div class="sidebar-item" data-action="show-section" data-target="person-centred">Person-Centred & Culturally Safe Care</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-title">Module 2: Physical Safety</div>
+    <div class="sidebar-item" data-action="show-section" data-target="falls">Falls Prevention</div>
+    <div class="sidebar-item" data-action="show-section" data-target="pressure">Pressure Injury & Skin Integrity</div>
+    <div class="sidebar-item" data-action="show-section" data-target="manual-handling">Manual Handling Basics</div>
+    <div class="sidebar-item" data-action="show-section" data-target="infection">Infection Prevention & Control</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-title">Module 3: Risk & Reporting</div>
+    <div class="sidebar-item" data-action="show-section" data-target="risk-management">Risk & Hazard Management</div>
+    <div class="sidebar-item" data-action="show-section" data-target="incident-reporting">Incident & Hazard Reporting</div>
+    <div class="sidebar-item" data-action="show-section" data-target="safeguarding">Elder Abuse & Safeguarding</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-title">Module 4: Records & Wrap-Up</div>
+    <div class="sidebar-item" data-action="show-section" data-target="documentation">Documentation & Privacy</div>
+    <div class="sidebar-item" data-action="show-section" data-target="quick-reference">Quick Reference Guide</div>
+    <div class="sidebar-item" data-action="show-section" data-target="quiz">Final Assessment</div>
+  </div>
+</aside>
+
+<main>
+
+<!-- INTRO -->
+<section id="intro" class="section active card">
+  <div class="eyebrow">Welcome</div>
+  <h2>&#128075; Welcome to ACP</h2>
+  <div class="box info">
+    <div class="box-title">What this module covers</div>
+    <p>This induction is your starting point as a new Personal Care Assistant (PCA) working with Aged Care Physiotherapy Pty Ltd (ACP) and the facilities we support. It covers the compliance, safety and reporting knowledge every PCA needs from day one &mdash; duty of care, falls prevention, pressure injury prevention, risk and hazard management, and incident reporting.</p>
+  </div>
+  <p>This module is deliberately broad rather than deep. Falls prevention and manual handling have their own full clinical training modules &mdash; ask your supervisor for access once you've completed this induction. Treat this as the floor every PCA must clear, not the ceiling.</p>
+  <h3>Your Role as a PCA</h3>
+  <p>A PCA supports residents/clients with activities of daily living &mdash; showering, dressing, mobility, meals, continence care, and social engagement &mdash; under the direction of registered staff (RNs, ENs, physiotherapists, and other allied health). You are often the staff member who spends the most time with a resident, which makes you the person most likely to notice a change first.</p>
+  <ul>
+    <li>You are <strong>not</strong> expected to diagnose, prescribe, or make clinical decisions.</li>
+    <li>You <strong>are</strong> expected to observe, report, and follow the care plan accurately.</li>
+    <li>When in doubt, escalate. No one has ever been criticised for reporting a concern that turned out to be nothing.</li>
+  </ul>
+  <div class="box warning">
+    <div class="box-title">&#9888; This training does not replace</div>
+    <p>Your organisation's policies and procedures, your facility orientation, or any accredited manual handling / infection control certification you're required to hold. Where they differ, your workplace policy always takes precedence over this module.</p>
+  </div>
+  <h3>How the module works</h3>
+  <p>Work through each section using the sidebar (tap &#9776; on mobile). Checklists are interactive. A short final assessment and certificate of completion are at the end.</p>
+  <button class="btn btn-primary" data-action="show-section" data-target="duty-of-care">Start: Duty of Care &rarr;</button>
+</section>
+
+<!-- DUTY OF CARE -->
+<section id="duty-of-care" class="section card">
+  <h2>&#9878;&#65039; Duty of Care & Scope of Practice</h2>
+  <h3>What duty of care means</h3>
+  <p>Duty of care is your legal obligation to take reasonable steps to prevent foreseeable harm to the people you support. It applies to everything you do &mdash; physical care, supervision, environment, and communication.</p>
+  <div class="accordion">
+    <div class="accordion-item">
+      <div class="accordion-header" data-action="toggle-accordion">Duty of Care</div>
+      <div class="accordion-body"><p>Taking reasonable care to avoid acts or omissions that could foreseeably harm a resident. This includes acting on things you notice, not just things you're asked to do.</p></div>
+    </div>
+    <div class="accordion-item">
+      <div class="accordion-header" data-action="toggle-accordion">Dignity of Risk</div>
+      <div class="accordion-body"><p>Residents have the right to make their own choices and accept reasonable risks &mdash; for example, choosing to walk without a frame against advice. Your role is to inform, support safe choices, and document the discussion &mdash; not to override capacity or remove all risk.</p></div>
+    </div>
+    <div class="accordion-item">
+      <div class="accordion-header" data-action="toggle-accordion">Scope of Practice</div>
+      <div class="accordion-body"><p>The tasks you are trained, competent, and authorised to perform. If a task is outside your scope (e.g. wound dressings, medication administration you're not signed off for), stop and escalate &mdash; do not attempt it because you've "seen it done before."</p></div>
+    </div>
+    <div class="accordion-item">
+      <div class="accordion-header" data-action="toggle-accordion">Restrictive Practices</div>
+      <div class="accordion-body"><p>Any practice that restricts a resident's rights or freedom of movement (physical restraint, chemical restraint, locked doors, bed rails used to confine) is heavily regulated. PCAs never independently decide to use a restrictive practice &mdash; this requires authorisation, consent, and a behaviour support plan.</p></div>
+    </div>
+  </div>
+  <div class="box danger">
+    <div class="box-title">&#128680; Balancing duty of care and dignity of risk</div>
+    <p>These two principles sit in tension deliberately. Duty of care doesn't mean wrapping residents in cotton wool, and dignity of risk doesn't mean ignoring genuine danger. When they conflict &mdash; flag it to the RN or team leader rather than deciding alone.</p>
+  </div>
+  <h3>Working within a team</h3>
+  <p>You work under the direction of registered staff and allied health. Follow the care plan as written; if it seems wrong, outdated, or unsafe for the resident's current condition, say so to the RN/EN rather than quietly deviating from it or quietly following something you believe is unsafe.</p>
+  <button class="btn btn-primary" data-action="show-section" data-target="quality-standards">Next: Quality Standards & Code of Conduct &rarr;</button>
+</section>
+
+<!-- QUALITY STANDARDS -->
+<section id="quality-standards" class="section card">
+  <h2>&#128203; Aged Care Quality Standards & Code of Conduct</h2>
+  <p>Australian aged care providers, including facilities ACP works in, are regulated under the <strong>Aged Care Quality Standards</strong> and monitored by the <strong>Aged Care Quality and Safety Commission</strong>. As a PCA, your day-to-day work is assessed against these standards, whether or not you ever see the paperwork.</p>
+  <table class="data-table">
+    <thead><tr><th>Standard</th><th>What it means for you</th></tr></thead>
+    <tbody>
+      <tr><td>Consumer dignity & choice</td><td>Ask before you act, respect refusals, knock before entering rooms</td></tr>
+      <tr><td>Ongoing assessment & planning</td><td>Report changes so care plans stay current</td></tr>
+      <tr><td>Personal & clinical care</td><td>Deliver care exactly as the plan specifies</td></tr>
+      <tr><td>Services & supports for daily living</td><td>Support independence, not just "doing it for them"</td></tr>
+      <tr><td>Organisation's service environment</td><td>Keep spaces clean, safe, and hazard-free</td></tr>
+      <tr><td>Feedback & complaints</td><td>Take resident/family concerns seriously and pass them on</td></tr>
+      <tr><td>Human resources</td><td>Work within your training and competency</td></tr>
+      <tr><td>Organisational governance</td><td>Follow incident reporting and risk processes &mdash; this is how the standard is actually met</td></tr>
+    </tbody>
+  </table>
+  <h3>Code of Conduct (Aged Care Code of Conduct)</h3>
+  <p>All aged care workers &mdash; including PCAs &mdash; are individually bound by the Code of Conduct. Breaches can affect your registration with the NDIS Worker Screening/Aged Care Worker Screening database, not just your employment.</p>
+  <ul>
+    <li>Act with respect for individual rights, dignity, and privacy</li>
+    <li>Provide care and services safely and competently, within scope</li>
+    <li>Act with integrity, honesty, and transparency</li>
+    <li>Report and respond to suspected abuse, neglect or unsafe practice</li>
+    <li>Never engage in sexual, physical, or emotional misconduct, or exploit a person you support financially or otherwise</li>
+    <li>Never provide care or services impaired by drugs or alcohol</li>
+  </ul>
+  <div class="box warning">
+    <div class="box-title">&#9888; Serious Incident Response Scheme (SIRS)</div>
+    <p>Certain incidents in residential aged care <strong>must</strong> be reported by the provider to the Aged Care Quality and Safety Commission &mdash; including unexplained absence, unreasonable use of force, neglect, psychological/emotional abuse, and unexpected death. As a PCA, your job is to report what you see or suspect to your supervisor/RN immediately; they are responsible for the formal SIRS notification. You don't need to know the SIRS categories by heart, but you do need to escalate fast.</p>
+  </div>
+  <button class="btn btn-primary" data-action="show-section" data-target="person-centred">Next: Person-Centred & Culturally Safe Care &rarr;</button>
+</section>
+
+<!-- PERSON CENTRED -->
+<section id="person-centred" class="section card">
+  <h2>&#129309; Person-Centred & Culturally Safe Care</h2>
+  <p>Person-centred care means the resident's preferences, history, and goals shape how care is delivered &mdash; not just the task list. Two residents with identical care needs may want very different approaches.</p>
+  <h3>In practice</h3>
+  <ul>
+    <li>Ask how someone likes things done, even for routine tasks &mdash; a shower order, a preferred side to be approached from, morning vs evening bathing</li>
+    <li>Explain what you're about to do before you do it, and check for consent each time &mdash; consent isn't a one-off event</li>
+    <li>Preserve privacy and dignity: close doors/curtains, cover the body appropriately, knock and wait</li>
+    <li>Recognise that behaviour changes (agitation, resistance to care) are often communication &mdash; pain, fear, confusion, or an unmet need &mdash; not "difficult" behaviour</li>
+  </ul>
+  <h3>Cultural safety</h3>
+  <p>Residents come from a wide range of cultural, linguistic, and religious backgrounds, including Aboriginal and Torres Strait Islander peoples, CALD communities, and LGBTIQ+ elders who may have experienced past discrimination in care settings. Cultural safety means the resident &mdash; not you &mdash; defines what feels safe and respectful.</p>
+  <ul>
+    <li>Use interpreters for important conversations rather than family members where possible, especially for consent</li>
+    <li>Don't assume dietary, religious, or modesty preferences &mdash; check the care plan and ask</li>
+    <li>Use a person's correct name, pronouns, and title</li>
+  </ul>
+  <button class="btn btn-primary" data-action="show-section" data-target="falls">Next: Falls Prevention &rarr;</button>
+</section>
+
+<!-- FALLS -->
+<section id="falls" class="section card">
+  <h2>&#128694; Falls Prevention</h2>
+  <div class="box info">
+    <div class="box-title">Why this matters</div>
+    <p>Falls are the most common preventable harm event in aged care. Most falls have multiple contributing factors, and PCAs are often best placed to catch the early warning signs &mdash; this section is a PCA-level overview; ACP's full Falls Prevention module covers assessment and clinical strategy in depth.</p>
+  </div>
+  <h3>Common contributing factors</h3>
+  <ul>
+    <li>Muscle weakness, poor balance, or a recent decline in mobility</li>
+    <li>Medication side effects (sedation, blood pressure drops)</li>
+    <li>Environmental hazards &mdash; clutter, poor lighting, wet floors, loose rugs</li>
+    <li>Incorrect or missing mobility aids (unlocked wheels, wrong-height frame)</li>
+    <li>Cognitive impairment or delirium affecting judgement of ability</li>
+    <li>Rushing &mdash; especially toileting urgency</li>
+  </ul>
+  <div class="quick-ref">
+    <h4>ACP's approach to falls strategy</h4>
+    <div class="quick-ref-grid">
+      <div class="quick-ref-item"><strong>Long-term</strong>Strength and balance training, reviewed regularly by physiotherapy</div>
+      <div class="quick-ref-item"><strong>Short-term</strong>Carer assistance, toileting schedules, environmental modification, sensor mats, medication review</div>
+      <div class="quick-ref-item"><strong>Mobility aids</strong>4-wheeled walkers (4WW) are generally preferred over single sticks</div>
+      <div class="quick-ref-item"><strong>Non-ambulant residents</strong>Low-low beds and crash mats where indicated</div>
+    </div>
+  </div>
+  <h3>What you do as a PCA</h3>
+  <div class="step"><div class="step-title">Follow the mobility care plan exactly</div><p>Use the aid and assistance level specified &mdash; don't upgrade or downgrade a resident's independence based on how they seem "today" without checking.</p></div>
+  <div class="step"><div class="step-title">Keep the environment clear</div><p>Remove clutter, wipe spills immediately, ensure the call bell and mobility aid are within reach before you leave.</p></div>
+  <div class="step"><div class="step-title">Respond to toileting needs promptly</div><p>Rushed, unassisted toileting attempts are one of the most common fall triggers &mdash; timely response reduces risk.</p></div>
+  <div class="step"><div class="step-title">Report near misses, not just falls</div><p>A wobble, a "nearly went down," or a resident found on the floor unable to say what happened are all reportable.</p></div>
+  <h3>If a fall happens</h3>
+  <div class="box danger">
+    <div class="box-title">&#128680; Do not move the resident</div>
+    <p>Do not attempt to lift or move a resident after a fall. Stay with them, call for help immediately (RN/EN or emergency services per your facility protocol), keep them warm and reassured, and do not give food or drink until they've been assessed &mdash; especially if head injury or anticoagulant use (e.g. warfarin) is possible.</p>
+  </div>
+  <button class="btn btn-primary" data-action="show-section" data-target="pressure">Next: Pressure Injury & Skin Integrity &rarr;</button>
+</section>
+
+<!-- PRESSURE -->
+<section id="pressure" class="section card">
+  <h2>&#129655; Pressure Injury & Skin Integrity</h2>
+  <p>Pressure injuries (also called pressure ulcers or bed sores) develop when sustained pressure &mdash; usually over a bony area &mdash; cuts off blood supply to the skin and underlying tissue. They can develop in hours and are largely preventable.</p>
+  <h3>High-risk residents</h3>
+  <ul>
+    <li>Immobile or bed/chair-bound residents, or those who need help to reposition</li>
+    <li>Incontinent residents (moisture breaks down skin integrity)</li>
+    <li>Residents with poor nutrition/hydration or very thin, fragile skin</li>
+    <li>Residents with reduced sensation (e.g. diabetes, stroke) who may not feel warning discomfort</li>
+  </ul>
+  <h3>High-risk sites</h3>
+  <p>Sacrum/tailbone, heels, hips, elbows, shoulder blades, ears, and the back of the head &mdash; anywhere bone sits close to skin.</p>
+  <h3>Your role in prevention</h3>
+  <div class="step"><div class="step-title">Reposition on schedule</div><p>Follow the repositioning frequency in the care plan (commonly 2-hourly, but this varies by resident) &mdash; don't wait for a resident to ask.</p></div>
+  <div class="step"><div class="step-title">Check skin every time you provide personal care</div><p>Look for redness that doesn't fade when pressed, discolouration, warmth, or broken skin &mdash; report anything new immediately, don't wait for the next scheduled skin check.</p></div>
+  <div class="step"><div class="step-title">Keep skin clean and dry</div><p>Respond promptly to incontinence, pat rather than rub skin dry, and use barrier creams as directed in the care plan.</p></div>
+  <div class="step"><div class="step-title">Use pressure-relieving equipment correctly</div><p>Air mattresses, heel protectors, and cushions only work if used properly &mdash; check they're switched on, correctly inflated, and positioned as intended.</p></div>
+  <div class="step"><div class="step-title">Support nutrition and hydration</div><p>Encourage meals and fluids as able &mdash; poor nutrition significantly increases pressure injury risk. Report reduced intake to the RN.</p></div>
+  <div class="box warning">
+    <div class="box-title">&#9888; Never do this</div>
+    <p>Never massage a reddened area over a bony prominence &mdash; this can worsen tissue damage. Never use a ring/donut cushion &mdash; it concentrates pressure at the edges. Report, don't self-treat.</p>
+  </div>
+  <button class="btn btn-primary" data-action="show-section" data-target="manual-handling">Next: Manual Handling Basics &rarr;</button>
+</section>
+
+<!-- MANUAL HANDLING -->
+<section id="manual-handling" class="section card">
+  <h2>&#127939; Manual Handling Basics</h2>
+  <div class="box info"><div class="box-title">Scope of this section</div><p>This is a general awareness overview. You must complete facility-specific, competency-based, supervised manual handling training and sign-off before using any hoist or transfer equipment &mdash; a verbal explanation alone is never sufficient.</p></div>
+  <h3>Core principles</h3>
+  <ul>
+    <li>Always check the resident's individual manual handling plan before assisting &mdash; techniques are resident-specific, not one-size-fits-all</li>
+    <li>Use equipment (hoists, slide sheets, transfer belts) as trained &mdash; never improvise or skip a step to save time</li>
+    <li>Never attempt a two-person transfer alone, even if you think you can manage</li>
+    <li>Keep loads close to your body, bend at the knees/hips not the back, and avoid twisting while lifting</li>
+    <li>If a resident's condition changes (e.g. new pain, reduced weight-bearing), stop and escalate before continuing with the usual technique</li>
+  </ul>
+  <div class="box danger">
+    <div class="box-title">&#128680; If in doubt, stop</div>
+    <p>An unsafe transfer risks injury to both the resident and you. If equipment seems faulty, if you haven't been signed off on a specific technique, or if a second person isn't available when the plan requires one &mdash; stop and get help rather than proceeding.</p>
+  </div>
+  <button class="btn btn-primary" data-action="show-section" data-target="infection">Next: Infection Prevention & Control &rarr;</button>
+</section>
+
+<!-- INFECTION -->
+<section id="infection" class="section card">
+  <h2>&#129468; Infection Prevention & Control</h2>
+  <h3>Standard precautions (apply to every resident, every time)</h3>
+  <ul>
+    <li>Hand hygiene before and after every episode of care &mdash; alcohol-based rub or wash with soap and water for 20+ seconds</li>
+    <li>Personal protective equipment (gloves, apron/gown, mask/eyewear) matched to the task</li>
+    <li>Safe handling and disposal of sharps, linen, and clinical waste per facility protocol</li>
+    <li>Respiratory hygiene/cough etiquette, and staying home when unwell yourself</li>
+  </ul>
+  <h3>Transmission-based precautions</h3>
+  <p>Some residents require additional precautions (contact, droplet, or airborne) for infections such as gastroenteritis outbreaks, influenza, COVID-19, or multi-resistant organisms. Follow the signage on the resident's door and the facility's outbreak management protocol exactly &mdash; this protects other residents, not just you.</p>
+  <div class="box warning">
+    <div class="box-title">&#9888; Report, don't guess</div>
+    <p>New diarrhoea, vomiting, fever, cough, or a wound that looks infected should be reported to the RN promptly &mdash; early reporting is what prevents outbreaks in a facility setting.</p>
+  </div>
+  <button class="btn btn-primary" data-action="show-section" data-target="risk-management">Next: Risk & Hazard Management &rarr;</button>
+</section>
+
+<!-- RISK MANAGEMENT -->
+<section id="risk-management" class="section card">
+  <h2>&#128737;&#65039; Risk & Hazard Management</h2>
+  <p>Risk management isn't a separate task from your shift &mdash; it's a habit of noticing. A hazard is anything with the potential to cause harm; a risk is the likelihood and severity of that harm actually occurring.</p>
+  <h3>Categories of hazard to watch for</h3>
+  <table class="data-table">
+    <thead><tr><th>Category</th><th>Examples</th></tr></thead>
+    <tbody>
+      <tr><td>Environmental</td><td>Wet floors, trailing cords, poor lighting, clutter, broken furniture</td></tr>
+      <tr><td>Equipment</td><td>Faulty hoists/wheelchairs, flat batteries, unlocked bed wheels, damaged mattresses</td></tr>
+      <tr><td>Clinical</td><td>Undetected skin changes, medication errors, unmanaged pain, choking risk in meals</td></tr>
+      <tr><td>Behavioural/security</td><td>Unattended exits, wandering risk, aggression, unsupervised hazardous items</td></tr>
+      <tr><td>Manual handling</td><td>Missing second staff member, incorrect equipment for a resident's weight/needs</td></tr>
+    </tbody>
+  </table>
+  <h3>The hierarchy of risk control</h3>
+  <p>When a hazard is identified, the most effective response is to eliminate it entirely; where that's not possible, reduce exposure (e.g. signage, rerouting, isolating the hazard); as a last resort, rely on individual precautions such as PPE. As a PCA, you rarely choose the control yourself &mdash; but reporting promptly is what allows the right control to be applied.</p>
+  <div class="checklist-item" data-action="toggle-check"><div class="checklist-box"></div><span class="label">I check my work area for hazards at the start of every shift</span></div>
+  <div class="checklist-item" data-action="toggle-check"><div class="checklist-box"></div><span class="label">I fix what I safely can myself (e.g. wipe a spill) and report what I can't</span></div>
+  <div class="checklist-item" data-action="toggle-check"><div class="checklist-box"></div><span class="label">I never keep using equipment I suspect is faulty "just this once"</span></div>
+  <div class="checklist-item" data-action="toggle-check"><div class="checklist-box"></div><span class="label">I report hazards even if no one was harmed this time</span></div>
+  <button class="btn btn-primary" data-action="show-section" data-target="incident-reporting">Next: Incident & Hazard Reporting &rarr;</button>
+</section>
+
+<!-- INCIDENT REPORTING -->
+<section id="incident-reporting" class="section card">
+  <h2>&#128221; Incident & Hazard Reporting</h2>
+  <h3>What must be reported</h3>
+  <ul>
+    <li><strong>Incidents:</strong> falls, skin tears, pressure injuries, medication errors, choking events, aggression/behavioural incidents, missing resident, any injury to a resident, visitor, or staff member</li>
+    <li><strong>Near misses:</strong> anything that could have caused harm but didn't this time &mdash; these are just as valuable to report because they reveal risk before someone is hurt</li>
+    <li><strong>Hazards:</strong> anything you notice that could cause future harm, even without an incident attached to it</li>
+    <li><strong>Suspected abuse or neglect:</strong> always reportable &mdash; see Safeguarding section</li>
+  </ul>
+  <div class="box info">
+    <div class="box-title">There is no such thing as "too small to report"</div>
+    <p>Under-reporting is one of the most common and most dangerous failures in aged care. A pattern only becomes visible if every instance is logged &mdash; a single unreported near-miss might be the one piece of data that would have prevented a serious harm event.</p>
+  </div>
+  <h3>How to report well</h3>
+  <div class="step"><div class="step-title">Ensure immediate safety first</div><p>Attend to the resident's safety and wellbeing before documentation &mdash; call for help if needed.</p></div>
+  <div class="step"><div class="step-title">Report verbally to the RN/team leader immediately</div><p>Don't wait until end of shift for anything involving actual or potential harm.</p></div>
+  <div class="step"><div class="step-title">Complete the written incident report promptly</div><p>Use objective, factual language &mdash; what you saw and did, not assumptions about cause. "Resident found on floor beside bed, alert, states no pain" not "resident fell out of bed."</p></div>
+  <div class="step"><div class="step-title">Stick to facts, not blame</div><p>Incident reports are about understanding what happened and preventing recurrence &mdash; not assigning fault. Avoid speculation about why something happened unless you witnessed it directly.</p></div>
+  <div class="step"><div class="step-title">Follow up as directed</div><p>You may be asked for more detail as part of an investigation or root cause review &mdash; cooperate fully and honestly.</p></div>
+  <div class="box danger">
+    <div class="box-title">&#128680; Never alter or delay a report</div>
+    <p>Never edit, backdate, or omit details from an incident report &mdash; including your own errors. Honest, timely reporting of your own mistakes is protected and expected; concealment is a serious breach of the Code of Conduct and can itself be a reportable matter.</p>
+  </div>
+  <button class="btn btn-primary" data-action="show-section" data-target="safeguarding">Next: Elder Abuse & Safeguarding &rarr;</button>
+</section>
+
+<!-- SAFEGUARDING -->
+<section id="safeguarding" class="section card">
+  <h2>&#128274; Elder Abuse & Safeguarding</h2>
+  <p>Elder abuse can be physical, psychological/emotional, financial, sexual, or neglect &mdash; and it can come from staff, other residents, family members, or visitors. PCAs are often best placed to notice early signs because of the time spent with residents.</p>
+  <div class="accordion">
+    <div class="accordion-item"><div class="accordion-header" data-action="toggle-accordion">Physical abuse</div><div class="accordion-body"><p>Unexplained bruising, fractures, or injuries; fear of a particular person; flinching at approach.</p></div></div>
+    <div class="accordion-item"><div class="accordion-header" data-action="toggle-accordion">Psychological/emotional abuse</div><div class="accordion-body"><p>Withdrawal, anxiety, fearfulness, being talked over or dismissed in front of others, humiliation.</p></div></div>
+    <div class="accordion-item"><div class="accordion-header" data-action="toggle-accordion">Financial abuse</div><div class="accordion-body"><p>Missing money or belongings, sudden changes to wills/power of attorney, a family member controlling all finances without the resident's involvement.</p></div></div>
+    <div class="accordion-item"><div class="accordion-header" data-action="toggle-accordion">Neglect</div><div class="accordion-body"><p>Poor hygiene, unmet basic needs, untreated medical issues, malnutrition or dehydration not explained by clinical condition.</p></div></div>
+    <div class="accordion-item"><div class="accordion-header" data-action="toggle-accordion">Sexual abuse</div><div class="accordion-body"><p>Any non-consensual sexual contact or behaviour &mdash; always a critical, immediate report regardless of the resident's cognitive status.</p></div></div>
+  </div>
+  <div class="box danger">
+    <div class="box-title">&#128680; If you suspect abuse or neglect</div>
+    <p>Report immediately to your supervisor/RN &mdash; do not wait to be "sure." You are not required to investigate or gather proof; that is not your role. If the immediate risk involves a staff member and you're not comfortable reporting to your direct supervisor, escalate to a more senior manager or use your organisation's whistleblower/external reporting channel. If a resident is in immediate danger, call emergency services.</p>
+  </div>
+  <p>Mandatory reporting obligations vary by role and jurisdiction, but as a general principle: reasonable suspicion is enough to report. You will not be penalised for a good-faith report that turns out to be unfounded.</p>
+  <button class="btn btn-primary" data-action="show-section" data-target="documentation">Next: Documentation & Privacy &rarr;</button>
+</section>
+
+<!-- DOCUMENTATION -->
+<section id="documentation" class="section card">
+  <h2>&#128193; Documentation & Privacy</h2>
+  <h3>Why documentation matters</h3>
+  <p>If it isn't written down, it's treated as if it didn't happen. Accurate documentation protects residents, protects you, and is often the only record other staff have of what occurred on your shift.</p>
+  <ul>
+    <li>Record care as it's delivered &mdash; not from memory at the end of the shift</li>
+    <li>Be factual and specific: times, observations, what was said, what was done</li>
+    <li>Never document care you didn't actually provide</li>
+    <li>Use approved abbreviations only; write legibly if handwritten</li>
+  </ul>
+  <h3>Privacy & confidentiality</h3>
+  <ul>
+    <li>Resident information is confidential &mdash; only share it with those who need it for care, never with other residents, unauthorised family, or on social media</li>
+    <li>Keep records, screens, and paperwork out of view of visitors and other residents</li>
+    <li>Photos of residents require explicit consent and must follow facility policy &mdash; never take personal photos of residents on a private device</li>
+  </ul>
+  <div class="box warning"><div class="box-title">&#9888; Social media</div><p>Never post about residents, colleagues, or workplace incidents &mdash; even without names, details can be identifying, and this is a serious Code of Conduct breach.</p></div>
+  <button class="btn btn-primary" data-action="show-section" data-target="quick-reference">Next: Quick Reference Guide &rarr;</button>
+</section>
+
+<!-- QUICK REFERENCE -->
+<section id="quick-reference" class="section card">
+  <h2>&#128204; Quick Reference Guide</h2>
+  <div class="quick-ref">
+    <h4>Report immediately, always</h4>
+    <div class="quick-ref-grid">
+      <div class="quick-ref-item"><strong>Falls</strong>Even if no visible injury or a "near miss"</div>
+      <div class="quick-ref-item"><strong>Skin changes</strong>New redness, bruising, tears, or wounds</div>
+      <div class="quick-ref-item"><strong>Suspected abuse/neglect</strong>Reasonable suspicion is enough &mdash; don't wait for proof</div>
+      <div class="quick-ref-item"><strong>Faulty equipment</strong>Hoists, wheelchairs, mattresses, call bells</div>
+      <div class="quick-ref-item"><strong>Behaviour change</strong>New confusion, withdrawal, agitation, appetite loss</div>
+      <div class="quick-ref-item"><strong>Infection signs</strong>Fever, diarrhoea, vomiting, new cough</div>
+      <div class="quick-ref-item"><strong>Your own errors</strong>Report honestly and promptly &mdash; concealment is worse than the mistake</div>
+      <div class="quick-ref-item"><strong>Anything outside your scope</strong>Stop and escalate rather than attempting it</div>
+    </div>
+  </div>
+  <h3>The one question to ask yourself</h3>
+  <p>"If I don't report this, and it turns out to matter, will I be able to say I did the right thing?" If the answer is no &mdash; report it.</p>
+  <button class="btn btn-primary" data-action="show-section" data-target="quiz">Next: Final Assessment &rarr;</button>
+</section>
+
+<!-- QUIZ / ASSESSMENT -->
+<section id="quiz" class="section">
+
+  <div id="quizGate" class="card">
+    <div class="eyebrow">Final assessment</div>
+    <h2>&#9989; Final Assessment</h2>
+    <p style="color:var(--ink-soft); font-size:13.5px;">Enter your details for the record &mdash; this will appear on your certificate of completion.</p>
+    <label for="nameInput">Full name</label>
+    <input type="text" id="nameInput" placeholder="e.g. Joe Bloggs" autocomplete="off">
+    <label for="roleInput">Role</label>
+    <select id="roleInput">
+      <option value="Personal Care Assistant">Personal Care Assistant</option>
+      <option value="Trainee / New PCA">Trainee / New PCA</option>
+      <option value="Support Worker">Support Worker</option>
+      <option value="Other">Other</option>
+    </select>
+    <div class="box warning" style="margin-top:4px;">
+      <p style="margin:0;">Pass standard: <strong>75% overall (6 of 8 correct)</strong>. You'll see the correct answer and a short explanation after each question.</p>
+    </div>
+    <button class="btn btn-primary" id="startQuizBtn" data-action="start-assessment" disabled>Begin Assessment &rarr;</button>
+  </div>
+
+  <div id="quizRunning" class="card hidden">
+    <div class="quiz-meta">
+      <span class="eyebrow">Final assessment</span>
+      <span class="q-counter" id="qCounter">Question 1 / 8</span>
+    </div>
+    <div class="q-progress-outer"><div class="q-progress-inner" id="qProgressInner"></div></div>
+    <div class="q-text" id="qText">Question text</div>
+    <div class="options" id="optionsList"></div>
+    <div class="feedback" id="feedbackBox"></div>
+    <div class="btn-row" style="justify-content:flex-end;">
+      <button class="btn btn-primary" id="nextBtn" data-action="next-question" disabled>Next Question &rarr;</button>
+    </div>
+  </div>
+
+  <div id="quizResults" class="hidden">
+    <div class="verdict-banner" id="verdictBanner">
+      <div class="verdict-label" id="verdictLabel">Result</div>
+      <div class="score-big" id="scoreBig">0%</div>
+      <div class="verdict-sub" id="verdictSub"></div>
+      <div class="completion-status" id="completionStatus"></div>
+    </div>
+
+    <div class="card">
+      <div class="btn-row">
+        <button class="btn btn-ghost" data-action="retake-assessment">Retake Assessment</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="certificateCard">
+      <h2 style="border-bottom:none; margin-bottom:4px; font-size:1.2rem;">Certificate of Completion</h2>
+      <p style="color:var(--ink-soft); font-size:13.5px; margin-bottom:18px;">Generated automatically on completion. Print or download below for your records / facility file.</p>
+      <div class="cert-wrap">
+        <div class="cert" id="certificatePreview"></div>
+      </div>
+      <div class="btn-row" style="margin-top:20px;">
+        <button class="btn btn-primary" data-action="print-cert">Print / Save Certificate (PDF)</button>
+        <button class="btn btn-secondary" data-action="download-cert">Download Certificate File</button>
+      </div>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin-top:10px;">If the print tab doesn't open (pop-up blocked), use "Download Certificate File" and open the downloaded file to print or save as PDF.</p>
+    </div>
+  </div>
+
+</section>
+
+</main>
+</div>
+
+<footer>ACP Training &mdash; New PCA Induction & Core Compliance.</footer>
+
+</div>
+
+<script>
+(function(){
+try{
+
+/* ---------------------------------------------------------
+   TRAINING TRACKER INTEGRATION
+   COURSE_ID for this course, copied from the Courses tab in
+   the training tracker. SUPABASE_URL/ANON_KEY are the same
+   for every course page (same edu project as index.html).
+--------------------------------------------------------- */
+var COURSE_ID = "3c810d4d-e66b-43bc-a37b-62f2965771a3";
+var SUPABASE_URL = "https://unomkggpwiugvkovdjto.supabase.co";
+var SUPABASE_ANON_KEY = "sb_publishable_rakZ0iLM1Tncok00y6HFPA_Xlls_Mwc";
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var currentAuthUser = null;
+
+function initAuthGate(){
+  sb.auth.getSession().then(function(res){
+    var session = res.data.session;
+    if(!session){
+      document.getElementById("authGate").style.display = "flex";
+      return;
+    }
+    currentAuthUser = session.user;
+    document.getElementById("courseContent").style.display = "block";
+  });
+}
+
+function recordCompletion(resultText){
+  var el = document.getElementById("completionStatus");
+  if(!el) return;
+  if(!currentAuthUser){
+    el.textContent = "Not signed in — this attempt was not saved.";
+    el.className = "completion-status err";
+    return;
+  }
+  el.textContent = "Saving your completion...";
+  el.className = "completion-status saving";
+  sb.from("completions").insert({
+    staff_id: currentAuthUser.id,
+    course_id: COURSE_ID,
+    completion_date: new Date().toISOString().slice(0,10),
+    result: resultText,
+    recorded_by: currentAuthUser.id
+  }).then(function(res){
+    if(res.error){
+      el.innerHTML = "Couldn't save your completion. <br><button data-action=\"retry-completion\" data-result=\"" + resultText.replace(/"/g,'&quot;') + "\">Retry</button>";
+      el.className = "completion-status err";
+      return;
+    }
+    el.textContent = "✓ Saved to your training record.";
+    el.className = "completion-status ok";
+  });
+}
+
+var sections = document.querySelectorAll('.section');
+var sidebarItems = document.querySelectorAll('.sidebar-item[data-target]');
+var order = Array.prototype.map.call(sidebarItems, function(i){ return i.getAttribute('data-target'); });
+
+function showSection(id){
+  sections.forEach(function(s){ s.classList.toggle('active', s.id === id); });
+  sidebarItems.forEach(function(i){
+    if(i.getAttribute('data-target') === id){ i.classList.add('active','completed'); }
+    else{ i.classList.remove('active'); }
+  });
+  updateProgress();
+  window.scrollTo({top:0, behavior:'smooth'});
+  closeSidebar();
+}
+function updateProgress(){
+  var completed = document.querySelectorAll('.sidebar-item.completed').length;
+  var pct = Math.min(100, Math.round((completed / order.length) * 100));
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('show');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('show');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+function toggleAccordion(header){
+  var body = header.nextElementSibling;
+  header.classList.toggle('open');
+  body.classList.toggle('open');
+}
+function toggleCheck(item){ item.classList.toggle('checked'); }
+
+// ===================== QUIZ =====================
+var quiz = [
+  { q:"A resident insists on walking to the bathroom without her frame, against the care plan. What should you do?",
+    options:["Physically stop her from walking","Let her go without comment, it's her choice","Support her informed choice while explaining the risk, stay close, and document/escalate the discussion","Refuse to assist her at all until she uses the frame"], correct:2,
+    rationale:"Supporting an informed choice while managing the risk and documenting it respects Dignity of Risk without abandoning duty of care." },
+  { q:"You notice a small area of non-blanching redness over a resident's heel during personal care. What's the correct action?",
+    options:["Massage the area to improve circulation","Report it to the RN immediately and avoid pressure on the area","Note it for the end-of-shift handover only","Apply a donut cushion and continue as normal"], correct:1,
+    rationale:"Non-blanching redness is an early pressure injury sign and needs immediate reporting and offloading, not massage or delay." },
+  { q:"Which of these is a reportable event?",
+    options:["Only incidents that caused a visible injury","Only incidents you personally caused","Only incidents a family member witnessed","Near misses and hazards too, even if no one was harmed"], correct:3,
+    rationale:"Near misses and hazards are just as reportable as incidents that caused harm — they reveal risk before someone is hurt." },
+  { q:"A resident has fallen. What is your first action?",
+    options:["Help them straight back up so they're not embarrassed","Do not move them, stay with them, and call for help immediately","Give them a warm drink to settle them first","Complete the incident report before doing anything else"], correct:1,
+    rationale:"Never move a resident after a fall — stay with them and get help first, in case of injury." },
+  { q:"A colleague asks you to help with a two-person transfer, but the second person isn't available yet. What do you do?",
+    options:["Attempt it alone carefully, just this once","Skip the transfer and leave the resident where they are indefinitely","Wait for the second person or get another staff member — never attempt a two-person transfer alone","Use a different technique you weren't trained on"], correct:2,
+    rationale:"A two-person transfer must never be attempted alone, regardless of confidence or time pressure." },
+  { q:"You suspect a family member may be financially exploiting a resident, but you have no proof. What should you do?",
+    options:["Report your suspicion to your supervisor — reasonable suspicion is enough","Say nothing until you have clear evidence","Confront the family member directly yourself","Mention it only if the resident brings it up first"], correct:0,
+    rationale:"Reasonable suspicion is enough to report — you are not required to investigate or gather proof yourself." },
+  { q:"You made an error while assisting with a meal — a resident on thickened fluids was given regular water. What should you do?",
+    options:["Say nothing since the resident seems fine","Report it immediately to the RN and complete an honest incident report","Mention it quietly to a colleague instead of the RN","Wait to see if any symptoms develop before reporting"], correct:1,
+    rationale:"Your own errors must be reported immediately and honestly — concealment is a serious Code of Conduct breach." },
+  { q:"What best describes \"dignity of risk\"?",
+    options:["Removing all risk from a resident's daily life","Ignoring safety concerns to avoid conflict","Supporting a resident's right to make informed choices, including ones that carry some risk","A term that only applies to residents without cognitive impairment"], correct:2,
+    rationale:"Dignity of risk is about supporting informed choice, not eliminating risk or ignoring it." },
+];
+
+var PASS_PCT = 75;
+var currentIndex = 0;
+var answers = [];
+var candidateName = "";
+var candidateRole = "";
+
+var nameInput = document.getElementById('nameInput');
+var roleInput = document.getElementById('roleInput');
+var startQuizBtn = document.getElementById('startQuizBtn');
+var quizGate = document.getElementById('quizGate');
+var quizRunning = document.getElementById('quizRunning');
+var quizResults = document.getElementById('quizResults');
+var qCounter = document.getElementById('qCounter');
+var qProgressInner = document.getElementById('qProgressInner');
+var qText = document.getElementById('qText');
+var optionsList = document.getElementById('optionsList');
+var feedbackBox = document.getElementById('feedbackBox');
+var nextBtn = document.getElementById('nextBtn');
+
+if(nameInput){
+  nameInput.addEventListener('input', function(){
+    startQuizBtn.disabled = nameInput.value.trim().length < 2;
+  });
+}
+
+function startAssessment(){
+  candidateName = nameInput.value.trim();
+  candidateRole = roleInput.value;
+  quizGate.classList.add('hidden');
+  quizRunning.classList.remove('hidden');
+  currentIndex = 0;
+  answers = [];
+  renderQuestion();
+}
+
+function renderQuestion(){
+  var item = quiz[currentIndex];
+  qCounter.textContent = "Question " + (currentIndex+1) + " / " + quiz.length;
+  qProgressInner.style.width = Math.round((currentIndex / quiz.length) * 100) + "%";
+  qText.textContent = item.q;
+  optionsList.innerHTML = "";
+  optionsList.classList.remove('locked');
+  feedbackBox.className = "feedback";
+  feedbackBox.innerHTML = "";
+  nextBtn.disabled = true;
+  nextBtn.textContent = (currentIndex === quiz.length - 1) ? "See Results \u2192" : "Next Question \u2192";
+
+  item.options.forEach(function(optText, idx){
+    var opt = document.createElement('div');
+    opt.className = 'option';
+    opt.setAttribute('data-action','select-option');
+    opt.setAttribute('data-idx', idx);
+    opt.innerHTML = '<span class="bullet"></span><span>' + optText + '</span>';
+    optionsList.appendChild(opt);
+  });
+}
+
+function selectOption(idx, el){
+  if(optionsList.classList.contains('locked')) return;
+  optionsList.classList.add('locked');
+  var item = quiz[currentIndex];
+  var isCorrect = (idx === item.correct);
+  answers[currentIndex] = { chosen: idx, correct: isCorrect };
+
+  var opts = optionsList.querySelectorAll('.option');
+  for(var i=0;i<opts.length;i++){
+    opts[i].classList.add('disabled');
+    if(i === item.correct) opts[i].classList.add('correct');
+    if(i === idx && i !== item.correct) opts[i].classList.add('incorrect');
+    if(i === idx) opts[i].classList.add('selected');
+  }
+  feedbackBox.className = 'feedback show ' + (isCorrect ? 'ok':'bad');
+  feedbackBox.innerHTML = '<b>' + (isCorrect ? 'Correct':'Not quite') + '</b>' + item.rationale;
+  nextBtn.disabled = false;
+}
+
+function nextQuestion(){
+  currentIndex++;
+  if(currentIndex >= quiz.length){ showResults(); }
+  else{ renderQuestion(); }
+}
+
+function showResults(){
+  quizRunning.classList.add('hidden');
+  quizResults.classList.remove('hidden');
+
+  var totalCorrect = 0;
+  answers.forEach(function(a){ if(a && a.correct) totalCorrect++; });
+  var pct = Math.round((totalCorrect / quiz.length) * 100);
+  var pass = pct >= PASS_PCT;
+
+  var banner = document.getElementById('verdictBanner');
+  var label = document.getElementById('verdictLabel');
+  var scoreBig = document.getElementById('scoreBig');
+  var sub = document.getElementById('verdictSub');
+  scoreBig.textContent = pct + '%';
+  if(pass){
+    banner.className = 'verdict-banner pass';
+    label.textContent = 'COMPLETE';
+    sub.textContent = totalCorrect + ' of ' + quiz.length + ' correct \u2014 pass mark of ' + PASS_PCT + '% reached. Certificate available below.';
+  } else {
+    banner.className = 'verdict-banner fail';
+    label.textContent = 'NOT YET COMPLETE';
+    sub.textContent = totalCorrect + ' of ' + quiz.length + ' correct \u2014 below the ' + PASS_PCT + '% pass mark. Review the sections above and retake when ready.';
+  }
+
+  var certCard = document.getElementById('certificateCard');
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('en-AU', { day:'numeric', month:'long', year:'numeric' });
+  var timeStr = now.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' });
+  var certId = 'ACP-PCA-' + now.getFullYear() + '-' + Math.random().toString(36).slice(2,8).toUpperCase();
+
+  if(pass){
+    certCard.classList.remove('hidden');
+    renderCertificatePreview(candidateName, candidateRole, pct, dateStr, timeStr, certId);
+    certCard.setAttribute('data-cert-html', buildCertificateHTML(candidateName, candidateRole, pct, dateStr, timeStr, certId));
+  } else {
+    certCard.classList.add('hidden');
+  }
+
+  recordCompletion(pct + '% (' + totalCorrect + '/' + quiz.length + ') — ' + (pass ? 'PASS' : 'NOT YET COMPLETE'));
+
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function retakeAssessment(){
+  quizResults.classList.add('hidden');
+  quizRunning.classList.add('hidden');
+  quizGate.classList.remove('hidden');
+  nameInput.value = "";
+  startQuizBtn.disabled = true;
+  var el = document.getElementById("completionStatus");
+  el.textContent = "";
+  el.className = "completion-status";
+}
+
+function safeFileName(s){ return (s || 'Candidate').replace(/[^a-z0-9]+/gi,'_'); }
+function escapeHtml(s){
+  return (s || '').replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+function renderCertificatePreview(name, role, pct, dateStr, timeStr, certId){
+  var el = document.getElementById('certificatePreview');
+  el.innerHTML =
+    '<div class="cert-inner">' +
+      '<div class="cert-mark">ACP</div>' +
+      '<div class="cert-org">Aged Care Physiotherapy Pty Ltd</div>' +
+      '<div class="cert-title">Certificate of Completion</div>' +
+      '<div class="cert-sub">New PCA Induction & Core Compliance</div>' +
+      '<div class="cert-presented">This certifies that</div>' +
+      '<div class="cert-name">' + escapeHtml(name) + '</div>' +
+      '<div class="cert-body">has successfully completed the ACP New PCA Induction module, demonstrating foundational knowledge of duty of care, falls prevention, pressure injury prevention, risk management and incident reporting, in the role of ' + escapeHtml(role) + '.</div>' +
+      '<div class="cert-score-row">' +
+        '<div class="cert-score-item"><div class="n">' + pct + '%</div><div class="l">Assessment score</div></div>' +
+        '<div class="cert-score-item"><div class="n">' + dateStr + '</div><div class="l">Date completed</div></div>' +
+      '</div>' +
+      '<div class="cert-sign-row">' +
+        '<div class="cert-sign"><div class="line">ACP Training</div>Clinical Director, ACP</div>' +
+        '<div class="cert-sign" style="text-align:right;"><div class="line" style="text-align:right;">' + timeStr + '</div>Time completed</div>' +
+      '</div>' +
+      '<div class="cert-id">Certificate ID: ' + certId + ' &middot; Issued ' + dateStr + ' at ' + timeStr + '</div>' +
+    '</div>';
+}
+
+function buildCertificateHTML(name, role, pct, dateStr, timeStr, certId){
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ACP Certificate \u2014 ' + escapeHtml(name) + '</title>' +
+  '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+  '<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">' +
+  '<style>' +
+    '@page{size:A4 landscape; margin:0;}' +
+    'body{margin:0; font-family:"Lexend",sans-serif; background:#e9ebee; display:flex; align-items:center; justify-content:center; min-height:100vh;}' +
+    '.wrap{padding:26px;}' +
+    '.cert{width:860px; max-width:94vw; background:#fffdfa; border-radius:10px; padding:50px 58px; position:relative; border:4px solid #cc3300; box-shadow:0 10px 40px rgba(0,0,0,.18); box-sizing:border-box;}' +
+    '.cert::before,.cert::after{content:"";position:absolute;left:18px;right:18px;height:2px;background:#336699;}' +
+    '.cert::before{top:14px;} .cert::after{bottom:14px;}' +
+    '.inner{text-align:center; position:relative; z-index:1;}' +
+    '.mark{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#cc3300,#a32900);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;margin:0 auto 16px;}' +
+    '.org{font-size:12px;text-transform:uppercase;letter-spacing:.16em;color:#264d73;font-weight:700;}' +
+    '.title{font-family:"Playfair Display",serif;font-weight:700;font-size:32px;color:#1e2328;margin:12px 0 4px;}' +
+    '.sub{font-size:13px;color:#4a5259;margin-bottom:26px;}' +
+    '.presented{font-size:12px;color:#4a5259;text-transform:uppercase;letter-spacing:.1em;}' +
+    '.name{font-family:"Playfair Display",serif;font-style:italic;font-weight:700;font-size:36px;color:#a32900;margin:10px 0 20px;border-bottom:1.5px solid #e2e6ea;display:inline-block;padding-bottom:12px;min-width:60%;}' +
+    '.body{font-size:14px;color:#1e2328;max-width:580px;margin:0 auto 26px;line-height:1.7;}' +
+    '.scores{display:flex;justify-content:center;gap:44px;margin:14px 0 30px;}' +
+    '.scores .item{text-align:center;} .scores .n{font-size:23px;font-weight:800;color:#264d73;} .scores .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#4a5259;}' +
+    '.signrow{display:flex;justify-content:space-between;align-items:flex-end;margin-top:34px;gap:20px;}' +
+    '.sign{font-size:12px;color:#4a5259;text-align:left;} .sign.right{text-align:right;}' +
+    '.sign .line{border-top:1.5px solid #1e2328;width:200px;margin-bottom:6px;padding-top:6px;font-family:"Playfair Display",serif;font-style:italic;font-size:15px;color:#1e2328;}' +
+    '.sign.right .line{margin-left:auto;text-align:right;}' +
+    '.certid{font-size:10.5px;color:#9aa2a8;margin-top:24px;letter-spacing:.03em;}' +
+    '.printbar{text-align:center;margin-top:18px;}' +
+    '.printbar button{font-family:"Lexend",sans-serif;background:#cc3300;color:#fff;border:none;border-radius:9px;padding:11px 22px;font-weight:600;font-size:13.5px;cursor:pointer;}' +
+    '@media print{ body{background:#fff;} .printbar{display:none;} .wrap{padding:0;} .cert{box-shadow:none; border-width:3px;} }' +
+  '</style></head><body>' +
+  '<div class="wrap"><div class="cert"><div class="inner">' +
+    '<div class="mark">ACP</div>' +
+    '<div class="org">Aged Care Physiotherapy Pty Ltd</div>' +
+    '<div class="title">Certificate of Completion</div>' +
+    '<div class="sub">New PCA Induction & Core Compliance</div>' +
+    '<div class="presented">This certifies that</div>' +
+    '<div class="name">' + escapeHtml(name) + '</div>' +
+    '<div class="body">has successfully completed the ACP New PCA Induction module, demonstrating foundational knowledge of duty of care, falls prevention, pressure injury prevention, risk management and incident reporting, in the role of ' + escapeHtml(role) + '.</div>' +
+    '<div class="scores">' +
+      '<div class="item"><div class="n">' + pct + '%</div><div class="l">Assessment score</div></div>' +
+      '<div class="item"><div class="n">' + dateStr + '</div><div class="l">Date completed</div></div>' +
+    '</div>' +
+    '<div class="signrow">' +
+      '<div class="sign"><div class="line">ACP Training</div>Clinical Director, ACP</div>' +
+      '<div class="sign right"><div class="line">' + timeStr + '</div>Time completed</div>' +
+    '</div>' +
+    '<div class="certid">Certificate ID: ' + certId + ' &middot; Issued ' + dateStr + ' at ' + timeStr + '</div>' +
+  '</div></div>' +
+  '<div class="printbar"><button onclick="window.print()">Print / Save as PDF</button></div></div>' +
+  '<script>setTimeout(function(){ try{ window.focus(); }catch(e){} }, 200);<\/script>' +
+  '</body></html>';
+}
+
+function openOrDownload(html, filename){
+  var win = null;
+  try{ win = window.open('', '_blank'); } catch(e){ win = null; }
+  if(win){
+    try{ win.document.open(); win.document.write(html); win.document.close(); return; }
+    catch(e){ /* fall through */ }
+  }
+  downloadHTML(html, filename);
+  try{ alert('Pop-up blocked \u2014 the file has been downloaded instead. Open it to print or save as PDF.'); }catch(e){}
+}
+function downloadHTML(html, filename){
+  try{
+    var blob = new Blob([html], { type:'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  }catch(e){ if(window.console) console.warn('Download failed', e); }
+}
+
+// ===================== EVENT DELEGATION =====================
+document.addEventListener('click', function(e){
+  var el = e.target.closest('[data-action]');
+  if(!el) return;
+  var action = el.getAttribute('data-action');
+  switch(action){
+    case 'show-section': showSection(el.getAttribute('data-target')); break;
+    case 'toggle-sidebar': toggleSidebar(); break;
+    case 'close-sidebar': closeSidebar(); break;
+    case 'toggle-accordion': toggleAccordion(el); break;
+    case 'toggle-check': toggleCheck(el); break;
+    case 'start-assessment': startAssessment(); break;
+    case 'select-option': selectOption(parseInt(el.getAttribute('data-idx'),10), el); break;
+    case 'next-question': nextQuestion(); break;
+    case 'retake-assessment': retakeAssessment(); break;
+    case 'retry-completion': recordCompletion(el.getAttribute('data-result')); break;
+    case 'print-cert':{
+      var certCard = document.getElementById('certificateCard');
+      openOrDownload(certCard.getAttribute('data-cert-html'), 'ACP_Certificate_' + safeFileName(candidateName) + '.html');
+      break;
+    }
+    case 'download-cert':{
+      var certCard2 = document.getElementById('certificateCard');
+      downloadHTML(certCard2.getAttribute('data-cert-html'), 'ACP_Certificate_' + safeFileName(candidateName) + '.html');
+      break;
+    }
+  }
+});
+
+updateProgress();
+initAuthGate();
+
+}catch(err){
+  if(window.console && console.warn) console.warn('Module init error:', err);
+}
+})();
+</script>
+</body>
+</html>
