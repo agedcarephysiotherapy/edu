@@ -15,7 +15,8 @@
   --ink:#1e2328; --ink-soft:#4a5259; --line:#e2e6ea; --bg:#f7f8fa; --white:#fff;
   --amber:#b8860b; --amber-tint:#fff8e6;
   --green:#2e7d4f; --green-tint:#eaf6ee;
-  --radius:12px; --shadow:0 1px 2px rgba(30,35,40,.06), 0 4px 14px rgba(30,35,40,.06);
+  --radius:14px; --shadow:0 1px 2px rgba(30,35,40,.04), 0 6px 16px -4px rgba(30,35,40,.08), 0 20px 40px -16px rgba(30,35,40,.10);
+  --shadow-hover:0 2px 6px rgba(30,35,40,.06), 0 12px 28px -6px rgba(30,35,40,.14), 0 28px 52px -20px rgba(30,35,40,.16);
 }
 *{box-sizing:border-box;}
 body{margin:0; font-family:'Lexend',system-ui,sans-serif; color:var(--ink); background:var(--bg); line-height:1.6;}
@@ -26,17 +27,20 @@ li{margin-bottom:.4rem;}
 strong{color:var(--blue-dark);}
 
 /* ---- topbar ---- */
-.topbar{position:fixed; top:0; left:0; right:0; z-index:1000; background:linear-gradient(90deg,var(--blue) 0%,var(--blue-dark) 100%); color:#fff; padding:12px 16px; display:flex; align-items:center; gap:12px; box-shadow:var(--shadow);}
+.topbar{position:fixed; top:0; left:0; right:0; z-index:1000; background:linear-gradient(90deg,rgba(51,102,153,.90) 0%,rgba(38,77,115,.94) 100%); backdrop-filter:blur(14px) saturate(160%); -webkit-backdrop-filter:blur(14px) saturate(160%); color:#fff; padding:12px 16px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 0 rgba(255,255,255,.08) inset, 0 4px 20px rgba(20,30,45,.18); border-bottom:1px solid rgba(255,255,255,.08);}
 .topbar .brand{display:flex; align-items:center; gap:10px; min-width:0;}
-.topbar .mark{width:34px;height:34px;border-radius:8px;background:var(--red);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;}
+.topbar .brand-logo{height:34px; width:auto; object-fit:contain; flex-shrink:0; display:block; background:#fff; border-radius:9px; padding:4px 7px; box-shadow:0 3px 10px rgba(0,0,0,.15);}
 .topbar .brand-text{display:flex; flex-direction:column; line-height:1.15; min-width:0;}
 .topbar .brand-text .t1{font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .topbar .brand-text .t2{font-weight:300; font-size:11.5px; opacity:.85; letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .topbar .spacer{flex:1;}
-.topbar .tag{font-size:11px; background:rgba(255,255,255,.14); padding:5px 10px; border-radius:999px; white-space:nowrap; flex-shrink:0;}
-.menu-toggle{display:none; background:rgba(255,255,255,.15); border:none; color:#fff; width:36px; height:36px; border-radius:8px; font-size:1.05rem; cursor:pointer; flex-shrink:0; align-items:center; justify-content:center;}
+.topbar .tag{font-size:11px; background:rgba(255,255,255,.14); padding:5px 10px; border-radius:999px; white-space:nowrap; flex-shrink:0; border:1px solid rgba(255,255,255,.12);}
+.menu-toggle{display:none; background:rgba(255,255,255,.15); border:none; color:#fff; width:36px; height:36px; border-radius:9px; font-size:1.05rem; cursor:pointer; flex-shrink:0; align-items:center; justify-content:center; transition:background .15s ease, transform .15s ease;}
+.menu-toggle:hover{background:rgba(255,255,255,.26);}
+.menu-toggle:active{transform:scale(.94);}
+.menu-toggle:focus-visible{outline:2px solid #fff; outline-offset:2px;}
 .progress-track{position:absolute; left:0; right:0; bottom:0; height:3px; background:rgba(255,255,255,.18);}
-.progress-fill{height:100%; width:0%; background:var(--green); transition:width .3s ease;}
+.progress-fill{height:100%; width:0%; background:linear-gradient(90deg, var(--red) 0%, var(--blue) 100%); transition:width .3s ease; box-shadow:0 0 8px rgba(204,51,0,.5);}
 
 .sidebar-overlay{display:none; position:fixed; inset:0; top:60px; background:rgba(0,0,0,.4); z-index:997;}
 .sidebar-overlay.show{display:block;}
@@ -47,9 +51,11 @@ strong{color:var(--blue-dark);}
 .sidebar{width:270px; flex-shrink:0; position:sticky; top:60px; height:calc(100vh - 60px); overflow-y:auto; padding:18px 12px 40px;}
 .sidebar-section{margin-bottom:1.3rem;}
 .sidebar-title{padding:.4rem .7rem; font-weight:700; color:var(--blue-dark); text-transform:uppercase; font-size:.68rem; letter-spacing:.08em;}
-.sidebar-item{padding:.6rem .8rem; margin:0 .2rem; cursor:pointer; border-radius:9px; transition:all .15s; font-size:.86rem; color:var(--ink-soft);}
-.sidebar-item:hover{background:var(--blue-tint); color:var(--blue-dark);}
-.sidebar-item.active{background:var(--blue); color:#fff; font-weight:600;}
+.sidebar-item{padding:.6rem .8rem; margin:0 .2rem; cursor:pointer; border-radius:10px; transition:background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease; font-size:.86rem; color:var(--ink-soft);}
+.sidebar-item:hover{background:var(--blue-tint); color:var(--blue-dark); transform:translateX(3px);}
+.sidebar-item.active{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-dark) 100%); color:#fff; font-weight:600; box-shadow:0 4px 14px -2px rgba(51,102,153,.35);}
+.sidebar-item.active:hover{transform:none;}
+.sidebar-item:focus-visible{outline:2px solid var(--blue); outline-offset:2px;}
 .sidebar-item.completed::after{content:" \2713"; color:var(--green); font-weight:bold;}
 .sidebar-item.active.completed::after{color:#fff;}
 
@@ -59,14 +65,14 @@ main{flex:1; min-width:0; padding:28px 24px 90px;}
 .section.active{display:block;}
 @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
-.card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:30px 32px; box-shadow:var(--shadow); margin-bottom:22px;}
+.card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:30px 32px; box-shadow:var(--shadow); margin-bottom:22px; transition:box-shadow .25s ease;}
 .card h2{font-size:1.4rem; border-bottom:3px solid var(--red); padding-bottom:.6rem; margin-bottom:1.1rem;}
 .card h3{color:var(--blue-dark); font-size:1.05rem; margin:1.4rem 0 .7rem;}
 
 .eyebrow{font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--red);}
 
 /* ---- callout boxes ---- */
-.box{border-radius:10px; padding:1.05rem 1.25rem; margin:1.1rem 0; border-left:5px solid;}
+.box{border-radius:12px; padding:1.05rem 1.25rem; margin:1.1rem 0; border-left:5px solid; box-shadow:0 2px 8px rgba(30,35,40,.05);}
 .box-title{font-weight:700; margin-bottom:.35rem; color:var(--ink);}
 .box p:last-child{margin-bottom:0;}
 .box.info{background:var(--blue-tint); border-color:var(--blue);}
@@ -82,9 +88,10 @@ table.data-table td{padding:9px 12px; border-bottom:1px solid var(--line); verti
 table.data-table tr:nth-child(even) td{background:var(--bg);}
 
 /* ---- accordion ---- */
-.accordion-item{border:1.5px solid var(--line); border-radius:10px; margin-bottom:.6rem; overflow:hidden;}
-.accordion-header{padding:.8rem 1.05rem; background:var(--bg); cursor:pointer; font-weight:600; color:var(--blue-dark); display:flex; justify-content:space-between; align-items:center; font-size:.92rem; transition:background .15s;}
+.accordion-item{border:1.5px solid var(--line); border-radius:12px; margin-bottom:.6rem; overflow:hidden; transition:box-shadow .2s ease;}
+.accordion-header{padding:.8rem 1.05rem; background:var(--bg); cursor:pointer; font-weight:600; color:var(--blue-dark); display:flex; justify-content:space-between; align-items:center; font-size:.92rem; transition:background .18s ease;}
 .accordion-header:hover{background:var(--blue-tint);}
+.accordion-header:focus-visible{outline:2px solid var(--blue); outline-offset:-2px;}
 .accordion-header::after{content:"+"; font-size:1.15rem; color:var(--blue);}
 .accordion-header.open::after{content:"\2013";}
 .accordion-body{max-height:0; overflow:hidden; transition:max-height .25s ease;}
@@ -92,49 +99,54 @@ table.data-table tr:nth-child(even) td{background:var(--bg);}
 .accordion-body.open{max-height:400px; padding-bottom:.8rem;}
 
 /* ---- steps ---- */
-.step{background:var(--bg); border:1px solid var(--line); border-left:4px solid var(--blue); border-radius:9px; padding:.85rem 1.05rem; margin-bottom:.6rem;}
+.step{background:var(--bg); border:1px solid var(--line); border-left:4px solid var(--blue); border-radius:11px; padding:.85rem 1.05rem; margin-bottom:.6rem;}
 .step-title{font-weight:700; color:var(--blue-dark); margin-bottom:.15rem; font-size:.92rem;}
 .step p{margin-bottom:0; font-size:.87rem;}
 
 /* ---- checklist ---- */
-.checklist-item{display:flex; align-items:flex-start; gap:.6rem; padding:.5rem 0; cursor:pointer;}
-.checklist-box{width:20px;height:20px;border:2px solid var(--blue);border-radius:5px;flex-shrink:0;margin-top:.15rem;display:flex;align-items:center;justify-content:center;}
-.checklist-item.checked .checklist-box{background:var(--green); border-color:var(--green);}
+.checklist-item{display:flex; align-items:flex-start; gap:.6rem; padding:.5rem .4rem; margin:0 -.4rem; cursor:pointer; border-radius:8px; transition:background .15s ease;}
+.checklist-item:hover{background:var(--blue-tint);}
+.checklist-box{width:20px;height:20px;border:2px solid var(--blue);border-radius:5px;flex-shrink:0;margin-top:.15rem;display:flex;align-items:center;justify-content:center;transition:background .15s ease, border-color .15s ease, transform .15s ease;}
+.checklist-item.checked .checklist-box{background:var(--green); border-color:var(--green); transform:scale(1.05);}
 .checklist-item.checked .checklist-box::after{content:"\2713"; color:#fff; font-size:.75rem;}
 .checklist-item.checked span.label{text-decoration:line-through; color:#9aa2a8;}
 
 /* ---- quick-ref ---- */
-.quick-ref{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-dark) 100%); color:#fff; padding:1.4rem 1.5rem; border-radius:12px; margin:1.3rem 0;}
+.quick-ref{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-dark) 100%); color:#fff; padding:1.4rem 1.5rem; border-radius:14px; margin:1.3rem 0; box-shadow:0 8px 24px -8px rgba(38,77,115,.4);}
 .quick-ref h4{color:#fff; border-bottom:2px solid rgba(255,255,255,.3); padding-bottom:.4rem; margin-bottom:.8rem; font-size:.98rem;}
 .quick-ref-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:.9rem;}
 .quick-ref-item{background:rgba(255,255,255,.12); padding:.85rem; border-radius:8px; font-size:.83rem;}
 .quick-ref-item strong{display:block; margin-bottom:.25rem; color:#fff;}
 
 /* ---- buttons ---- */
-.btn{display:inline-flex; align-items:center; gap:8px; border:none; border-radius:10px; padding:12px 22px; font-family:'Lexend',sans-serif; font-weight:600; font-size:14px; cursor:pointer; transition:transform .1s ease, background .15s ease; margin-top:1rem;}
+.btn{display:inline-flex; align-items:center; gap:8px; border:none; border-radius:11px; padding:12px 22px; font-family:'Lexend',sans-serif; font-weight:600; font-size:14px; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease; margin-top:1rem;}
 .btn:disabled{opacity:.4; cursor:not-allowed;}
-.btn-primary{background:var(--red); color:#fff;}
-.btn-primary:hover:not(:disabled){background:var(--red-dark);}
+.btn:focus-visible{outline:2px solid var(--blue); outline-offset:2px;}
+.btn-primary{background:linear-gradient(135deg,var(--red) 0%,var(--red-dark) 100%); color:#fff; box-shadow:0 2px 8px rgba(204,51,0,.28);}
+.btn-primary:hover:not(:disabled){background:linear-gradient(135deg,var(--red-dark) 0%,var(--red) 100%); transform:translateY(-2px); box-shadow:0 10px 22px -4px rgba(204,51,0,.4);}
+.btn-primary:active:not(:disabled){transform:translateY(0); box-shadow:0 2px 6px rgba(204,51,0,.3);}
 .btn-secondary{background:var(--blue-tint); color:var(--blue-dark);}
-.btn-secondary:hover:not(:disabled){background:var(--blue); color:#fff;}
+.btn-secondary:hover:not(:disabled){background:var(--blue); color:#fff; transform:translateY(-2px); box-shadow:0 8px 18px -4px rgba(51,102,153,.35);}
+.btn-secondary:active:not(:disabled){transform:translateY(0);}
 .btn-ghost{background:transparent; color:var(--ink-soft); border:1.5px solid var(--line);}
-.btn-ghost:hover{border-color:var(--blue); color:var(--blue-dark);}
+.btn-ghost:hover{border-color:var(--blue); color:var(--blue-dark); transform:translateY(-1px);}
 .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;}
 
 /* ---- quiz gate ---- */
 label{display:block; font-size:12px; font-weight:600; color:var(--blue-dark); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;}
-input[type="text"], select{width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:9px; font-family:'Lexend',sans-serif; font-size:14.5px; color:var(--ink); margin-bottom:18px; background:var(--bg);}
-input[type="text"]:focus, select:focus{outline:none; border-color:var(--blue); background:#fff;}
+input[type="text"], select{width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; font-family:'Lexend',sans-serif; font-size:14.5px; color:var(--ink); margin-bottom:18px; background:var(--bg); transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;}
+input[type="text"]:focus, select:focus{outline:none; border-color:var(--blue); background:#fff; box-shadow:0 0 0 3px var(--blue-tint);}
 
 /* ---- quiz ---- */
 .quiz-meta{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px;}
 .q-counter{font-size:12.5px; color:var(--ink-soft); font-weight:600;}
 .q-progress-outer{height:6px; background:var(--line); border-radius:4px; overflow:hidden; margin-bottom:22px;}
-.q-progress-inner{height:100%; background:var(--red); width:0%; transition:width .25s ease;}
+.q-progress-inner{height:100%; background:linear-gradient(90deg,var(--red) 0%,var(--blue) 100%); width:0%; transition:width .25s ease;}
 .q-text{font-size:17px; font-weight:600; margin-bottom:20px; line-height:1.4; color:var(--ink);}
 .options{display:flex; flex-direction:column; gap:10px;}
-.option{display:flex; align-items:flex-start; gap:12px; padding:13px 16px; border:1.5px solid var(--line); border-radius:10px; cursor:pointer; font-size:13.8px; transition:background .12s ease, border-color .12s ease;}
-.option:hover{border-color:var(--blue); background:var(--blue-tint);}
+.option{display:flex; align-items:flex-start; gap:12px; padding:13px 16px; border:1.5px solid var(--line); border-radius:11px; cursor:pointer; font-size:13.8px; transition:background .15s ease, border-color .15s ease, transform .15s ease, box-shadow .15s ease;}
+.option:hover{border-color:var(--blue); background:var(--blue-tint); transform:translateY(-1px); box-shadow:0 4px 12px -4px rgba(51,102,153,.25);}
+.option:focus-visible{outline:2px solid var(--blue); outline-offset:2px;}
 .option .bullet{width:22px;height:22px;border-radius:50%;border:1.5px solid #b9c0c6;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:transparent;margin-top:1px;}
 .option.selected .bullet{border-color:var(--blue); background:var(--blue); color:#fff;}
 .option.selected{border-color:var(--blue); background:var(--blue-tint);}
@@ -244,7 +256,7 @@ footer{max-width:1180px; margin:0 auto; padding:20px 24px; color:var(--ink-soft)
 <div class="topbar">
   <button class="menu-toggle" data-action="toggle-sidebar" aria-label="Toggle menu">&#9776;</button>
   <div class="brand">
-    <div class="mark">ACP</div>
+    <img class="brand-logo" src="https://forms.acphysio.com.au/acplogo" alt="Aged Care Physiotherapy">
     <div class="brand-text">
       <span class="t1">New PCA Induction</span>
       <span class="t2">Core Compliance, Safety & Duty of Care</span>
@@ -260,32 +272,32 @@ footer{max-width:1180px; margin:0 auto; padding:20px 24px; color:var(--ink-soft)
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-section">
     <div class="sidebar-title">Getting Started</div>
-    <div class="sidebar-item active" data-action="show-section" data-target="intro">Welcome & Your Role</div>
+    <div class="sidebar-item active" tabindex="0" data-action="show-section" data-target="intro">Welcome & Your Role</div>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-title">Module 1: Foundations</div>
-    <div class="sidebar-item" data-action="show-section" data-target="duty-of-care">Duty of Care & Scope of Practice</div>
-    <div class="sidebar-item" data-action="show-section" data-target="quality-standards">Quality Standards & Code of Conduct</div>
-    <div class="sidebar-item" data-action="show-section" data-target="person-centred">Person-Centred & Culturally Safe Care</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="duty-of-care">Duty of Care & Scope of Practice</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="quality-standards">Quality Standards & Code of Conduct</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="person-centred">Person-Centred & Culturally Safe Care</div>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-title">Module 2: Physical Safety</div>
-    <div class="sidebar-item" data-action="show-section" data-target="falls">Falls Prevention</div>
-    <div class="sidebar-item" data-action="show-section" data-target="pressure">Pressure Injury & Skin Integrity</div>
-    <div class="sidebar-item" data-action="show-section" data-target="manual-handling">Manual Handling Basics</div>
-    <div class="sidebar-item" data-action="show-section" data-target="infection">Infection Prevention & Control</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="falls">Falls Prevention</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="pressure">Pressure Injury & Skin Integrity</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="manual-handling">Manual Handling Basics</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="infection">Infection Prevention & Control</div>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-title">Module 3: Risk & Reporting</div>
-    <div class="sidebar-item" data-action="show-section" data-target="risk-management">Risk & Hazard Management</div>
-    <div class="sidebar-item" data-action="show-section" data-target="incident-reporting">Incident & Hazard Reporting</div>
-    <div class="sidebar-item" data-action="show-section" data-target="safeguarding">Elder Abuse & Safeguarding</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="risk-management">Risk & Hazard Management</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="incident-reporting">Incident & Hazard Reporting</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="safeguarding">Elder Abuse & Safeguarding</div>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-title">Module 4: Records & Wrap-Up</div>
-    <div class="sidebar-item" data-action="show-section" data-target="documentation">Documentation & Privacy</div>
-    <div class="sidebar-item" data-action="show-section" data-target="quick-reference">Quick Reference Guide</div>
-    <div class="sidebar-item" data-action="show-section" data-target="quiz">Final Assessment</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="documentation">Documentation & Privacy</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="quick-reference">Quick Reference Guide</div>
+    <div class="sidebar-item" tabindex="0" data-action="show-section" data-target="quiz">Final Assessment</div>
   </div>
 </aside>
 
@@ -985,7 +997,7 @@ function buildCertificateHTML(name, role, pct, dateStr, timeStr, certId){
     '.cert::before,.cert::after{content:"";position:absolute;left:18px;right:18px;height:2px;background:#336699;}' +
     '.cert::before{top:14px;} .cert::after{bottom:14px;}' +
     '.inner{text-align:center; position:relative; z-index:1;}' +
-    '.mark{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#cc3300,#a32900);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;margin:0 auto 16px;}' +
+    '.mark{width:auto;height:56px;margin:0 auto 16px;display:block;}' +
     '.org{font-size:12px;text-transform:uppercase;letter-spacing:.16em;color:#264d73;font-weight:700;}' +
     '.title{font-family:"Playfair Display",serif;font-weight:700;font-size:32px;color:#1e2328;margin:12px 0 4px;}' +
     '.sub{font-size:13px;color:#4a5259;margin-bottom:26px;}' +
@@ -1004,7 +1016,7 @@ function buildCertificateHTML(name, role, pct, dateStr, timeStr, certId){
     '@media print{ body{background:#fff;} .printbar{display:none;} .wrap{padding:0;} .cert{box-shadow:none; border-width:3px;} }' +
   '</style></head><body>' +
   '<div class="wrap"><div class="cert"><div class="inner">' +
-    '<div class="mark">ACP</div>' +
+    '<img class="mark" src="https://forms.acphysio.com.au/acplogo" alt="Aged Care Physiotherapy">' +
     '<div class="org">Aged Care Physiotherapy Pty Ltd</div>' +
     '<div class="title">Certificate of Completion</div>' +
     '<div class="sub">New PCA Induction & Core Compliance</div>' +
