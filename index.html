@@ -88,6 +88,48 @@
     background:var(--brand-light);color:var(--brand-dark);
   }
   .role-tag.on-light{background:var(--blue-light);color:var(--blue-dark);}
+  .cat-tag{
+    display:inline-block;padding:3px 10px;border-radius:980px;font-size:10.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.2px;background:var(--blue-light);color:var(--blue-dark);
+    margin:0 4px 4px 0;
+  }
+  .cat-tag.excluded{background:var(--brand-light);color:var(--brand-dark);text-decoration:line-through;}
+  .cat-tag.assigned{background:#E3F1E8;color:var(--success);}
+  .chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;}
+  .chip-check{
+    display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:980px;
+    border:1px solid var(--line);background:var(--paper);font-size:12.5px;font-weight:600;
+    cursor:pointer;color:var(--muted);transition:background .15s,border-color .15s,color .15s;
+  }
+  .chip-check input{margin:0;}
+  .chip-check.on{background:var(--blue-light);border-color:var(--blue);color:var(--blue-dark);}
+  .course-admin{
+    border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:10px;background:var(--paper);
+  }
+  .course-admin .toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;font-weight:600;}
+  .course-admin h4{font-size:12px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin:14px 0 8px;}
+  .course-admin .staff-pick{display:flex;gap:8px;margin-bottom:10px;}
+  .course-admin .staff-pick select{flex:1;}
+  .mini-list{display:flex;flex-wrap:wrap;gap:6px;}
+  .mini-list .none{color:var(--muted);font-size:12.5px;}
+  .pill-x{
+    display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);
+    border-radius:980px;padding:4px 6px 4px 12px;font-size:12px;
+  }
+  .pill-x button{
+    background:var(--line);border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;
+    font-size:11px;line-height:1;color:var(--ink);
+  }
+  .matrix-wrap{overflow-x:auto;}
+  table.matrix{border-collapse:collapse;font-size:12.5px;white-space:nowrap;}
+  table.matrix th,table.matrix td{padding:8px 10px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);text-align:center;}
+  table.matrix th{background:var(--paper);font-size:10.5px;text-transform:uppercase;color:var(--muted);}
+  table.matrix td:first-child,table.matrix th:first-child{
+    text-align:left;position:sticky;left:0;background:#fff;font-weight:600;white-space:nowrap;z-index:1;
+  }
+  table.matrix .cell-done{color:var(--success);font-weight:700;}
+  table.matrix .cell-missing{color:var(--danger);font-weight:700;}
+  table.matrix .cell-na{color:var(--line);}
   .status-line{font-size:12.5px;color:var(--muted);margin-top:8px;min-height:14px;}
   .status-line.ok{color:var(--success);font-weight:600;}
   .status-line.err{color:var(--danger);}
@@ -181,6 +223,10 @@
     <p class="sub">This is how you'll appear to managers and in your training records. Use your full name.</p>
     <label for="nameCaptureInput">Full Name</label>
     <input type="text" id="nameCaptureInput" placeholder="e.g. Jane Smith">
+    <div style="height:14px;"></div>
+    <label>Which best describes your role? (select all that apply)</label>
+    <div class="chip-group" id="nameCaptureCategories"></div>
+    <p class="sub" style="margin:6px 0 0;">A manager will confirm this when approving your access.</p>
     <div style="height:10px;"></div>
     <button class="btn" id="nameCaptureBtn" style="width:100%;">Save and Continue</button>
     <div class="status-line" id="nameCaptureStatus"></div>
@@ -208,6 +254,7 @@
       <button data-tab="add">Record Completion</button>
       <button data-tab="courses">Courses</button>
       <button data-tab="roles">Manage Staff</button>
+      <button data-tab="audit">Audit</button>
     </div>
 
     <!-- STAFF: MY COMPLETIONS -->
@@ -312,8 +359,17 @@
     <div id="panel-roles" class="panel" style="display:none;">
       <div class="card">
         <h2>Manage Staff</h2>
-        <p class="sub">Approve new sign-ins before they can see anything, and promote a staff member to manager or step someone back down. Be careful with manager access — managers can see and edit everyone's records.</p>
+        <p class="sub">Approve new sign-ins before they can see anything, and promote a staff member to manager or step someone back down. Be careful with manager access — managers can see and edit everyone's records. Confirm each person's role category here too — it's what decides which courses they see by default.</p>
         <div id="rolesTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+    </div>
+
+    <!-- MANAGER: AUDIT -->
+    <div id="panel-audit" class="panel" style="display:none;">
+      <div class="card">
+        <h2>Course Audit</h2>
+        <p class="sub">Every approved staff member against every course they're expected to have (by category, individual assignment, or "everyone") — and whether they've completed it. Blank columns mean the course isn't relevant to that person.</p>
+        <div id="auditMatrix"><p class="empty">Loading&hellip;</p></div>
       </div>
     </div>
 
@@ -341,6 +397,17 @@
   let allCourses = [];
   let allCompletionsCache = [];
   let editingCourseId = null;
+  let allCourseCategories = [];   // {course_id, category}
+  let allCourseAssignments = [];  // {id, course_id, staff_id}
+  let allCourseExclusions = [];   // {id, course_id, staff_id}
+  let openCourseAdminId = null;   // which course's admin panel is expanded
+
+  const CATEGORIES = ["support_worker", "personal_care_worker", "physiotherapist"];
+  const CATEGORY_LABELS = {
+    support_worker: "Support Worker",
+    personal_care_worker: "Personal Care Worker",
+    physiotherapist: "Physiotherapist"
+  };
 
   function setStatus(id, msg, cls){
     const el = document.getElementById(id);
@@ -394,6 +461,34 @@
   async function loadAllCourses(){
     const { data } = await sb.from("courses").select("*").order("name");
     allCourses = data || [];
+  }
+
+  async function loadCourseVisibilityData(){
+    const [cats, asg, exc] = await Promise.all([
+      sb.from("course_categories").select("*"),
+      sb.from("course_assignments").select("*"),
+      sb.from("course_exclusions").select("*")
+    ]);
+    allCourseCategories = cats.data || [];
+    allCourseAssignments = asg.data || [];
+    allCourseExclusions = exc.data || [];
+  }
+
+  // Mirrors the course_visible_to() SQL function, so the manager-facing
+  // admin UI and audit report always match what a staff member actually
+  // sees under RLS — never compute this a second, slightly different way.
+  function isCourseVisibleTo(courseId, staffId){
+    const course = allCourses.find(c => c.id === courseId);
+    if(!course) return false;
+    const excluded = allCourseExclusions.some(e => e.course_id === courseId && e.staff_id === staffId);
+    if(excluded) return false;
+    if(course.visible_to_all) return true;
+    const staff = allProfiles.find(p => p.id === staffId);
+    const staffCats = (staff && staff.staff_categories) || [];
+    const categoryMatch = allCourseCategories.some(cc => cc.course_id === courseId && staffCats.includes(cc.category));
+    if(categoryMatch) return true;
+    const individuallyAssigned = allCourseAssignments.some(a => a.course_id === courseId && a.staff_id === staffId);
+    return individuallyAssigned;
   }
 
   async function signedCertUrl(path){
@@ -532,6 +627,67 @@
     renderAll();
   });
 
+  function courseAdminHtml(c){
+    const assignedRows = allCourseAssignments.filter(a => a.course_id === c.id);
+    const excludedRows = allCourseExclusions.filter(e => e.course_id === c.id);
+    const assignedIds = new Set(assignedRows.map(a => a.staff_id));
+    const excludedIds = new Set(excludedRows.map(e => e.staff_id));
+    const courseCats = new Set(allCourseCategories.filter(cc => cc.course_id === c.id).map(cc => cc.category));
+
+    const nameOf = id => { const p = allProfiles.find(p=>p.id===id); return p ? (p.full_name || p.email) : "—"; };
+
+    // Anyone not already individually assigned or excluded is a candidate for either dropdown.
+    const assignCandidates = allProfiles.filter(p => !assignedIds.has(p.id));
+    const excludeCandidates = allProfiles.filter(p => !excludedIds.has(p.id));
+
+    return `
+      <div class="course-admin" data-admin-for="${c.id}">
+        <div class="toggle-row">
+          <label class="chip-check ${c.visible_to_all ? "on" : ""}" style="margin:0;">
+            <input type="checkbox" data-vta="${c.id}" ${c.visible_to_all ? "checked" : ""}>
+            Visible to all staff by default
+          </label>
+        </div>
+
+        <h4>Target by category ${c.visible_to_all ? "(ignored while \"visible to all\" is on)" : ""}</h4>
+        <div class="chip-group">
+          ${CATEGORIES.map(cat => `
+            <label class="chip-check ${courseCats.has(cat) ? "on" : ""}">
+              <input type="checkbox" data-cat="${c.id}" data-cat-value="${cat}" ${courseCats.has(cat) ? "checked" : ""} ${c.visible_to_all ? "disabled" : ""}>
+              ${CATEGORY_LABELS[cat]}
+            </label>`).join("")}
+        </div>
+
+        <h4>Individually assigned (sees it regardless of category/exclusion below)</h4>
+        <div class="staff-pick">
+          <select data-assign-select="${c.id}">
+            <option value="">Add a staff member&hellip;</option>
+            ${assignCandidates.map(p => `<option value="${p.id}">${p.full_name || p.email}</option>`).join("")}
+          </select>
+          <button class="btn small blue" data-assign-add="${c.id}">Assign</button>
+        </div>
+        <div class="mini-list">
+          ${assignedRows.length ? assignedRows.map(a => `
+            <span class="pill-x">${nameOf(a.staff_id)}<button data-assign-remove="${a.id}" title="Remove assignment">&times;</button></span>
+          `).join("") : '<span class="none">No individual assignments.</span>'}
+        </div>
+
+        <h4>Individually excluded (hidden even if visible-to-all or category-matched)</h4>
+        <div class="staff-pick">
+          <select data-exclude-select="${c.id}">
+            <option value="">Exclude a staff member&hellip;</option>
+            ${excludeCandidates.map(p => `<option value="${p.id}">${p.full_name || p.email}</option>`).join("")}
+          </select>
+          <button class="btn small ghost" data-exclude-add="${c.id}">Exclude</button>
+        </div>
+        <div class="mini-list">
+          ${excludedRows.length ? excludedRows.map(e => `
+            <span class="pill-x">${nameOf(e.staff_id)}<button data-exclude-remove="${e.id}" title="Remove exclusion">&times;</button></span>
+          `).join("") : '<span class="none">No individual exclusions.</span>'}
+        </div>
+      </div>`;
+  }
+
   async function renderCourses(){
     const wrap = document.getElementById("coursesTable");
     if(allCourses.length===0){
@@ -558,16 +714,30 @@
               </td>
             </tr>`;
         }
-        return `
+        const rows = [`
         <tr>
-          <td>${c.name}${c.description ? `<div style="color:var(--muted);font-size:12px;">${c.description}</div>` : ""}</td>
+          <td>${c.name}${c.description ? `<div style="color:var(--muted);font-size:12px;">${c.description}</div>` : ""}
+            <div style="margin-top:6px;">
+              ${c.visible_to_all ? '<span class="cat-tag">Everyone</span>' : (
+                  Array.from(new Set(allCourseCategories.filter(cc=>cc.course_id===c.id).map(cc=>cc.category)))
+                    .map(cat=>`<span class="cat-tag">${CATEGORY_LABELS[cat]}</span>`).join("") || '<span class="cat-tag excluded">No one by default</span>'
+                )}
+            </div>
+          </td>
           <td>${c.page_url ? `<a class="cert-link" href="${c.page_url}" target="_blank">Open ↗</a>` : "—"}</td>
           <td>
             <code style="font-size:11px;background:var(--paper);padding:2px 6px;border-radius:4px;">${c.id}</code>
             <button class="btn small ghost blue" data-copy="${c.id}" style="margin-left:6px;">Copy</button>
           </td>
-          <td><button class="btn small ghost" data-edit="${c.id}">Edit</button></td>
-        </tr>`;
+          <td>
+            <button class="btn small ghost" data-edit="${c.id}">Edit</button>
+            <button class="btn small ghost blue" data-toggle-admin="${c.id}" style="margin-top:6px;">${openCourseAdminId===c.id ? "Hide Access" : "Access"}</button>
+          </td>
+        </tr>`];
+        if(openCourseAdminId === c.id){
+          rows.push(`<tr><td colspan="4">${courseAdminHtml(c)}</td></tr>`);
+        }
+        return rows.join("");
       }).join("") + `</tbody></table>`;
 
     wrap.querySelectorAll("button[data-copy]").forEach(btn=>{
@@ -608,6 +778,81 @@
         await loadAllCourses();
         renderCourses();
         populateAddForm();
+      });
+    });
+    wrap.querySelectorAll("button[data-toggle-admin]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        openCourseAdminId = openCourseAdminId === btn.dataset.toggleAdmin ? null : btn.dataset.toggleAdmin;
+        renderCourses();
+      });
+    });
+
+    // ---- course-admin wiring (only present when a panel is open) ----
+    wrap.querySelectorAll("input[data-vta]").forEach(cb=>{
+      cb.addEventListener("change", async ()=>{
+        const id = cb.dataset.vta;
+        const { error } = await sb.from("courses").update({visible_to_all: cb.checked}).eq("id", id);
+        if(error){ alert("Couldn't update — try again."); return; }
+        await loadAllCourses();
+        renderCourses();
+        renderAudit();
+      });
+    });
+    wrap.querySelectorAll("input[data-cat]").forEach(cb=>{
+      cb.addEventListener("change", async ()=>{
+        const courseId = cb.dataset.cat;
+        const category = cb.dataset.catValue;
+        const error = cb.checked
+          ? (await sb.from("course_categories").insert({course_id: courseId, category})).error
+          : (await sb.from("course_categories").delete().eq("course_id", courseId).eq("category", category)).error;
+        if(error){ alert("Couldn't update category targeting — try again."); return; }
+        await loadCourseVisibilityData();
+        renderCourses();
+        renderAudit();
+      });
+    });
+    wrap.querySelectorAll("button[data-assign-add]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const courseId = btn.dataset.assignAdd;
+        const sel = wrap.querySelector(`select[data-assign-select="${courseId}"]`);
+        const staffId = sel.value;
+        if(!staffId) return;
+        const { error } = await sb.from("course_assignments").insert({course_id: courseId, staff_id: staffId, assigned_by: currentUser.id});
+        if(error){ alert("Couldn't assign — try again."); return; }
+        await loadCourseVisibilityData();
+        renderCourses();
+        renderAudit();
+      });
+    });
+    wrap.querySelectorAll("button[data-assign-remove]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const { error } = await sb.from("course_assignments").delete().eq("id", btn.dataset.assignRemove);
+        if(error){ alert("Couldn't remove — try again."); return; }
+        await loadCourseVisibilityData();
+        renderCourses();
+        renderAudit();
+      });
+    });
+    wrap.querySelectorAll("button[data-exclude-add]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const courseId = btn.dataset.excludeAdd;
+        const sel = wrap.querySelector(`select[data-exclude-select="${courseId}"]`);
+        const staffId = sel.value;
+        if(!staffId) return;
+        const { error } = await sb.from("course_exclusions").insert({course_id: courseId, staff_id: staffId, excluded_by: currentUser.id});
+        if(error){ alert("Couldn't exclude — try again."); return; }
+        await loadCourseVisibilityData();
+        renderCourses();
+        renderAudit();
+      });
+    });
+    wrap.querySelectorAll("button[data-exclude-remove]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const { error } = await sb.from("course_exclusions").delete().eq("id", btn.dataset.excludeRemove);
+        if(error){ alert("Couldn't remove — try again."); return; }
+        await loadCourseVisibilityData();
+        renderCourses();
+        renderAudit();
       });
     });
   }
@@ -654,7 +899,7 @@
 
   async function renderRoles(){
     const wrap = document.getElementById("rolesTable");
-    wrap.innerHTML = `<table><thead><tr><th>Staff</th><th>Email</th><th>Status</th><th>Role</th><th></th></tr></thead><tbody>` +
+    wrap.innerHTML = `<table><thead><tr><th>Staff</th><th>Email</th><th>Status</th><th>Role</th><th>Category</th><th></th></tr></thead><tbody>` +
       allProfiles.map(p=>{
         const statusTag = `<span class="approval-tag ${p.status||'pending'}">${p.status||'pending'}</span>`;
         const isYou = p.id === currentUser.id;
@@ -672,12 +917,23 @@
                         ${p.role === "manager" ? "↓ Demote" : "↑ Promote"}
                       </button>`;
         }
+        const staffCats = p.staff_categories || [];
+        const catCell = isYou
+          ? '<span style="color:var(--muted);font-size:12px;">—</span>'
+          : `<div class="chip-group" style="margin:0;">
+              ${CATEGORIES.map(cat => `
+                <label class="chip-check ${staffCats.includes(cat) ? "on" : ""}" style="padding:5px 10px;font-size:11px;">
+                  <input type="checkbox" data-catprofile="${p.id}" data-catprofile-value="${cat}" ${staffCats.includes(cat) ? "checked" : ""}>
+                  ${CATEGORY_LABELS[cat]}
+                </label>`).join("")}
+            </div>`;
         return `
         <tr>
           <td>${p.full_name || "—"}</td>
           <td>${p.email || "—"}</td>
           <td>${statusTag}</td>
           <td><span class="role-tag on-light">${p.role}</span></td>
+          <td>${catCell}</td>
           <td>${actions}</td>
         </tr>`;
       }).join("") + `</tbody></table>`;
@@ -695,26 +951,81 @@
     wrap.querySelectorAll("button[data-approve]").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
         const { error } = await sb.from("profiles").update({status: "approved"}).eq("id", btn.dataset.approve);
-        if(!error){ await loadAllProfiles(); renderRoles(); populateAddForm(); }
+        if(!error){ await loadAllProfiles(); renderRoles(); populateAddForm(); renderAudit(); }
       });
     });
     wrap.querySelectorAll("button[data-reject]").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
         if(!confirm("Reject this sign-in? They'll remain unable to see any courses or completions.")) return;
         const { error } = await sb.from("profiles").update({status: "rejected"}).eq("id", btn.dataset.reject);
-        if(!error){ await loadAllProfiles(); renderRoles(); populateAddForm(); }
+        if(!error){ await loadAllProfiles(); renderRoles(); populateAddForm(); renderAudit(); }
+      });
+    });
+    // Category checkboxes save immediately — this doubles as the manager's
+    // confirmation step; whatever's checked when they interact is the record.
+    wrap.querySelectorAll("input[data-catprofile]").forEach(cb=>{
+      cb.addEventListener("change", async ()=>{
+        const profileId = cb.dataset.catprofile;
+        const profile = allProfiles.find(p => p.id === profileId);
+        const current = new Set(profile.staff_categories || []);
+        if(cb.checked) current.add(cb.dataset.catprofileValue);
+        else current.delete(cb.dataset.catprofileValue);
+        const { error } = await sb.from("profiles").update({staff_categories: Array.from(current)}).eq("id", profileId);
+        if(error){ alert("Couldn't save category — try again."); cb.checked = !cb.checked; return; }
+        await loadAllProfiles();
+        renderRoles();
+        renderAudit();
+        populateAddForm();
       });
     });
   }
 
+  function renderAudit(){
+    const wrap = document.getElementById("auditMatrix");
+    if(!wrap) return;
+    const staff = allProfiles.filter(p => p.status === "approved");
+    if(staff.length===0 || allCourses.length===0){
+      wrap.innerHTML = '<p class="empty">Nothing to audit yet — need at least one approved staff member and one course.</p>';
+      return;
+    }
+    // Completion lookup keyed on staff_id + course_id (allCompletionsCache is
+    // populated by renderAll(), which already runs for every manager session).
+    const completionKey = (staffId, courseId) => `${staffId}::${courseId}`;
+    const completed = new Map();
+    allCompletionsCache.forEach(c=>{
+      completed.set(completionKey(c.staff_id, c.course_id), c);
+    });
+
+    let html = `<div class="matrix-wrap"><table class="matrix"><thead><tr><th>Staff</th>` +
+      allCourses.map(c=>`<th>${c.name}</th>`).join("") + `</tr></thead><tbody>`;
+    staff.forEach(p=>{
+      html += `<tr><td>${p.full_name || p.email}</td>`;
+      allCourses.forEach(c=>{
+        if(!isCourseVisibleTo(c.id, p.id)){
+          html += `<td class="cell-na">—</td>`;
+          return;
+        }
+        const done = completed.get(completionKey(p.id, c.id));
+        html += done
+          ? `<td class="cell-done" title="${fmtDate(done.completion_date)} · ${done.result||''}">✓</td>`
+          : `<td class="cell-missing" title="Expected, not yet completed">○</td>`;
+      });
+      html += `</tr>`;
+    });
+    html += `</tbody></table></div>
+      <p class="sub" style="margin-top:10px;">✓ completed &nbsp;·&nbsp; ○ expected, not yet done &nbsp;·&nbsp; — not applicable to this person</p>`;
+    wrap.innerHTML = html;
+  }
+
   // ---------- TABS (manager view) ----------
-  const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles"};
+  const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles", audit:"panel-audit"};
   document.getElementById("managerTabs").addEventListener("click", (e)=>{
     const btn = e.target.closest("button[data-tab]");
     if(!btn) return;
     document.querySelectorAll("#managerTabs button").forEach(b=>b.classList.toggle("active", b===btn));
     Object.values(tabToPanel).forEach(id=>document.getElementById(id).style.display = "none");
     document.getElementById(tabToPanel[btn.dataset.tab]).style.display = "block";
+    if(btn.dataset.tab === "audit") renderAudit();
   });
 
   // ---------- BOOT ----------
@@ -761,9 +1072,11 @@
       document.getElementById("panel-mine").style.display = "none";
       document.getElementById("panel-all").style.display = "block";
       await Promise.all([loadAllProfiles(), loadAllCourses()]);
-      renderAll();
+      await loadCourseVisibilityData();
+      await renderAll();
       renderCourses();
       renderRoles();
+      renderAudit();
       populateAddForm();
     }else{
       document.getElementById("panel-mine").style.display = "block";
@@ -773,19 +1086,41 @@
     }
   }
 
+  // Build the category chip group once — options are static, only their
+  // checked state changes per-visit.
+  (function buildNameCaptureCategories(){
+    const wrap = document.getElementById("nameCaptureCategories");
+    wrap.innerHTML = CATEGORIES.map(cat => `
+      <label class="chip-check" data-nc-chip="${cat}">
+        <input type="checkbox" data-nc-cat="${cat}">
+        ${CATEGORY_LABELS[cat]}
+      </label>`).join("");
+    wrap.querySelectorAll("input[data-nc-cat]").forEach(cb=>{
+      cb.addEventListener("change", ()=>{
+        cb.closest("label").classList.toggle("on", cb.checked);
+      });
+    });
+  })();
+
   document.getElementById("nameCaptureBtn").addEventListener("click", async ()=>{
     const name = document.getElementById("nameCaptureInput").value.trim();
     if(!name){
       setStatus("nameCaptureStatus", "Enter your name to continue.", "err");
       return;
     }
+    const indicatedCategories = Array.from(
+      document.querySelectorAll("#nameCaptureCategories input[data-nc-cat]:checked")
+    ).map(cb => cb.dataset.ncCat);
     setStatus("nameCaptureStatus", "Saving...", "");
-    const { error } = await sb.from("profiles").update({ full_name: name }).eq("id", currentUser.id);
+    const { error } = await sb.from("profiles")
+      .update({ full_name: name, staff_categories: indicatedCategories })
+      .eq("id", currentUser.id);
     if(error){
       setStatus("nameCaptureStatus", "Couldn't save — try again.", "err");
       return;
     }
     currentProfile.full_name = name;
+    currentProfile.staff_categories = indicatedCategories;
     const { data } = await sb.auth.getSession();
     bootApp(data.session);
   });
