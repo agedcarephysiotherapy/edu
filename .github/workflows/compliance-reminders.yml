@@ -1,0 +1,19 @@
+name: Send compliance reminders
+
+on:
+  schedule:
+    # 22:00 UTC = 8am/9am Melbourne (AEST/AEDT) - adjust if you want a
+    # different local send time.
+    - cron: "0 22 * * *"
+  workflow_dispatch: {} # lets you trigger it manually from the Actions tab
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call reminder Edge Function
+        run: |
+          curl --fail --silent --show-error \
+            -X POST "https://${{ secrets.SUPABASE_PROJECT_REF }}.functions.supabase.co/send-compliance-reminders" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
