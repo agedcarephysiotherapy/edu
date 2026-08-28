@@ -253,8 +253,8 @@
   }
   .ts-adjust label{margin-top:0;}
   .ts-delta{font-weight:700;}
-  .ts-delta.neg{color:var(--danger);}
-  .ts-delta.pos{color:var(--blue-dark);}
+  .ts-delta.neg{color:var(--blue-dark);}
+  .ts-delta.pos{color:var(--brand);}
   #timesheetMineTable table, #timesheetAllTable table{table-layout:fixed;}
   #timesheetMineTable td, #timesheetAllTable td{font-size:13px;}
   #timesheetMineTable td:not(.addr), #timesheetAllTable td:not(.addr){white-space:nowrap;}
@@ -462,32 +462,36 @@
     <div id="panel-mine" class="panel">
       <div id="complianceNudgeBanner"></div>
 
-      <div class="card ts-card">
+      <div id="cardTimesheet" class="card ts-card collapsible" data-collapsed="false">
         <div class="ts-eyebrow">Time &amp; attendance</div>
-        <h2>Timesheet</h2>
-        <p class="sub">Sign in when you arrive, sign out when you leave. Your location is captured each time so shifts can be verified.</p>
-        <div id="tsFlash"></div>
-        <div id="tsPayPeriodStat" class="ts-stats"></div>
-        <div class="ts-panel">
-          <div id="tsStatusPill" class="ts-status-pill"><span class="dot"></span><span id="tsStatusText">Loading&hellip;</span></div>
-          <div id="tsGpsHelp" style="display:none;"></div>
-          <div id="tsDeclareWrap"></div>
-          <button class="btn" id="tsActionBtn" style="width:100%;" disabled>Loading&hellip;</button>
-          <div id="tsAdjustWrap"></div>
+        <div class="card-toggle">
+          <h2>Timesheet</h2>
+          <span class="card-chevron">▾</span>
         </div>
-        <div id="cardTsHistory" class="collapsible" data-collapsed="true">
-          <div class="card-toggle">
-            <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin:0;">My last 50 entries</h4>
-            <span class="card-chevron">▾</span>
+        <div class="card-body">
+          <p class="sub">Sign in when you arrive, sign out when you leave. Your location is captured each time so shifts can be verified.</p>
+          <div id="tsFlash"></div>
+          <div id="tsPayPeriodStat" class="ts-stats"></div>
+          <div class="ts-panel">
+            <div id="tsStatusPill" class="ts-status-pill"><span class="dot"></span><span id="tsStatusText">Loading&hellip;</span></div>
+            <div id="tsGpsHelp" style="display:none;"></div>
+            <div id="tsDeclareWrap"></div>
+            <button class="btn" id="tsActionBtn" style="width:100%;" disabled>Loading&hellip;</button>
+            <div id="tsAdjustWrap"></div>
           </div>
-          <div class="card-body" style="margin-top:10px;">
-            <div id="timesheetMineTable"><p class="empty">Loading&hellip;</p></div>
+          <div id="cardTsHistory" class="collapsible" data-collapsed="true">
+            <div class="card-toggle">
+              <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin:0;">My last 50 entries</h4>
+              <span class="card-chevron">▾</span>
+            </div>
+            <div class="card-body" style="margin-top:10px;">
+              <div id="timesheetMineTable"><p class="empty">Loading&hellip;</p></div>
+            </div>
           </div>
         </div>
       </div>
 
       <div id="cardCourses" class="card collapsible" data-collapsed="false">
-        <img class="card-banner" src="https://images.unsplash.com/photo-1664382953481-141e97ad9825?fm=jpg&amp;q=80&amp;w=900&amp;auto=format&amp;fit=crop" alt="Staff training session">
         <div class="card-toggle">
           <h2>Available Courses</h2>
           <span class="card-chevron">▾</span>
@@ -2717,7 +2721,17 @@
     if(confirmBtn){ confirmBtn.disabled = true; confirmBtn.textContent = "Signing out…"; }
     try{
       const { lat, lng } = tsPendingSignOutCoords;
-      const body = { action: "sign_out", lat, lng };
+      const { start: ppStart, end: ppEnd } = tsPayPeriodRange(new Date());
+      const ppLastDay = new Date(ppEnd); ppLastDay.setDate(ppLastDay.getDate() - 1);
+      const body = {
+        action: "sign_out", lat, lng,
+        pay_period_start: ppStart.toISOString(),
+        pay_period_end: ppEnd.toISOString(),
+        // Stable match/display key for the Google Sheets "Fortnight Summary"
+        // tab — plain ISO dates so it sorts and matches consistently
+        // regardless of locale, distinct from the on-screen pretty label.
+        pay_period_key: `${ppStart.toISOString().slice(0,10)} to ${ppLastDay.toISOString().slice(0,10)}`,
+      };
       if(payableHours !== undefined) body.payable_hours = payableHours;
       const result = await tsCallFunction(body);
       const staffName = currentProfile?.full_name || currentUser.email;
@@ -2860,7 +2874,7 @@
       try{ localStorage.setItem(`collapse:${id}`, el.dataset.collapsed); }catch{}
     });
   }
-  ["cardTsHistory","cardCourses","cardMyCompletions","cardMyCompliance"].forEach(initCollapsible);
+  ["cardTimesheet","cardTsHistory","cardCourses","cardMyCompletions","cardMyCompliance"].forEach(initCollapsible);
 
   // ---------- TABS (manager view) ----------
   const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles", compliance:"panel-compliance", audit:"panel-audit", timesheets:"panel-timesheets", help:"panel-help"};
