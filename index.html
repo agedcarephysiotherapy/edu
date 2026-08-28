@@ -185,6 +185,34 @@
   .nudge-banner b{font-weight:700;}
   .nudge-banner a{color:inherit;font-weight:600;text-decoration:underline;white-space:nowrap;}
 
+  /* ---- Timesheet (staff sign-in/out + manager tab) ---- */
+  .ts-flash{
+    border-radius:14px;padding:14px 18px;margin-bottom:16px;font-size:14px;line-height:1.5;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  }
+  .ts-flash.ok{background:#E3F1E8;color:var(--success);border:1px solid #bfe2cc;}
+  .ts-flash.err{background:#F6E4E1;color:var(--danger);border:1px solid #e8beb5;}
+  .ts-flash button{background:none;border:none;color:inherit;font-size:18px;line-height:1;cursor:pointer;padding:0;flex:none;}
+  .ts-gps-help{
+    background:var(--warn-tint);border:1px solid #f0dfa0;color:#7a5d05;
+    border-radius:14px;padding:16px 18px;margin-bottom:16px;font-size:13.5px;line-height:1.55;
+  }
+  .ts-gps-help h4{margin:0 0 6px;font-size:13.5px;}
+  .ts-gps-help p{margin:0 0 10px;}
+  .ts-status-pill{
+    display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:14px;
+  }
+  .ts-status-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--line);}
+  .ts-status-pill.open .dot{background:var(--success);}
+  .ts-adjust{
+    border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px;background:var(--paper);
+  }
+  .ts-adjust label{margin-top:0;}
+  .ts-delta{font-weight:700;}
+  .ts-delta.neg{color:var(--danger);}
+  .ts-delta.pos{color:var(--blue-dark);}
+  #timesheetMineTable td.addr, #timesheetAllTable td.addr{font-size:12px;color:var(--muted);max-width:200px;}
+
   #helpWidget{position:fixed;right:20px;bottom:20px;z-index:200;font-size:14px;}
   #helpWidgetToggle{
     background:var(--blue);color:#fff;border:none;border-radius:999px;padding:12px 18px;
@@ -374,12 +402,27 @@
       <button data-tab="roles">Manage Staff</button>
       <button data-tab="compliance">Compliance</button>
       <button data-tab="audit">Staff Audit</button>
+      <button data-tab="timesheets">Timesheets</button>
       <button data-tab="help">Help Content</button>
     </div>
 
     <!-- STAFF: MY COMPLETIONS -->
     <div id="panel-mine" class="panel">
       <div id="complianceNudgeBanner"></div>
+
+      <div class="card">
+        <h2>Timesheet</h2>
+        <p class="sub">Sign in when you arrive, sign out when you leave. Your location is captured each time so shifts can be verified.</p>
+        <div id="tsFlash"></div>
+        <div id="tsStatusPill" class="ts-status-pill"><span class="dot"></span><span id="tsStatusText">Loading&hellip;</span></div>
+        <div id="tsGpsHelp" style="display:none;"></div>
+        <button class="btn" id="tsActionBtn" style="width:100%;" disabled>Loading&hellip;</button>
+        <div id="tsAdjustWrap"></div>
+        <div style="height:20px;"></div>
+        <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin:0 0 10px;">My last 50 entries</h4>
+        <div id="timesheetMineTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+
       <div class="card">
         <img class="card-banner" src="https://images.unsplash.com/photo-1664382953481-141e97ad9825?fm=jpg&amp;q=80&amp;w=900&amp;auto=format&amp;fit=crop" alt="Staff training session">
         <h2>Available Courses</h2>
@@ -635,6 +678,33 @@
           </div>
         </div>
         <div id="auditMatrix"><p class="empty">Loading&hellip;</p></div>
+      </div>
+    </div>
+
+    <!-- MANAGER: TIMESHEETS -->
+    <div id="panel-timesheets" class="panel" style="display:none;">
+      <div class="card">
+        <h2>Timesheets</h2>
+        <p class="sub">Every staff sign-in/out, with raw vs. payable hours. Deltas (where a staff member adjusted their payable hours) are flagged.</p>
+        <div class="row" style="align-items:end;">
+          <div>
+            <label for="tsFilterStaff">Staff</label>
+            <select id="tsFilterStaff"><option value="">All Staff</option></select>
+          </div>
+          <div>
+            <label for="tsFilterFrom">From</label>
+            <input type="date" id="tsFilterFrom">
+          </div>
+          <div>
+            <label for="tsFilterTo">To</label>
+            <input type="date" id="tsFilterTo">
+          </div>
+          <div style="display:flex;gap:8px;align-items:end;">
+            <button class="btn small ghost" id="tsClearFilterBtn">Clear</button>
+            <button class="btn small blue" id="tsExportCsvBtn">⬇ Export CSV</button>
+          </div>
+        </div>
+        <div id="timesheetAllTable"><p class="empty">Loading&hellip;</p></div>
       </div>
     </div>
 
@@ -2237,8 +2307,404 @@
     }
   });
 
+  // ---------- TIMESHEET (staff sign-in/out + manager Timesheets tab) ----------
+  // Uses the same `sb` client already initialized above for direct reads
+  // (RLS scopes these to "own" for staff, "all" for managers) and calls the
+  // `timesheet` Edge Function for every write — sign_in, sign_out and
+  // report_gps_failure are the only ways any row in timesheet_entries /
+  // timesheet_gps_failures is ever created or changed; there is no RLS
+  // insert/update policy for the client to write directly.
+  const TIMESHEET_URL = `${SUPABASE_URL}/functions/v1/timesheet`;
+
+  let tsOpenEntry = null;       // the signed-in staff member's own open entry, or null
+  let tsGeoBusy = false;        // guards double-clicks while a geolocation/API round trip is in flight
+  let allTimesheetEntries = []; // manager "Timesheets" tab cache
+
+  const TS_GPS_ERROR_TYPE = { 1: "permission_denied", 2: "position_unavailable", 3: "timeout" };
+  const TS_GPS_INSTRUCTIONS = {
+    permission_denied: {
+      title: "Location access is blocked",
+      body: "Allow location for this site, then reload the page and try again. Look for the lock/site-info icon next to the address bar, open its permissions, and set Location to Allow."
+    },
+    position_unavailable: {
+      title: "Couldn't get a location",
+      body: "Your device couldn't determine its position. Check that Location Services / GPS is turned on for your device and that you have a signal, then try again."
+    },
+    timeout: {
+      title: "Location request timed out",
+      body: "Getting a GPS fix took too long. Check your GPS/internet connection and try again — it can help to move somewhere with a clearer view of the sky if you're indoors."
+    }
+  };
+
+  function tsFmtTime(iso){
+    if(!iso) return "";
+    return new Date(iso).toLocaleTimeString("en-AU", {hour:"numeric", minute:"2-digit"});
+  }
+  function tsFmtDateTime(iso){
+    if(!iso) return "—";
+    return new Date(iso).toLocaleString("en-AU", {day:"numeric", month:"short", year:"numeric", hour:"numeric", minute:"2-digit"});
+  }
+  function tsFmtHours(h){
+    return (h===null || h===undefined) ? "—" : `${Number(h).toFixed(2)}h`;
+  }
+  function tsDeltaHtml(raw, payable){
+    if(raw===null || raw===undefined || payable===null || payable===undefined) return "—";
+    const delta = Math.round((payable - raw) * 100) / 100;
+    if(delta === 0) return `<span style="color:var(--muted);">0.00h</span>`;
+    const cls = delta < 0 ? "neg" : "pos";
+    return `<span class="ts-delta ${cls}">${delta > 0 ? "+" : ""}${delta.toFixed(2)}h</span>`;
+  }
+
+  function tsFlash(html, cls){
+    const wrap = document.getElementById("tsFlash");
+    wrap.innerHTML = `<div class="ts-flash ${cls}"><div>${html}</div><button aria-label="Dismiss">&times;</button></div>`;
+    const el = wrap.querySelector(".ts-flash");
+    wrap.querySelector("button").addEventListener("click", ()=>{ wrap.innerHTML = ""; });
+    if(cls === "ok"){
+      setTimeout(()=>{ if(wrap.contains(el)) wrap.innerHTML = ""; }, 12000);
+    }
+  }
+
+  // Hard gate: the Edge Function is only ever called once a GPS fix has
+  // actually succeeded. On failure this reports the failure (so managers
+  // get notified) and shows recovery instructions instead of calling
+  // sign_in/sign_out at all.
+  function tsGetPosition(){
+    return new Promise((resolve, reject)=>{
+      if(!("geolocation" in navigator)){
+        reject({code: 2});
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({lat: pos.coords.latitude, lng: pos.coords.longitude}),
+        err => reject(err),
+        {enableHighAccuracy:true, timeout:15000, maximumAge:0}
+      );
+    });
+  }
+
+  async function tsCallFunction(body){
+    const { data: { session } } = await sb.auth.getSession();
+    if(!session) throw new Error("Not signed in");
+    const res = await fetch(TIMESHEET_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const payload = await res.json().catch(()=>({}));
+    if(!res.ok || payload.error) throw new Error(payload.error || "Something went wrong — try again.");
+    return payload;
+  }
+
+  async function tsReportGpsFailure(attemptedAction, errorType){
+    try{
+      await tsCallFunction({ action: "report_gps_failure", attempted_action: attemptedAction, error_type: errorType });
+    }catch(err){
+      console.error("Couldn't report GPS failure:", err);
+    }
+  }
+
+  function tsShowGpsHelp(attemptedAction, errorType, retryFn){
+    const info = TS_GPS_INSTRUCTIONS[errorType] || TS_GPS_INSTRUCTIONS.position_unavailable;
+    const wrap = document.getElementById("tsGpsHelp");
+    wrap.style.display = "block";
+    wrap.innerHTML = `
+      <h4>⚠ ${info.title}</h4>
+      <p>${info.body}</p>
+      <button class="btn small blue" id="tsGpsRetryBtn">Try again</button>
+    `;
+    document.getElementById("tsGpsRetryBtn").addEventListener("click", ()=>{
+      wrap.style.display = "none";
+      wrap.innerHTML = "";
+      retryFn();
+    });
+  }
+  function tsHideGpsHelp(){
+    const wrap = document.getElementById("tsGpsHelp");
+    wrap.style.display = "none";
+    wrap.innerHTML = "";
+  }
+
+  function tsRenderButton(){
+    const btn = document.getElementById("tsActionBtn");
+    const pill = document.getElementById("tsStatusPill");
+    const text = document.getElementById("tsStatusText");
+    btn.disabled = tsGeoBusy;
+    if(tsOpenEntry){
+      btn.textContent = "Sign Out";
+      pill.classList.add("open");
+      text.textContent = `Signed in since ${tsFmtTime(tsOpenEntry.signed_in_at)}`;
+    }else{
+      btn.textContent = "Sign In";
+      pill.classList.remove("open");
+      text.textContent = "Not signed in";
+    }
+  }
+
+  async function tsLoadOpenEntry(){
+    const { data } = await sb.from("timesheet_entries")
+      .select("*")
+      .eq("staff_id", currentUser.id)
+      .eq("status", "open")
+      .order("signed_in_at", {ascending:false})
+      .limit(1)
+      .maybeSingle();
+    tsOpenEntry = data || null;
+    tsRenderButton();
+  }
+
+  async function renderMyTimesheetTable(){
+    const wrap = document.getElementById("timesheetMineTable");
+    const { data } = await sb.from("timesheet_entries")
+      .select("*")
+      .eq("staff_id", currentUser.id)
+      .order("signed_in_at", {ascending:false})
+      .limit(50);
+    if(!data || data.length===0){
+      wrap.innerHTML = '<p class="empty">No timesheet entries yet.</p>';
+      return;
+    }
+    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr>
+        <th>Date</th><th>In</th><th>Out</th><th>Raw</th><th>Payable</th><th>Δ</th><th>In address</th><th>Out address</th>
+      </tr></thead><tbody>` +
+      data.map(e => `<tr>
+          <td>${fmtDate(e.signed_in_at.slice(0,10))}</td>
+          <td>${tsFmtTime(e.signed_in_at)}</td>
+          <td>${e.signed_out_at ? tsFmtTime(e.signed_out_at) : '<span style="color:var(--success);font-weight:600;">Open</span>'}</td>
+          <td>${tsFmtHours(e.raw_hours)}</td>
+          <td>${tsFmtHours(e.payable_hours)}</td>
+          <td>${tsDeltaHtml(e.raw_hours, e.payable_hours)}</td>
+          <td class="addr">${e.in_address || "—"}</td>
+          <td class="addr">${e.out_address || "—"}</td>
+        </tr>`).join("") +
+      `</tbody></table></div>`;
+  }
+
+  async function tsHandleSignIn(){
+    tsGeoBusy = true; tsRenderButton();
+    tsHideGpsHelp();
+    try{
+      const {lat, lng} = await tsGetPosition();
+      const result = await tsCallFunction({ action: "sign_in", lat, lng });
+      const staffName = currentProfile?.full_name || currentUser.email;
+      tsFlash(`✅ Signed in — <b>${staffName}</b>, ${tsFmtTime(result.signed_in_at)}${result.address ? `, ${result.address}` : ""}`, "ok");
+      await tsLoadOpenEntry();
+      await renderMyTimesheetTable();
+    }catch(err){
+      if(err && typeof err.code === "number"){
+        const errorType = TS_GPS_ERROR_TYPE[err.code] || "position_unavailable";
+        await tsReportGpsFailure("sign_in", errorType);
+        tsShowGpsHelp("sign_in", errorType, tsHandleSignIn);
+      }else{
+        tsFlash(err.message || "Couldn't sign in — try again.", "err");
+      }
+    }finally{
+      tsGeoBusy = false; tsRenderButton();
+    }
+  }
+
+  // Design choice for the payable-hours prompt at sign-out: the true
+  // raw_hours can't be known client-side until the server computes it from
+  // now() at the moment it receives the request, so this shows a
+  // live-updating ESTIMATE computed from the stored signed_in_at, and
+  // defaults the editable field to that estimate. The server's
+  // authoritative computation always wins regardless of small clock drift
+  // between browser and server — the client only ever sends payable_hours,
+  // never raw_hours. This keeps sign-out a single Edge Function call rather
+  // than a call-then-confirm round trip.
+  let tsAdjustTimer = null;
+  function tsRenderAdjustPanel(){
+    const wrap = document.getElementById("tsAdjustWrap");
+    if(!tsOpenEntry){ wrap.innerHTML = ""; return; }
+    const estimateNow = () => Math.round(((Date.now() - new Date(tsOpenEntry.signed_in_at).getTime()) / 3600000) * 100) / 100;
+    const initial = estimateNow();
+    wrap.innerHTML = `
+      <div class="ts-adjust">
+        <label for="tsPayableInput">Payable hours (estimated worked time — adjust if needed, e.g. to exclude an unpaid break)</label>
+        <input type="text" id="tsPayableInput" value="${initial.toFixed(2)}">
+        <p class="sub" id="tsEstimateNote" style="margin:8px 0 0;">Estimated worked time so far: <b>${initial.toFixed(2)}h</b>. The exact figure is calculated when you confirm.</p>
+        <div style="height:12px;"></div>
+        <button class="btn" id="tsConfirmSignOutBtn" style="width:100%;">Confirm Sign Out</button>
+        <button class="btn ghost" id="tsCancelSignOutBtn" style="width:100%;margin-top:8px;">Cancel</button>
+      </div>`;
+    if(tsAdjustTimer) clearInterval(tsAdjustTimer);
+    const input = document.getElementById("tsPayableInput");
+    let userEdited = false;
+    input.addEventListener("input", ()=>{ userEdited = true; });
+    tsAdjustTimer = setInterval(()=>{
+      const est = estimateNow();
+      document.getElementById("tsEstimateNote").innerHTML = `Estimated worked time so far: <b>${est.toFixed(2)}h</b>. The exact figure is calculated when you confirm.`;
+      if(!userEdited) input.value = est.toFixed(2);
+    }, 1000);
+    document.getElementById("tsCancelSignOutBtn").addEventListener("click", ()=>{
+      clearInterval(tsAdjustTimer); tsAdjustTimer = null;
+      wrap.innerHTML = "";
+    });
+    document.getElementById("tsConfirmSignOutBtn").addEventListener("click", ()=>{
+      const raw = parseFloat(document.getElementById("tsPayableInput").value);
+      tsHandleSignOut(Number.isFinite(raw) && raw > 0 ? raw : undefined);
+    });
+  }
+
+  async function tsHandleSignOutClick(){
+    tsHideGpsHelp();
+    // Geolocation is captured up front (per the hard-gate requirement) —
+    // the adjust panel only opens once a fix has actually succeeded, and
+    // the same coordinates are reused when Confirm Sign Out is pressed.
+    tsGeoBusy = true; tsRenderButton();
+    try{
+      tsPendingSignOutCoords = await tsGetPosition();
+      tsRenderAdjustPanel();
+    }catch(err){
+      if(err && typeof err.code === "number"){
+        const errorType = TS_GPS_ERROR_TYPE[err.code] || "position_unavailable";
+        await tsReportGpsFailure("sign_out", errorType);
+        tsShowGpsHelp("sign_out", errorType, tsHandleSignOutClick);
+      }else{
+        tsFlash(err.message || "Couldn't sign out — try again.", "err");
+      }
+    }finally{
+      tsGeoBusy = false; tsRenderButton();
+    }
+  }
+
+  let tsPendingSignOutCoords = null;
+  async function tsHandleSignOut(payableHours){
+    if(!tsPendingSignOutCoords){
+      // Shouldn't happen (Confirm is only reachable after a successful fix),
+      // but fail safe rather than sending a sign_out with no coordinates.
+      tsFlash("Lost your location — try Sign Out again.", "err");
+      return;
+    }
+    const confirmBtn = document.getElementById("tsConfirmSignOutBtn");
+    if(confirmBtn){ confirmBtn.disabled = true; confirmBtn.textContent = "Signing out…"; }
+    try{
+      const { lat, lng } = tsPendingSignOutCoords;
+      const body = { action: "sign_out", lat, lng };
+      if(payableHours !== undefined) body.payable_hours = payableHours;
+      const result = await tsCallFunction(body);
+      const staffName = currentProfile?.full_name || currentUser.email;
+      const deltaTxt = result.delta && Math.abs(result.delta) > 0.001
+        ? `, payable ${tsFmtHours(result.payable_hours)} (${result.delta > 0 ? "+" : ""}${result.delta.toFixed(2)}h)`
+        : "";
+      tsFlash(`✅ Signed out — <b>${staffName}</b>, ${tsFmtTime(result.signed_out_at)}${result.address ? `, ${result.address}` : ""}. Worked ${tsFmtHours(result.raw_hours)}${deltaTxt}.`, "ok");
+      if(tsAdjustTimer){ clearInterval(tsAdjustTimer); tsAdjustTimer = null; }
+      document.getElementById("tsAdjustWrap").innerHTML = "";
+      tsPendingSignOutCoords = null;
+      await tsLoadOpenEntry();
+      await renderMyTimesheetTable();
+    }catch(err){
+      tsFlash(err.message || "Couldn't sign out — try again.", "err");
+      if(confirmBtn){ confirmBtn.disabled = false; confirmBtn.textContent = "Confirm Sign Out"; }
+    }
+  }
+
+  document.getElementById("tsActionBtn").addEventListener("click", ()=>{
+    if(tsGeoBusy) return;
+    if(tsOpenEntry) tsHandleSignOutClick();
+    else tsHandleSignIn();
+  });
+
+  // ---- Manager: Timesheets tab ----
+  function populateTsFilterStaff(){
+    const sel = document.getElementById("tsFilterStaff");
+    const keep = sel.value;
+    sel.innerHTML = '<option value="">All Staff</option>' +
+      allProfiles.filter(p=>p.status==="approved").map(p=>`<option value="${p.id}">${p.full_name || p.email}</option>`).join("");
+    sel.value = keep;
+  }
+
+  async function loadAllTimesheets(){
+    const { data } = await sb.from("timesheet_entries")
+      .select("*, profiles!timesheet_entries_staff_id_fkey(full_name,email)")
+      .order("signed_in_at", {ascending:false});
+    allTimesheetEntries = data || [];
+    renderTimesheetAllTable();
+  }
+
+  function getTimesheetAllRows(){
+    const staffFilter = document.getElementById("tsFilterStaff").value;
+    const from = document.getElementById("tsFilterFrom").value;
+    const to = document.getElementById("tsFilterTo").value;
+    let rows = allTimesheetEntries;
+    if(staffFilter) rows = rows.filter(e => e.staff_id === staffFilter);
+    if(from) rows = rows.filter(e => e.signed_in_at.slice(0,10) >= from);
+    if(to) rows = rows.filter(e => e.signed_in_at.slice(0,10) <= to);
+    return rows;
+  }
+
+  function renderTimesheetAllTable(){
+    const wrap = document.getElementById("timesheetAllTable");
+    const rows = getTimesheetAllRows();
+    if(rows.length===0){
+      wrap.innerHTML = '<p class="empty">No timesheet entries match this filter.</p>';
+      return;
+    }
+    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr>
+        <th>Staff</th><th>Date</th><th>In</th><th>Out</th><th>Raw</th><th>Payable</th><th>Δ</th><th>In address</th><th>Out address</th>
+      </tr></thead><tbody>` +
+      rows.map(e => `<tr>
+          <td>${e.profiles?.full_name || e.profiles?.email || "—"}</td>
+          <td>${fmtDate(e.signed_in_at.slice(0,10))}</td>
+          <td>${tsFmtTime(e.signed_in_at)}</td>
+          <td>${e.signed_out_at ? tsFmtTime(e.signed_out_at) : '<span style="color:var(--success);font-weight:600;">Open</span>'}</td>
+          <td>${tsFmtHours(e.raw_hours)}</td>
+          <td>${tsFmtHours(e.payable_hours)}</td>
+          <td>${tsDeltaHtml(e.raw_hours, e.payable_hours)}</td>
+          <td class="addr">${e.in_address || "—"}</td>
+          <td class="addr">${e.out_address || "—"}</td>
+        </tr>`).join("") +
+      `</tbody></table></div>`;
+  }
+
+  ["tsFilterStaff","tsFilterFrom","tsFilterTo"].forEach(id=>{
+    document.getElementById(id).addEventListener("change", renderTimesheetAllTable);
+  });
+  document.getElementById("tsClearFilterBtn").addEventListener("click", ()=>{
+    document.getElementById("tsFilterStaff").value = "";
+    document.getElementById("tsFilterFrom").value = "";
+    document.getElementById("tsFilterTo").value = "";
+    renderTimesheetAllTable();
+  });
+  document.getElementById("tsExportCsvBtn").addEventListener("click", ()=>{
+    const rows = getTimesheetAllRows();
+    if(rows.length===0){
+      alert("No timesheet entries match the current filter to export.");
+      return;
+    }
+    const header = ["Staff", "Date", "Signed In", "Signed Out", "Raw Hours", "Payable Hours", "Delta", "In Address", "Out Address"];
+    const lines = [header];
+    rows.forEach(e=>{
+      const delta = (e.raw_hours!==null && e.payable_hours!==null) ? Math.round((e.payable_hours - e.raw_hours) * 100) / 100 : "";
+      lines.push([
+        e.profiles?.full_name || e.profiles?.email || "",
+        fmtDate(e.signed_in_at.slice(0,10)),
+        tsFmtDateTime(e.signed_in_at),
+        e.signed_out_at ? tsFmtDateTime(e.signed_out_at) : "Open",
+        e.raw_hours ?? "",
+        e.payable_hours ?? "",
+        delta,
+        e.in_address || "",
+        e.out_address || "",
+      ]);
+    });
+    const csv = lines.map(row => row.map(csvEscape).join(",")).join("\r\n");
+    const blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `timesheets-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
   // ---------- TABS (manager view) ----------
-  const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles", compliance:"panel-compliance", audit:"panel-audit", help:"panel-help"};
+  const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles", compliance:"panel-compliance", audit:"panel-audit", timesheets:"panel-timesheets", help:"panel-help"};
   document.getElementById("managerTabs").addEventListener("click", (e)=>{
     const btn = e.target.closest("button[data-tab]");
     if(!btn) return;
@@ -2254,6 +2720,7 @@
       renderComplianceAudit();
       renderCoverage();
     });
+    if(btn.dataset.tab === "timesheets"){ populateTsFilterStaff(); loadAllTimesheets(); }
     if(btn.dataset.tab === "help") loadHelpArticles().then(renderHelpArticlesTable);
   });
 
@@ -2315,6 +2782,8 @@
       renderMine();
       await loadComplianceData();
       renderMyCompliance();
+      await tsLoadOpenEntry();
+      renderMyTimesheetTable();
     }
   }
 
