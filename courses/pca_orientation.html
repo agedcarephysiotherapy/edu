@@ -195,7 +195,7 @@ input[type="text"]:focus, select:focus{outline:none; border-color:var(--blue); b
 
 footer{max-width:1180px; margin:0 auto; padding:20px 24px; color:var(--ink-soft); font-size:12px; text-align:center;}
 
-/* ---- Auth gate & completion tracking (added for training tracker) ---- */
+/* ---- Auth gate & completion tracking (added for ACP Staff Hub) ---- */
 #authGate{
   min-height:100vh;display:flex;align-items:center;justify-content:center;
   padding:24px;background:linear-gradient(120deg,var(--blue) 0%,var(--blue-dark) 100%);
@@ -246,8 +246,8 @@ footer{max-width:1180px; margin:0 auto; padding:20px 24px; color:var(--ink-soft)
 <div id="authGate" style="display:none;">
   <div class="gate-card">
     <h2>Sign in required</h2>
-    <p>You need to be signed in to the ACP Training Tracker to complete this course and have it recorded against your name.</p>
-    <a class="gate-link" href="../index.html">Go to the Training Tracker</a>
+    <p>You need to be signed in to the ACP Staff Hub to complete this course and have it recorded against your name.</p>
+    <a class="gate-link" href="../index.html">Go to ACP Staff Hub</a>
   </div>
 </div>
 
@@ -707,9 +707,9 @@ footer{max-width:1180px; margin:0 auto; padding:20px 24px; color:var(--ink-soft)
 try{
 
 /* ---------------------------------------------------------
-   TRAINING TRACKER INTEGRATION
+   ACP STAFF HUB INTEGRATION
    COURSE_ID for this course, copied from the Courses tab in
-   the training tracker. SUPABASE_URL/ANON_KEY are the same
+   ACP Staff Hub. SUPABASE_URL/ANON_KEY are the same
    for every course page (same edu project as index.html).
 --------------------------------------------------------- */
 var COURSE_ID = "3c810d4d-e66b-43bc-a37b-62f2965771a3";
