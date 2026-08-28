@@ -9,6 +9,13 @@ staff training tracker.
 - `courses/*.html` — individual, self-contained training modules. Each one
   embeds its own copy of the Supabase client and reports completion back to
   the `completions` table under a specific `COURSE_ID`.
+- `supabase/migrations/*.sql` — schema changes for the backend. Not run
+  automatically; apply via the Supabase SQL editor (or `supabase db push`
+  with the CLI linked to the project).
+- `supabase/functions/*` — Edge Functions. Deploy with
+  `supabase functions deploy <name>`. Each function's required secrets
+  (e.g. `ANTHROPIC_API_KEY`) must be set separately with
+  `supabase secrets set` — they are never committed to the repo.
 
 ## Brand / design system for course modules
 
