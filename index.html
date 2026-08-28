@@ -1673,9 +1673,12 @@
       setStatus(statusId, "Couldn't save — try again.", "err");
       return;
     }
-    setStatus(statusId, "Uploaded — waiting on review.", "ok");
     await loadComplianceData();
     renderMyCompliance();
+    // renderMyCompliance() just rebuilt this row's status-line element from
+    // scratch (fresh id, no text) — set the success message after the
+    // rebuild, not before, or it gets wiped out the instant it's shown.
+    setStatus(statusId, "Uploaded — waiting on review.", "ok");
   }
 
   // ---------- TABS (manager view) ----------
