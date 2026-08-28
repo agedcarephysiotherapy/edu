@@ -176,6 +176,45 @@
   .status-line{font-size:12.5px;color:var(--muted);margin-top:8px;min-height:14px;}
   .status-line.ok{color:var(--success);font-weight:600;}
   .status-line.err{color:var(--danger);}
+
+  #helpWidget{position:fixed;right:20px;bottom:20px;z-index:200;font-size:14px;}
+  #helpWidgetToggle{
+    background:var(--blue);color:#fff;border:none;border-radius:999px;padding:12px 18px;
+    font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;
+    box-shadow:0 8px 20px -6px rgba(0,0,0,.35);
+  }
+  #helpWidgetToggle:hover{background:var(--blue-dark);}
+  #helpWidgetPanel{
+    position:absolute;right:0;bottom:56px;width:340px;max-width:calc(100vw - 40px);
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 16px 40px -10px rgba(0,0,0,.35);display:flex;flex-direction:column;
+    max-height:70vh;overflow:hidden;
+  }
+  #helpWidgetHeader{
+    display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
+    background:var(--blue);color:#fff;font-weight:600;
+  }
+  #helpWidgetHeader button{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;padding:0;}
+  #helpWidgetMessages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-height:120px;}
+  .help-msg{padding:9px 13px;border-radius:12px;font-size:13.5px;line-height:1.45;max-width:88%;}
+  .help-msg.user{align-self:flex-end;background:var(--blue-light);color:var(--blue-dark);}
+  .help-msg.bot{align-self:flex-start;background:var(--paper);color:var(--ink);border:1px solid var(--line);}
+  .help-msg.bot.err{color:var(--danger);border-color:#e8beb5;background:#F6E4E1;}
+  .help-msg.pending{align-self:flex-start;color:var(--muted);font-style:italic;}
+  #helpWidgetForm{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);}
+  #helpWidgetInput{
+    flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:10px;
+    font-family:inherit;font-size:13.5px;background:var(--paper);color:var(--ink);
+  }
+  #helpWidgetForm button{
+    background:var(--blue);color:#fff;border:none;border-radius:10px;padding:9px 14px;
+    font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;
+  }
+  #helpWidgetForm button:disabled{opacity:.6;cursor:default;}
+  @media(max-width:480px){
+    #helpWidget{right:14px;bottom:14px;}
+    #helpWidgetPanel{width:calc(100vw - 28px);}
+  }
   .tabs{display:flex;gap:4px;margin-bottom:18px;flex-wrap:wrap;background:#EBEBED;padding:4px;border-radius:14px;}
   .tabs button{background:transparent;border:none;border-radius:11px;padding:10px 16px;font-weight:600;font-size:13px;cursor:pointer;color:var(--muted);transition:background .15s,color .15s;flex:1 1 auto;min-width:0;}
   .tabs button:hover{color:var(--ink);}
@@ -220,7 +259,7 @@
   @media print{
     @page { size: landscape; margin: 10mm; }
     #loginScreen, #pendingScreen, #nameScreen, header.top .who, .backup-row, .tabs,
-    #panel-add, #panel-courses, #panel-roles, #panel-mine, #panel-compliance,
+    #panel-add, #panel-courses, #panel-roles, #panel-mine, #panel-compliance, #panel-help,
     #staffFilterInput, #clearFilterBtn, #printRecordsBtn, label[for="staffFilterInput"],
     #auditFilterInput, #auditClearFilterBtn, #auditExportCsvBtn, #auditPrintBtn,
     label[for="auditFilterInput"], .audit-check-col {
@@ -327,6 +366,7 @@
       <button data-tab="roles">Manage Staff</button>
       <button data-tab="compliance">Compliance</button>
       <button data-tab="audit">Staff Audit</button>
+      <button data-tab="help">Help Content</button>
     </div>
 
     <!-- STAFF: MY COMPLETIONS -->
@@ -589,7 +629,54 @@
       </div>
     </div>
 
+    <!-- MANAGER: HELP CONTENT -->
+    <div id="panel-help" class="panel" style="display:none;">
+      <div class="card">
+        <h2>Help Content</h2>
+        <p class="sub">Powers the "Ask for help" assistant staff and managers see on the dashboard. Content marked <b>Manager</b> is only ever shown to signed-in managers — staff never see it, and never learn it exists. Add or retire articles here any time; there's no code change or redeploy needed.</p>
+        <div class="row">
+          <div>
+            <label for="newHelpTitle">Title</label>
+            <input type="text" id="newHelpTitle" placeholder="e.g. Uploading a compliance document">
+          </div>
+          <div>
+            <label for="newHelpScope">Visible to</label>
+            <select id="newHelpScope">
+              <option value="staff">Staff &amp; managers</option>
+              <option value="manager">Managers only</option>
+            </select>
+          </div>
+        </div>
+        <label for="newHelpBody">Content</label>
+        <textarea id="newHelpBody" rows="4" placeholder="Plain-language explanation the assistant can quote from when answering a related question." style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-family:inherit;font-size:15px;background:var(--paper);color:var(--ink);resize:vertical;"></textarea>
+        <div style="height:12px;"></div>
+        <button class="btn" id="addHelpArticleBtn">Add Article</button>
+        <div class="status-line" id="helpArticleStatus"></div>
+        <div style="height:16px;"></div>
+        <div id="helpArticlesTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+    </div>
+
   </main>
+</div>
+
+<!-- Ask-for-help widget — visible to any signed-in, approved user once
+     appRoot is shown. What it can answer is enforced server-side (by the
+     ask-assistant Edge Function, from the caller's own profile role), not
+     by anything here — this markup is identical for staff and managers. -->
+<div id="helpWidget" style="display:none;">
+  <button id="helpWidgetToggle" aria-label="Ask for help">💬 Help</button>
+  <div id="helpWidgetPanel" style="display:none;">
+    <div id="helpWidgetHeader">
+      <span>Ask for help</span>
+      <button id="helpWidgetClose" aria-label="Close">&times;</button>
+    </div>
+    <div id="helpWidgetMessages"></div>
+    <form id="helpWidgetForm">
+      <input type="text" id="helpWidgetInput" placeholder="How do I…?" autocomplete="off">
+      <button type="submit">Send</button>
+    </form>
+  </div>
 </div>
 
 <script>
@@ -1982,8 +2069,130 @@
     setStatus(statusId, "Uploaded — waiting on review.", "ok");
   }
 
+  // ---- Manager: Help Content (powers the ask-for-help assistant) ----
+  let allHelpArticles = [];
+  async function loadHelpArticles(){
+    const { data, error } = await sb.from("help_articles").select("*").order("scope").order("title");
+    if(error){ allHelpArticles = []; return; }
+    allHelpArticles = data || [];
+  }
+  function renderHelpArticlesTable(){
+    const wrap = document.getElementById("helpArticlesTable");
+    if(allHelpArticles.length === 0){
+      wrap.innerHTML = '<p class="empty">No help articles added yet.</p>';
+      return;
+    }
+    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Title</th><th>Visible to</th><th>Status</th><th></th></tr></thead><tbody>` +
+      allHelpArticles.map(a=>{
+        const scopeBadge = a.scope === "manager" ? '<span class="badge other">Managers only</span>' : '<span class="badge pass">Staff &amp; managers</span>';
+        const statusBadge = a.active ? '<span class="badge pass">Active</span>' : '<span class="badge fail">Retired</span>';
+        return `<tr>
+          <td>${a.title}</td>
+          <td>${scopeBadge}</td>
+          <td>${statusBadge}</td>
+          <td>${a.active ? `<button class="btn small ghost" data-retire-help="${a.id}">Retire</button>` : ""}</td>
+        </tr>`;
+      }).join("") + `</tbody></table></div>`;
+    wrap.querySelectorAll("button[data-retire-help]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        if(!confirm("Retire this help article? The assistant will stop using it to answer questions.")) return;
+        const { error } = await sb.from("help_articles").update({active:false}).eq("id", btn.dataset.retireHelp);
+        if(error){ alert("Couldn't retire — try again."); return; }
+        await loadHelpArticles();
+        renderHelpArticlesTable();
+      });
+    });
+  }
+  document.getElementById("addHelpArticleBtn").addEventListener("click", async ()=>{
+    const title = document.getElementById("newHelpTitle").value.trim();
+    const scope = document.getElementById("newHelpScope").value;
+    const body = document.getElementById("newHelpBody").value.trim();
+    if(!title || !body){
+      setStatus("helpArticleStatus", "Title and content are both required.", "err");
+      return;
+    }
+    setStatus("helpArticleStatus", "Saving...", "");
+    const { error } = await sb.from("help_articles").insert({ title, scope, body });
+    if(error){
+      setStatus("helpArticleStatus", "Couldn't save — a title this exact might already exist.", "err");
+      return;
+    }
+    document.getElementById("newHelpTitle").value = "";
+    document.getElementById("newHelpBody").value = "";
+    document.getElementById("newHelpScope").value = "staff";
+    setStatus("helpArticleStatus", "Article added.", "ok");
+    await loadHelpArticles();
+    renderHelpArticlesTable();
+  });
+
+  // ---- Ask-for-help widget (staff + manager) ----
+  // What this can answer is enforced server-side in the ask-assistant Edge
+  // Function, from the caller's own profile role — this widget is
+  // identical for everyone, on purpose.
+  const ASK_ASSISTANT_URL = `${SUPABASE_URL}/functions/v1/ask-assistant`;
+  document.getElementById("helpWidgetToggle").addEventListener("click", ()=>{
+    const panel = document.getElementById("helpWidgetPanel");
+    const opening = panel.style.display === "none";
+    panel.style.display = opening ? "flex" : "none";
+    if(opening) document.getElementById("helpWidgetInput").focus();
+  });
+  document.getElementById("helpWidgetClose").addEventListener("click", ()=>{
+    document.getElementById("helpWidgetPanel").style.display = "none";
+  });
+  function addHelpMessage(text, cls){
+    const list = document.getElementById("helpWidgetMessages");
+    const div = document.createElement("div");
+    div.className = `help-msg ${cls}`;
+    div.textContent = text;
+    list.appendChild(div);
+    list.scrollTop = list.scrollHeight;
+    return div;
+  }
+  document.getElementById("helpWidgetForm").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const input = document.getElementById("helpWidgetInput");
+    const question = input.value.trim();
+    if(!question) return;
+    const sendBtn = e.target.querySelector("button[type=submit]");
+    input.value = "";
+    input.disabled = true;
+    sendBtn.disabled = true;
+    addHelpMessage(question, "user");
+    const pending = addHelpMessage("Thinking…", "bot pending");
+    try{
+      const { data: { session } } = await sb.auth.getSession();
+      if(!session){
+        pending.remove();
+        addHelpMessage("You need to be signed in to ask for help.", "bot err");
+        return;
+      }
+      const res = await fetch(ASK_ASSISTANT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ question }),
+      });
+      const payload = await res.json().catch(()=>({}));
+      pending.remove();
+      if(!res.ok || payload.error){
+        addHelpMessage(payload.error || "Something went wrong answering that — try again.", "bot err");
+        return;
+      }
+      addHelpMessage(payload.answer || "Sorry, I couldn't generate an answer.", "bot");
+    }catch(err){
+      pending.remove();
+      addHelpMessage("Couldn't reach the help assistant — check your connection and try again.", "bot err");
+    }finally{
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  });
+
   // ---------- TABS (manager view) ----------
-  const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles", compliance:"panel-compliance", audit:"panel-audit"};
+  const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles", compliance:"panel-compliance", audit:"panel-audit", help:"panel-help"};
   document.getElementById("managerTabs").addEventListener("click", (e)=>{
     const btn = e.target.closest("button[data-tab]");
     if(!btn) return;
@@ -1999,6 +2208,7 @@
       renderComplianceAudit();
       renderCoverage();
     });
+    if(btn.dataset.tab === "help") loadHelpArticles().then(renderHelpArticlesTable);
   });
 
   // ---------- BOOT ----------
@@ -2037,6 +2247,7 @@
 
     document.getElementById("pendingScreen").style.display = "none";
     document.getElementById("appRoot").style.display = "block";
+    document.getElementById("helpWidget").style.display = "block";
     document.getElementById("whoAmI").textContent = currentProfile?.full_name || currentUser.email;
 
     if(isManager){
