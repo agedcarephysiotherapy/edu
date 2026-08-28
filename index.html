@@ -1801,11 +1801,25 @@
     window.location.reload();
   });
 
+  // Supabase re-validates the session (and can re-fire SIGNED_IN) whenever
+  // the tab regains focus — including after closing a native file-picker
+  // dialog. Without this guard, that re-triggers a full bootApp(), which
+  // wipes out in-progress form state (e.g. a just-selected upload file)
+  // across the whole app. Only ever boot once per page load; sign-out
+  // already does a full page reload, so a second genuine sign-in can't
+  // happen without hasBooted being reset along with everything else.
+  let hasBooted = false;
   sb.auth.getSession().then(({data})=>{
-    if(data.session) bootApp(data.session);
+    if(data.session && !hasBooted){
+      hasBooted = true;
+      bootApp(data.session);
+    }
   });
   sb.auth.onAuthStateChange((event, session)=>{
-    if(event === "SIGNED_IN" && session) bootApp(session);
+    if(event === "SIGNED_IN" && session && !hasBooted){
+      hasBooted = true;
+      bootApp(session);
+    }
   });
 
 })();
