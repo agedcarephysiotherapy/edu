@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aged Care Physiotherapy — Training Modules Dashboard</title>
+<title>Aged Care Physiotherapy — Training &amp; Compliance Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root{
@@ -266,8 +266,8 @@
 
 <div id="loginScreen">
   <img class="auth-logo" src="https://forms.acphysio.com.au/acplogo" alt="Aged Care Physiotherapy">
-  <h1 class="auth-heading">Training Modules Dashboard</h1>
-  <p class="auth-sub">Sign in with your email to access your training courses.</p>
+  <h1 class="auth-heading">Training &amp; Compliance Dashboard</h1>
+  <p class="auth-sub">Sign in with your email to access your training and compliance records.</p>
   <img class="auth-hero-photo" src="https://images.unsplash.com/photo-1664382953481-141e97ad9825?fm=jpg&amp;q=80&amp;w=1200&amp;auto=format&amp;fit=crop" alt="A trainer leading a group training session">
   <div class="card">
     <label for="emailInput">Work Email</label>
@@ -308,7 +308,7 @@
   <header class="top">
     <div class="top-inner">
       <img class="logo" src="https://forms.acphysio.com.au/acplogo" alt="ACP">
-      <h1>Training Modules Dashboard</h1>
+      <h1>Training &amp; Compliance Dashboard</h1>
       <div class="who">
         Signed in as <strong id="whoAmI"></strong>
         <span id="roleTag"></span>
@@ -509,6 +509,33 @@
         <h2>Review Submissions</h2>
         <p class="sub">Documents staff have uploaded that are waiting on your approval.</p>
         <div id="complianceReviewTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+
+      <div class="card">
+        <h2>Compliance Audit</h2>
+        <p class="sub">Every active requirement across the team, with its current status. Filter to find who's overdue.</p>
+        <div class="row">
+          <div>
+            <label for="complianceAuditFilterStaff">Staff</label>
+            <select id="complianceAuditFilterStaff"><option value="">All Staff</option></select>
+          </div>
+          <div>
+            <label for="complianceAuditFilterStatus">Status</label>
+            <select id="complianceAuditFilterStatus">
+              <option value="">All Statuses</option>
+              <option value="none">Not submitted</option>
+              <option value="pending_review">Pending review</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+          <div>
+            <label for="complianceAuditFilterDocType">Document Type</label>
+            <select id="complianceAuditFilterDocType"><option value="">All Types</option></select>
+          </div>
+        </div>
+        <div id="complianceAuditTable"><p class="empty">Loading&hellip;</p></div>
       </div>
     </div>
 
@@ -1438,6 +1465,8 @@
         await loadComplianceData();
         renderDocTypesTable();
         populateComplianceAssignForm();
+        populateComplianceAuditFilters();
+        renderComplianceAudit();
       });
     });
   }
@@ -1480,6 +1509,8 @@
     await loadComplianceData();
     renderDocTypesTable();
     populateComplianceAssignForm();
+    populateComplianceAuditFilters();
+    renderComplianceAudit();
   });
 
   // ---- Manager: Assign Requirement ----
@@ -1518,6 +1549,7 @@
         await loadComplianceData();
         renderComplianceRequirementsTable();
         renderComplianceReview();
+        renderComplianceAudit();
       });
     });
   }
@@ -1541,6 +1573,7 @@
     await loadComplianceData();
     renderComplianceRequirementsTable();
     renderComplianceReview();
+    renderComplianceAudit();
   });
 
   // ---- Manager: Review Submissions ----
@@ -1585,6 +1618,7 @@
         await loadComplianceData();
         renderComplianceReview();
         renderComplianceRequirementsTable();
+        renderComplianceAudit();
       });
     });
     wrap.querySelectorAll("button[data-reject-compliance]").forEach(btn=>{
@@ -1597,9 +1631,96 @@
         await loadComplianceData();
         renderComplianceReview();
         renderComplianceRequirementsTable();
+        renderComplianceAudit();
       });
     });
   }
+
+  // ---- Manager: Compliance Audit ----
+  function populateComplianceAuditFilters(){
+    const staffSel = document.getElementById("complianceAuditFilterStaff");
+    const keepStaff = staffSel.value;
+    staffSel.innerHTML = '<option value="">All Staff</option>' +
+      allProfiles.filter(p=>p.status==="approved").map(p=>`<option value="${p.id}">${p.full_name || p.email}</option>`).join("");
+    staffSel.value = keepStaff;
+
+    const typeSel = document.getElementById("complianceAuditFilterDocType");
+    const keepType = typeSel.value;
+    typeSel.innerHTML = '<option value="">All Types</option>' +
+      allComplianceDocTypes.map(dt=>`<option value="${dt.id}">${dt.name}</option>`).join("");
+    typeSel.value = keepType;
+  }
+
+  // Renders relative to due_date, not expiry — "approved" requirements
+  // have nothing outstanding, so there's no overdue/due-in count to show.
+  function complianceDaysLabel(dueDateStr, status){
+    if(status === "approved") return {text:"—", style:"color:var(--muted);"};
+    const due = new Date(dueDateStr + "T00:00:00");
+    const today = new Date(); today.setHours(0,0,0,0);
+    const diffDays = Math.round((due - today) / 86400000);
+    if(diffDays < 0) return {text:`${Math.abs(diffDays)} day${Math.abs(diffDays)===1?"":"s"} overdue`, style:"color:var(--danger);font-weight:600;"};
+    if(diffDays === 0) return {text:"Due today", style:"color:var(--danger);font-weight:600;"};
+    return {text:`Due in ${diffDays} day${diffDays===1?"":"s"}`, style:"color:var(--muted);"};
+  }
+
+  function renderComplianceAudit(){
+    const wrap = document.getElementById("complianceAuditTable");
+    const staffFilter = document.getElementById("complianceAuditFilterStaff").value;
+    const statusFilter = document.getElementById("complianceAuditFilterStatus").value;
+    const typeFilter = document.getElementById("complianceAuditFilterDocType").value;
+    const nameOf = id => { const p = allProfiles.find(p=>p.id===id); return p ? (p.full_name || p.email) : "—"; };
+    const typeOf = id => { const dt = allComplianceDocTypes.find(dt=>dt.id===id); return dt ? dt.name : "—"; };
+
+    let rows = allComplianceRequirements.map(r => {
+      const st = complianceStatusFor(r.id);
+      return {req: r, status: st.status, submission: st.submission};
+    });
+    if(staffFilter) rows = rows.filter(x => x.req.staff_id === staffFilter);
+    if(statusFilter) rows = rows.filter(x => x.status === statusFilter);
+    if(typeFilter) rows = rows.filter(x => x.req.document_type_id === typeFilter);
+
+    // Most urgent first — longest overdue, then soonest due; approved
+    // (nothing to action) sinks to the bottom regardless of due date.
+    rows.sort((a,b) => {
+      if((a.status === "approved") !== (b.status === "approved")) return a.status === "approved" ? 1 : -1;
+      return new Date(a.req.due_date) - new Date(b.req.due_date);
+    });
+
+    if(rows.length === 0){
+      wrap.innerHTML = '<p class="empty">No requirements match this filter.</p>';
+      return;
+    }
+    // File view is available for any status with an actual upload on file
+    // (approved, rejected, pending review, or expired-but-was-approved) —
+    // this is the only place a manager can retrieve an approved or
+    // rejected document once it's dropped off the Review Submissions
+    // queue, so it isn't limited to pending items.
+    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Staff</th><th>Document</th><th>Due</th><th>Days</th><th>Status</th><th>File</th></tr></thead><tbody>` +
+      rows.map(x=>{
+        const days = complianceDaysLabel(x.req.due_date, x.status);
+        const fileLink = x.submission
+          ? `<a class="cert-link" href="#" data-view-compliance="${x.submission.file_path}">View</a>`
+          : `<span style="color:var(--muted);font-size:12px;">—</span>`;
+        return `<tr>
+          <td>${nameOf(x.req.staff_id)}</td>
+          <td>${typeOf(x.req.document_type_id)}</td>
+          <td>${fmtDate(x.req.due_date)}</td>
+          <td style="${days.style}">${days.text}</td>
+          <td>${complianceStatusBadge(x.status)}</td>
+          <td>${fileLink}</td>
+        </tr>`;
+      }).join("") + `</tbody></table></div>`;
+    wrap.querySelectorAll("a[data-view-compliance]").forEach(a=>{
+      a.addEventListener("click", async (e)=>{
+        e.preventDefault();
+        const url = await signedComplianceUrl(a.dataset.viewCompliance);
+        if(url) window.open(url, "_blank");
+      });
+    });
+  }
+  ["complianceAuditFilterStaff","complianceAuditFilterStatus","complianceAuditFilterDocType"].forEach(id=>{
+    document.getElementById(id).addEventListener("change", renderComplianceAudit);
+  });
 
   // ---- Staff: My Compliance Documents ----
   function renderMyCompliance(){
@@ -1700,6 +1821,8 @@
       renderDocTypesTable();
       populateComplianceAssignForm();
       renderComplianceReview();
+      populateComplianceAuditFilters();
+      renderComplianceAudit();
     });
   });
 
