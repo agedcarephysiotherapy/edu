@@ -9,7 +9,7 @@
   :root{
     --brand:#CC3300; --brand-dark:#A32900; --brand-light:#FBEAE3;
     --blue:#336699; --blue-dark:#25507A; --blue-light:#EAF1F7;
-    --ink:#1D1D1F; --muted:#6E6E73; --paper:#F5F5F7; --card:#FFFFFF;
+    --ink:#1D1D1F; --muted:#6E6E73; --paper:#EDEEF2; --card:#FFFFFF;
     --line:#D2D2D7; --success:#2F7D4F; --danger:#B23A2E; --warn:#B8860B; --warn-tint:#FBF3DD;
   }
   *{box-sizing:border-box;}
@@ -22,10 +22,11 @@
     -webkit-font-smoothing:antialiased;
   }
   header.top{
-    background:rgba(255,255,255,0.82);
+    background:linear-gradient(120deg, rgba(251,234,227,0.88), rgba(234,241,247,0.88));
     -webkit-backdrop-filter:saturate(180%) blur(20px);
     backdrop-filter:saturate(180%) blur(20px);
     border-bottom:1px solid var(--line);
+    box-shadow:0 2px 10px -4px rgba(0,0,0,.08);
     padding:14px 20px;
     position:sticky; top:0; z-index:50;
   }
@@ -2437,6 +2438,17 @@
     if(!iso) return "";
     return new Date(iso).toLocaleTimeString("en-AU", {hour:"numeric", minute:"2-digit"});
   }
+  // dd/mm/yy — compact date for the timesheet tables specifically, where
+  // the longer "17 Aug 2026" style (used elsewhere in the app via fmtDate)
+  // eats too much column width.
+  function tsFmtDateShort(iso){
+    if(!iso) return "";
+    const d = new Date(iso);
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yy = String(d.getFullYear()).slice(-2);
+    return `${dd}/${mm}/${yy}`;
+  }
   function tsFmtDateTime(iso){
     if(!iso) return "—";
     return new Date(iso).toLocaleString("en-AU", {day:"numeric", month:"short", year:"numeric", hour:"numeric", minute:"2-digit"});
@@ -2595,15 +2607,15 @@
     }
     wrap.innerHTML = `<div class="table-wrap"><table>
       <colgroup>
-        <col style="width:13%"><col style="width:9%"><col style="width:9%">
+        <col style="width:8%"><col style="width:9%"><col style="width:9%">
         <col style="width:8%"><col style="width:9%"><col style="width:8%">
-        <col style="width:22%"><col style="width:22%">
+        <col style="width:24.5%"><col style="width:24.5%">
       </colgroup>
       <thead><tr>
         <th>Date</th><th>In</th><th>Out</th><th>Raw</th><th>Payable</th><th>Δ</th><th>In address</th><th>Out address</th>
       </tr></thead><tbody>` +
       data.map(e => `<tr>
-          <td>${fmtDate(e.signed_in_at.slice(0,10))}</td>
+          <td>${tsFmtDateShort(e.signed_in_at)}</td>
           <td>${tsFmtTime(e.signed_in_at)}</td>
           <td>${e.signed_out_at ? tsFmtTime(e.signed_out_at) : '<span style="color:var(--success);font-weight:600;">Open</span>'}</td>
           <td>${tsFmtHours(e.raw_hours)}</td>
@@ -2657,24 +2669,37 @@
   function tsRenderAdjustPanel(){
     const wrap = document.getElementById("tsAdjustWrap");
     if(!tsOpenEntry){ wrap.innerHTML = ""; return; }
-    const estimateNow = () => Math.round(((Date.now() - new Date(tsOpenEntry.signed_in_at).getTime()) / 3600000) * 100) / 100;
+    // Mirrors the server's mandatory-break rule (applyMandatoryBreak in the
+    // Edge Function) purely so the on-screen estimate isn't misleading —
+    // the server's own computation from real timestamps is still what's
+    // actually authoritative.
+    const estimateNow = () => {
+      const diff = (Date.now() - new Date(tsOpenEntry.signed_in_at).getTime()) / 3600000;
+      const withBreak = diff > 5 ? diff - 0.5 : diff;
+      return Math.round(withBreak * 100) / 100;
+    };
     const initial = estimateNow();
     wrap.innerHTML = `
       <div class="ts-adjust">
         <label for="tsPayableInput">Payable hours (estimated worked time — adjust if needed, e.g. to exclude an unpaid break)</label>
         <input type="text" id="tsPayableInput" value="${initial.toFixed(2)}">
-        <p class="sub" id="tsEstimateNote" style="margin:8px 0 0;">Estimated worked time so far: <b>${initial.toFixed(2)}h</b>. The exact figure is calculated when you confirm.</p>
+        <p class="sub" id="tsEstimateNote" style="margin:8px 0 0;">Estimated worked time so far: <b>${initial.toFixed(2)}h</b> (shifts over 5h already have the mandatory 30-minute unpaid break deducted). The exact figure is calculated when you confirm.</p>
+        <div id="tsOverrideNotice" class="ts-gps-help" style="display:none;margin:10px 0 0;padding:12px 14px;">⚠ Adjusting the hours away from the calculated time will require manager approval.</div>
         <div style="height:12px;"></div>
         <button class="btn" id="tsConfirmSignOutBtn" style="width:100%;">Confirm Sign Out</button>
         <button class="btn ghost" id="tsCancelSignOutBtn" style="width:100%;margin-top:8px;">Cancel</button>
       </div>`;
     if(tsAdjustTimer) clearInterval(tsAdjustTimer);
     const input = document.getElementById("tsPayableInput");
+    const overrideNotice = document.getElementById("tsOverrideNotice");
     let userEdited = false;
-    input.addEventListener("input", ()=>{ userEdited = true; });
+    input.addEventListener("input", ()=>{
+      userEdited = true;
+      overrideNotice.style.display = "block";
+    });
     tsAdjustTimer = setInterval(()=>{
       const est = estimateNow();
-      document.getElementById("tsEstimateNote").innerHTML = `Estimated worked time so far: <b>${est.toFixed(2)}h</b>. The exact figure is calculated when you confirm.`;
+      document.getElementById("tsEstimateNote").innerHTML = `Estimated worked time so far: <b>${est.toFixed(2)}h</b> (shifts over 5h already have the mandatory 30-minute unpaid break deducted). The exact figure is calculated when you confirm.`;
       if(!userEdited) input.value = est.toFixed(2);
     }, 1000);
     document.getElementById("tsCancelSignOutBtn").addEventListener("click", ()=>{
@@ -2794,16 +2819,16 @@
     }
     wrap.innerHTML = `<div class="table-wrap"><table>
       <colgroup>
-        <col style="width:14%"><col style="width:11%"><col style="width:8%"><col style="width:8%">
+        <col style="width:13%"><col style="width:8%"><col style="width:8%"><col style="width:8%">
         <col style="width:7%"><col style="width:8%"><col style="width:7%">
-        <col style="width:18.5%"><col style="width:18.5%">
+        <col style="width:20.5%"><col style="width:20.5%">
       </colgroup>
       <thead><tr>
         <th>Staff</th><th>Date</th><th>In</th><th>Out</th><th>Raw</th><th>Payable</th><th>Δ</th><th>In address</th><th>Out address</th>
       </tr></thead><tbody>` +
       rows.map(e => `<tr>
           <td>${e.profiles?.full_name || e.profiles?.email || "—"}</td>
-          <td>${fmtDate(e.signed_in_at.slice(0,10))}</td>
+          <td>${tsFmtDateShort(e.signed_in_at)}</td>
           <td>${tsFmtTime(e.signed_in_at)}</td>
           <td>${e.signed_out_at ? tsFmtTime(e.signed_out_at) : '<span style="color:var(--success);font-weight:600;">Open</span>'}</td>
           <td>${tsFmtHours(e.raw_hours)}</td>

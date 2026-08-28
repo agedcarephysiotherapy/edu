@@ -7,8 +7,9 @@
 // writes) — role/identity is never trusted from the request body. This is
 // also the ONLY write path to timesheet_entries / timesheet_gps_failures:
 // neither table has an insert/update RLS policy for authenticated/anon, so
-// raw_hours (computed here, server-side, from real timestamps) can never be
-// tampered with client-side.
+// raw_hours (computed here, server-side, from real timestamps — with a
+// mandatory 30-minute unpaid break deducted for shifts over 5 hours) can
+// never be tampered with client-side.
 //
 // Actions (POST body: { action: 'sign_in' | 'sign_out' | 'report_gps_failure', ... }):
 //   sign_in             — { lat, lng, fit_to_work_declared }
@@ -243,9 +244,13 @@ Deno.serve(async (req: Request) => {
       const address = await reverseGeocode(lat, lng);
       const signedOutAt = new Date();
       const signedInAt = new Date(openEntry.signed_in_at);
-      // Authoritative — computed server-side from real timestamps, rounded
-      // to 2dp. Any raw_hours the client might have sent is ignored.
-      const rawHours = Math.round(((signedOutAt.getTime() - signedInAt.getTime()) / 3600000) * 100) / 100;
+      // Authoritative — computed server-side from real timestamps. Shifts
+      // longer than 5 hours have a mandatory 30-minute unpaid break
+      // deducted before rounding to 2dp. Any raw_hours the client might
+      // have sent is ignored.
+      const rawDiffHours = (signedOutAt.getTime() - signedInAt.getTime()) / 3600000;
+      const rawHoursWithBreak = rawDiffHours > 5 ? rawDiffHours - 0.5 : rawDiffHours;
+      const rawHours = Math.round(rawHoursWithBreak * 100) / 100;
       const payableHours = isFiniteNumber(clientPayableHours) && clientPayableHours > 0
         ? Math.round(clientPayableHours * 100) / 100
         : rawHours;
