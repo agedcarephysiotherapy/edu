@@ -646,7 +646,7 @@ footer{max-width:1180px; margin:0 auto; padding:20px 24px; color:var(--ink-soft)
       <option value="Other">Other</option>
     </select>
     <div class="box warning" style="margin-top:4px;">
-      <p style="margin:0;">Pass standard: <strong>75% overall (6 of 8 correct)</strong>. You'll see the correct answer and a short explanation after each question.</p>
+      <p style="margin:0;">Pass standard: <strong>80% overall (7 of 8 correct)</strong>. You'll see the correct answer and a short explanation after each question.</p>
     </div>
     <button class="btn btn-primary" id="startQuizBtn" data-action="start-assessment" disabled>Begin Assessment &rarr;</button>
   </div>
@@ -819,7 +819,7 @@ var quiz = [
     rationale:"Dignity of risk is about supporting informed choice, not eliminating risk or ignoring it." },
 ];
 
-var PASS_PCT = 75;
+var PASS_PCT = 80;
 var currentIndex = 0;
 var answers = [];
 var candidateName = "";
@@ -939,7 +939,9 @@ function showResults(){
     certCard.classList.add('hidden');
   }
 
-  recordCompletion(pct + '% (' + totalCorrect + '/' + quiz.length + ') — ' + (pass ? 'PASS' : 'NOT YET COMPLETE'));
+  if (pass) {
+    recordCompletion(pct + '% (' + totalCorrect + '/' + quiz.length + ') — PASS');
+  }
 
   window.scrollTo({top:0, behavior:'smooth'});
 }

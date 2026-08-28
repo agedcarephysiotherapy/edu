@@ -2448,10 +2448,29 @@
             const pass = percentage >= 80;
             if (pass) {
                 display.innerHTML = `<span style="color:var(--success)">🎉 Congratulations! You scored ${score}/10 (${percentage}%). You have passed!</span>`;
+                recordCompletion(score + '/10 (' + percentage + '%) — PASS');
             } else {
-                display.innerHTML = `<span style="color:var(--danger)">You scored ${score}/10 (${percentage}%). You need 80% to pass. Please review the material and try again.</span>`;
+                display.innerHTML = `<span style="color:var(--danger)">You scored ${score}/10 (${percentage}%) — 80% is required to complete this module. Please review the material and retake the quiz.</span> <button class="btn btn-danger" data-action="retake-quiz" style="margin-top:0.75rem;">Retake Quiz</button>`;
             }
-            recordCompletion(score + '/10 (' + percentage + '%) — ' + (pass ? 'PASS' : 'NOT YET COMPLETE'));
+        }
+
+        function retakeQuiz() {
+            for (let i = 1; i <= 10; i++) {
+                const inputs = document.querySelectorAll(`input[name="q${i}"]`);
+                inputs.forEach(input => { input.checked = false; });
+                const options = document.querySelectorAll(`#quiz${i} .quiz-options label`);
+                options.forEach(opt => opt.classList.remove('correct', 'incorrect'));
+                const feedback = document.getElementById(`feedback${i}`);
+                if (feedback) {
+                    feedback.style.display = 'none';
+                    feedback.innerHTML = '';
+                    feedback.className = 'quiz-feedback';
+                }
+            }
+            document.getElementById('score-display').innerHTML = '';
+            const status = document.getElementById('completionStatus');
+            if (status) { status.textContent = ''; status.className = 'completion-status'; }
+            document.getElementById('quiz1').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function showCompletionBadge() {
@@ -2506,6 +2525,9 @@
                     break;
                 case 'retry-completion':
                     recordCompletion(el.getAttribute('data-result'));
+                    break;
+                case 'retake-quiz':
+                    retakeQuiz();
                     break;
             }
         });

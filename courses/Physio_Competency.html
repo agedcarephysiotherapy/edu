@@ -829,7 +829,9 @@ function showResults(){
   var overallPass = (overallPct >= PASS_OVERALL*100) && (failedDomains.length === 0);
 
   var resultText = overallPct + "% — " + (overallPass ? "COMPETENT" : "NOT YET COMPETENT" + (failedDomains.length ? " (" + failedDomains.length + " domain" + (failedDomains.length===1?"":"s") + " flagged)" : ""));
-  recordCompletion(resultText);
+  if (overallPass) {
+    recordCompletion(resultText);
+  }
 
   // verdict banner
   var banner = document.getElementById('verdictBanner');
