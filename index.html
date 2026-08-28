@@ -1861,6 +1861,26 @@
   // ---- Staff: My Compliance Documents ----
   function renderMyCompliance(){
     const wrap = document.getElementById("myComplianceList");
+    // A re-render here can be triggered by something outside the user's
+    // control (e.g. the browser tab regaining focus once the native file
+    // picker closes) while they've already picked a file/date but haven't
+    // hit Upload yet. Snapshot any such in-progress selections before we
+    // blow away the DOM, then restore them into the freshly built inputs —
+    // otherwise the selection silently vanishes and "Choose file" resets.
+    const pending = {};
+    wrap.querySelectorAll('input[type="file"][id^="compFile-"]').forEach(input=>{
+      if(input.files && input.files[0]){
+        const reqId = input.id.slice("compFile-".length);
+        (pending[reqId] = pending[reqId] || {}).file = input.files[0];
+      }
+    });
+    wrap.querySelectorAll('input[type="date"][id^="compIssueDate-"]').forEach(input=>{
+      if(input.value){
+        const reqId = input.id.slice("compIssueDate-".length);
+        (pending[reqId] = pending[reqId] || {}).date = input.value;
+      }
+    });
+
     const mine = allComplianceRequirements.filter(r => r.staff_id === currentUser.id);
     if(mine.length === 0){
       wrap.innerHTML = '<p class="empty">No compliance documents required of you right now.</p>';
@@ -1905,6 +1925,18 @@
     wrap.querySelectorAll("button[data-upload-compliance]").forEach(btn=>{
       btn.addEventListener("click", ()=>uploadComplianceDoc(btn.dataset.uploadCompliance));
     });
+
+    Object.keys(pending).forEach(reqId=>{
+      const p = pending[reqId];
+      const dateInput = document.getElementById(`compIssueDate-${reqId}`);
+      if(dateInput && p.date) dateInput.value = p.date;
+      const fileInput = document.getElementById(`compFile-${reqId}`);
+      if(fileInput && p.file){
+        const dt = new DataTransfer();
+        dt.items.add(p.file);
+        fileInput.files = dt.files;
+      }
+    });
   }
 
   async function uploadComplianceDoc(requirementId){
@@ -1936,6 +1968,12 @@
       setStatus(statusId, "Couldn't save — try again.", "err");
       return;
     }
+    // Clear this row's own inputs before the re-render below — otherwise
+    // renderMyCompliance()'s in-progress-selection preservation would carry
+    // the just-submitted file/date right back into the rebuilt inputs,
+    // making it look like the upload hadn't happened.
+    document.getElementById(`compIssueDate-${requirementId}`).value = "";
+    document.getElementById(`compFile-${requirementId}`).value = "";
     await loadComplianceData();
     renderMyCompliance();
     // renderMyCompliance() just rebuilt this row's status-line element from
