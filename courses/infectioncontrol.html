@@ -93,11 +93,23 @@
     border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;
     box-shadow:0 2px 10px rgba(31,41,55,.05);
   }
-  .progress-inner{max-width:1120px;margin:0 auto;padding:0 28px;}
+  .progress-inner{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;}
   .progress-track{height:4px;background:var(--line);border-radius:2px;overflow:hidden;}
   .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--acp-red),var(--acp-blue));transition:width .4s ease;}
-  nav.tabs{display:flex;gap:2px;overflow-x:auto;padding:10px 0 0;scrollbar-width:none;}
-  nav.tabs::-webkit-scrollbar{display:none;}
+  nav.tabs{display:flex;gap:2px;overflow-x:auto;padding:10px 0 0;scrollbar-width:thin;scrollbar-color:var(--acp-blue) transparent;}
+  nav.tabs::-webkit-scrollbar{height:5px;}
+  nav.tabs::-webkit-scrollbar-track{background:transparent;}
+  nav.tabs::-webkit-scrollbar-thumb{background:var(--acp-blue);border-radius:99px;}
+  /* Signals there are more tabs to scroll to — nav.tabs has no visible
+     end otherwise, so a user can easily miss that the checklist/quiz
+     tabs exist off to the right. Shown only while genuinely scrollable
+     and not already at the end (toggled in JS via updateTabsFade). */
+  .tabs-fade{
+    position:absolute;top:10px;right:0;bottom:0;width:40px;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.92) 70%);
+    pointer-events:none;opacity:0;transition:opacity .2s ease;z-index:2;
+  }
+  .tabs-fade.show{opacity:1;}
   .tab-btn{
     flex:0 0 auto;background:none;border:none;font-family:inherit;font-size:13.5px;font-weight:500;
     color:var(--ink-soft);padding:10px 16px 12px;cursor:pointer;border-bottom:3px solid transparent;
@@ -378,7 +390,7 @@
     <p class="subtitle">A comprehensive module for every aged care and community support worker and allied health clinician — hand hygiene, PPE, outbreak recognition, and your responsibilities when an outbreak is declared.</p>
     <div class="meta-pills">
       <div class="pill"><span class="dot"></span> Aged Care &amp; Community Practice</div>
-      <div class="pill">Estimated time: 30–35 min</div>
+      <div class="pill">Estimated time: 35–45 min</div>
       <div class="pill">Includes competency check</div>
     </div>
   </div>
@@ -387,6 +399,7 @@
 <div class="progress-wrap">
   <div class="progress-inner">
     <nav class="tabs" id="tabNav"></nav>
+    <div class="tabs-fade" id="tabsFade"></div>
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
   </div>
 </div>
@@ -475,6 +488,21 @@ sections.forEach((s,i)=>{
   tabNav.appendChild(btn);
 });
 
+// Right-edge fade hints that the tab bar scrolls further — shown only
+// while there's actually more to scroll to, hidden once at the true end
+// (not just a static decoration, since that would mislabel the last tab).
+function updateTabsFade(){
+  const fade = document.getElementById("tabsFade");
+  if(!fade) return;
+  const scrollable = tabNav.scrollWidth > tabNav.clientWidth + 2;
+  const atEnd = tabNav.scrollLeft + tabNav.clientWidth >= tabNav.scrollWidth - 2;
+  fade.classList.toggle("show", scrollable && !atEnd);
+}
+tabNav.addEventListener("scroll", updateTabsFade);
+window.addEventListener("resize", updateTabsFade);
+window.addEventListener("load", updateTabsFade);
+updateTabsFade();
+
 function updateProgress(){
   const activeIdx = sections.findIndex(s=>s.id===currentId);
   const pct = ((activeIdx+1)/sections.length)*100;
@@ -541,6 +569,24 @@ main.innerHTML = `
   </div>
 
   <div class="card">
+    <h3>🧴 Reservoirs specific to aged care &amp; home visiting</h3>
+    <p>The "reservoir" link in the chain of infection isn't abstract — in this setting it's usually one of a short, predictable list. Knowing where organisms actually sit lets you break the chain deliberately, not by luck.</p>
+    <div class="grid2">
+      <ul>
+        <li>Shared mobility &amp; transfer equipment — wheelchairs, hoists, slide sheets, walking frames</li>
+        <li>High-touch surfaces — call bells, bed rails, over-bed tables, remote controls, door handles</li>
+        <li>Shared bathing/toileting equipment and communal bathrooms</li>
+      </ul>
+      <ul>
+        <li>Communal dining and activity spaces</li>
+        <li>Your own bag, tablet/phone, badge lanyard and stethoscope between visits or residents</li>
+        <li>Linen, laundry hampers and waste if not segregated correctly</li>
+      </ul>
+    </div>
+    <p style="margin-top:10px;">This is why standard precautions apply to equipment and surfaces, not just to hands and PPE — cleaning or replacing shared items between uses is part of infection control, not a separate housekeeping task.</p>
+  </div>
+
+  <div class="card">
     <h3>🛡️ Standard precautions — the baseline for every person, every time</h3>
     <p>Standard precautions apply to <b>every</b> resident or client on <b>every</b> occasion, regardless of whether they have a known infection — many infections are transmissible before symptoms appear, or are never formally diagnosed. Standard precautions include:</p>
     <div class="grid2">
@@ -594,6 +640,29 @@ main.innerHTML = `
     Alcohol-based hand rub does not reliably kill spore-forming organisms. Use soap and water — not ABHR alone — when hands are visibly soiled, after using the toilet, and during a confirmed or suspected norovirus/gastro outbreak or when caring for a resident with <i>Clostridioides difficile</i>.
   </div>
 
+  <div class="card">
+    <h3>❌ Common technique errors that undo hand hygiene</h3>
+    <div class="grid2">
+      <ul>
+        <li>Rubbing for less than the full ~20 seconds (ABHR) or 40–60 seconds (soap and water)</li>
+        <li>Missing thumbs, fingertips and between-finger spaces — the areas most often missed</li>
+        <li>Applying ABHR to hands that are still wet from washing, diluting it below an effective concentration</li>
+        <li>Rings, wristwatches or long/artificial nails that trap organisms under and around them</li>
+      </ul>
+      <ul>
+        <li>Touching your hair, mask or face after performing hand hygiene, before starting the task</li>
+        <li>Re-gloving instead of performing hand hygiene between residents or tasks</li>
+        <li>Not drying hands fully after washing — damp hands transfer organisms more readily than dry ones</li>
+        <li>Skipping a moment because "you didn't touch anything, really" — the standard is the moment, not your judgement of risk in the instant</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout scope">
+    <b>Look after your own skin</b>
+    Frequent hand hygiene — especially ABHR — dries skin and can lead to dermatitis, which itself increases infection risk by breaking the skin barrier and making effective hand hygiene harder to perform correctly. Use facility-supplied moisturiser regularly, report skin breakdown to your supervisor, and avoid wearing gloves over damaged skin without advice, since it can worsen contact dermatitis.
+  </div>
+
   ${panelNav("why", "PPE", "ppe")}
 </section>
 
@@ -629,6 +698,27 @@ main.innerHTML = `
     Gloves are removed <i>first</i> because they're the most contaminated item — then hand hygiene straight away. The mask or respirator comes off <i>last</i>, touched only by its ties or ear loops, never the front. Hand hygiene again once everything is off.
   </div>
 
+  <div class="grid2">
+    <div class="card">
+      <h3>🧤 Choosing the right glove</h3>
+      <ul>
+        <li><b>Nitrile</b> — the default choice in most facilities; good barrier protection and no natural rubber latex</li>
+        <li><b>Vinyl</b> — lower barrier protection and a looser fit; suitable for low-risk, short tasks only, not for procedures with a fluid exposure risk</li>
+        <li><b>Latex</b> — good barrier protection, but a known allergen for both residents/clients and staff; check for a documented latex allergy before use</li>
+        <li>Change gloves — and perform hand hygiene — between tasks on the <i>same</i> resident, not just between residents (e.g. after personal care, before handling food or medication)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>😷 Respirator fit &amp; reuse</h3>
+      <ul>
+        <li>A P2/N95 respirator only protects you if it seals against your face — a <b>fit check</b> (a quick seal check you do yourself each time) is required every time you put one on</li>
+        <li>Facial hair, a poor size match, or a damaged respirator can all break the seal even if it "feels" secure</li>
+        <li>Follow your facility's policy on extended use vs single-session use — this varies by outbreak status and PPE supply, and is not something to decide on your own</li>
+        <li>A wet, damaged, or hard-to-breathe-through respirator must be replaced immediately, regardless of how long it's been worn</li>
+      </ul>
+    </div>
+  </div>
+
   ${panelNav("handhygiene", "Transmission-Based Precautions", "precautions")}
 </section>
 
@@ -641,6 +731,21 @@ main.innerHTML = `
 
   <div class="opt-grid" id="precautionGrid"></div>
   <div class="opt-detail" id="precautionDetail"></div>
+
+  <div class="card" style="margin-top:20px;">
+    <h3>📋 Quick reference</h3>
+    <div style="overflow-x:auto;">
+    <table class="reftable">
+      <thead><tr><th>Category</th><th>Typical examples</th><th>Minimum PPE</th><th>Placement</th></tr></thead>
+      <tbody>
+        <tr><td>Contact</td><td>Norovirus, MRSA/VRE, scabies, <i>C. difficile</i></td><td>Gloves + gown</td><td>Single room or cohort with same organism where possible</td></tr>
+        <tr><td>Droplet</td><td>Influenza, RSV, pertussis</td><td>Surgical mask (+ eye protection if splash risk)</td><td>Spatial separation; single room preferred during outbreaks</td></tr>
+        <tr><td>Airborne</td><td>Measles, tuberculosis, chickenpox, high-risk COVID-19 scenarios</td><td>Fit-tested P2/N95 respirator</td><td>Airborne isolation/cohorting; door closed</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="margin-top:10px;font-size:13.5px;color:var(--ink-soft);">Precautions can combine — e.g. contact + droplet together is common. Always follow your facility's current signage and protocol over general rules of thumb like this table.</p>
+  </div>
 
   <div class="callout scope" style="margin-top:20px;">
     <b>COVID-19 in practice</b>
@@ -678,6 +783,11 @@ main.innerHTML = `
     </div>
   </div>
 
+  <div class="card">
+    <h3>📏 When does a cluster become an "outbreak"?</h3>
+    <p>Facilities work to a formal outbreak definition set out in their outbreak management plan — commonly framed around <b>two or more people with compatible symptoms within a short window (often 72 hours)</b> in the same unit or area. The exact threshold is set by your facility policy and the relevant public health unit, not by individual judgement, and reaching it triggers formal outbreak status — additional reporting, restrictions and resourcing. This is exactly why a single new case still needs immediate reporting: it's the input that lets someone with the full picture make that call.</p>
+  </div>
+
   <div class="callout bad">
     <b>Don't guess — test and isolate on suspicion</b>
     Any new respiratory symptoms in a resident or client should prompt precautions and testing per your facility's protocol immediately, not after a diagnosis is confirmed. Waiting to "see if it's serious" is how a single case becomes a facility-wide outbreak.
@@ -713,6 +823,11 @@ main.innerHTML = `
     </div>
   </div>
 
+  <div class="callout scope">
+    <b>Detergent isn't disinfectant</b>
+    Routine detergent cleaning removes dirt but doesn't reliably kill norovirus. During a gastro outbreak, high-touch surfaces and bathrooms need a disinfectant effective against norovirus (commonly chlorine-based, at the concentration and contact time set in your facility's cleaning procedure) — using the wrong product, or the right product without enough contact time, is a common reason outbreaks drag on.
+  </div>
+
   ${panelNav("respiratory", "Other Outbreaks", "other")}
 </section>
 
@@ -742,6 +857,18 @@ main.innerHTML = `
         <li>Linen and clothing need laundering at a high enough temperature to kill mites</li>
       </ul>
     </div>
+  </div>
+
+  <div class="card">
+    <h3>🩸 Sharps injuries &amp; blood/body fluid exposure</h3>
+    <p>A needlestick or splash exposure is a time-critical incident, not just a paperwork item — some post-exposure options are only effective if started promptly.</p>
+    <ol class="steps">
+      <li><b>Encourage bleeding</b> from a puncture wound under running water — don't suck the wound</li>
+      <li><b>Wash</b> the area thoroughly with soap and water (or flush eyes/mucous membranes with water/saline for a splash)</li>
+      <li><b>Report immediately</b> to your supervisor — don't finish the shift/visit first</li>
+      <li><b>Seek urgent medical assessment</b> per your facility's exposure protocol — timing matters for blood-borne virus risk assessment and any prophylaxis</li>
+      <li><b>Document</b> the incident per your facility's incident reporting process</li>
+    </ol>
   </div>
 
   <div class="callout warn">
@@ -792,6 +919,27 @@ main.innerHTML = `
     Record symptom onset, what you observed, who you told, and when. This isn't just paperwork — it's what allows the outbreak to be tracked, contained, and reported accurately.
   </div>
 
+  <div class="grid2">
+    <div class="card">
+      <h3>⏱️ Reporting timeframes</h3>
+      <p>Under the Serious Incident Response Scheme (SIRS), reportable incidents have defined notification timeframes to the Aged Care Quality and Safety Commission — some incidents require notification within 24 hours, others within a longer window, depending on severity and type. As a frontline worker you don't need to know which category applies; you need to report what you see immediately so the people who do know can meet that clock.</p>
+    </div>
+    <div class="card">
+      <h3>🧭 Who does what</h3>
+      <ul>
+        <li><b>You</b> — recognise and report promptly, follow precautions and PPE as directed, document what you did</li>
+        <li><b>Supervisor/facility management</b> — assess, escalate, declare outbreak status, notify authorities and families</li>
+        <li><b>Infection prevention &amp; control lead</b> — directs the clinical response, precaution levels, and testing strategy</li>
+        <li><b>Public health unit</b> — provides guidance and oversight for notifiable conditions and larger outbreaks</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout scope">
+    <b>Closing an outbreak</b>
+    An outbreak isn't over just because symptoms settle in the last known case. It's formally declared over once the facility and/or public health unit confirm the relevant clearance period has passed with no new cases — commonly a set number of days from the last case's symptom onset or resolution, per the specific disease's guidance. Precautions stay in place until that formal close, even if things feel quiet.
+  </div>
+
   ${panelNav("other", "Staff Health & Community Practice", "staffhealth")}
 </section>
 
@@ -809,6 +957,8 @@ main.innerHTML = `
         <li>Never work with a transmissible illness — report symptoms to your supervisor before starting, not after</li>
         <li>Follow your facility's exclusion period before returning after illness (especially after gastro or a confirmed infectious diagnosis)</li>
         <li>Stay current with recommended vaccinations for your role — influenza is commonly required annually in aged care, alongside COVID-19 and other vaccinations per current facility policy</li>
+        <li>Vaccination isn't just about influenza and COVID-19 — dTpa (whooping cough), MMR (measles/mumps/rubella) and hepatitis B status are commonly checked or recommended too, especially in roles with exposure to blood/body fluids</li>
+        <li>If you're exposed to blood or a body fluid (e.g. a sharps injury), your own vaccination and immunity status is exactly the information a clinician needs to assess your risk quickly — see the sharps injury steps in the Other Outbreaks section</li>
       </ul>
     </div>
     <div class="card">
@@ -834,7 +984,7 @@ main.innerHTML = `
   </div>
 
   <div class="checklist-progress">
-    <span id="checklistCount">0 / 8 confirmed</span>
+    <span id="checklistCount">0 / 10 confirmed</span>
     <div class="checklist-track"><div class="checklist-fill" id="checklistFill"></div></div>
   </div>
 
@@ -852,12 +1002,12 @@ main.innerHTML = `
   <div class="section-head">
     <div class="eyebrow">Section 11 · Competency check</div>
     <h2>Check your knowledge</h2>
-    <p class="lede">Seven questions covering the key decisions from this module.</p>
+    <p class="lede">Ten questions covering the key decisions from this module.</p>
   </div>
 
   <div id="quizArea"></div>
   <div class="quiz-score" id="quizScore">
-    <div class="num" id="quizScoreNum">0/7</div>
+    <div class="num" id="quizScoreNum">0/10</div>
     <div id="quizScoreMsg"></div>
     <div class="completion-status" id="completionStatus"></div>
     <button class="quiz-reset" onclick="resetQuiz()">Try again</button>
@@ -1013,7 +1163,9 @@ const checklistData = [
   {t:"Equipment cleaned between residents/clients", d:"Shared or reusable equipment cleaned or replaced before the next person."},
   {t:"Any resident/client symptoms reported promptly", d:"New or unexplained symptoms flagged immediately, not after a second case appears."},
   {t:"Outbreak protocol followed if one is declared", d:"Facility-specific isolation, PPE escalation and communication steps followed."},
-  {t:"Findings documented per facility policy", d:"Symptom onset, actions taken, and who was notified recorded."}
+  {t:"Respirator fit-checked before entering a precaution area", d:"Seal check performed every time a P2/N95 is put on, not just the first time."},
+  {t:"Findings documented per facility policy", d:"Symptom onset, actions taken, and who was notified recorded."},
+  {t:"Any sharps or blood/body fluid exposure reported immediately", d:"First aid performed, supervisor told straight away, medical assessment sought per protocol."}
 ];
 const checklistEl = document.getElementById("checklistItems");
 checklistData.forEach((item,i)=>{
@@ -1086,6 +1238,24 @@ const quizData = [
     opts:["Wait to see if a third case appears before reporting","Report it to your supervisor immediately — early reporting limits how large an outbreak becomes","Only report if the symptoms are severe","Handle it yourself since you're not sure what's causing it"],
     correct:1,
     explain:"Early recognition and reporting is the single biggest factor in outbreak size. You don't need to identify the cause or wait for confirmation — flagging a pattern immediately is exactly the right action."
+  },
+  {
+    q:"You get a needlestick injury while assisting with a task. What's the correct first step?",
+    opts:["Suck the wound to draw out any contamination","Encourage bleeding under running water, then wash thoroughly and report immediately","Finish the task first, then deal with it once you have a moment","Apply a bandage and monitor it over the next few days"],
+    correct:1,
+    explain:"Encourage bleeding under running water, wash thoroughly, and report immediately — some post-exposure options are time-critical, so this isn't something to deal with later."
+  },
+  {
+    q:"Roughly what typically triggers formal outbreak status in a facility's outbreak management plan?",
+    opts:["Any single resident feeling unwell","Two or more people with compatible symptoms within a short window (often around 72 hours) in the same area","Only when a resident is hospitalised","A fixed number of cases per month"],
+    correct:1,
+    explain:"Facilities work to a formal outbreak definition, commonly framed around two or more people with compatible symptoms within a short window in the same area. The exact threshold sits with facility policy and public health guidance, not individual judgement — which is why every case still needs reporting immediately."
+  },
+  {
+    q:"Why is routine detergent cleaning not enough during a norovirus outbreak?",
+    opts:["Detergent removes dirt but doesn't reliably kill norovirus — a disinfectant with the right contact time is needed","Detergent is more effective than disinfectant against norovirus","There's no difference between detergent and disinfectant","Cleaning frequency doesn't matter during an outbreak"],
+    correct:0,
+    explain:"Detergent cleans surfaces but doesn't reliably kill norovirus. High-touch surfaces need a disinfectant effective against norovirus, used at the correct concentration and contact time set by facility policy."
   }
 ];
 let quizScore = 0;

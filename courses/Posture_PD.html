@@ -124,15 +124,23 @@
     position:sticky;top:0;z-index:50;
     box-shadow:0 2px 10px rgba(31,41,55,.05);
   }
-  .progress-inner{max-width:1120px;margin:0 auto;padding:0 28px;}
+  .progress-inner{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;}
   .progress-track{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:0;}
   .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--acp-red),var(--acp-blue));transition:width .4s ease;}
   nav.tabs{
     display:flex;gap:2px;overflow-x:auto;
     padding:10px 0 0;
-    scrollbar-width:none;
+    scrollbar-width:thin;scrollbar-color:var(--acp-blue) transparent;
   }
-  nav.tabs::-webkit-scrollbar{display:none;}
+  nav.tabs::-webkit-scrollbar{height:5px;}
+  nav.tabs::-webkit-scrollbar-track{background:transparent;}
+  nav.tabs::-webkit-scrollbar-thumb{background:var(--acp-blue);border-radius:99px;}
+  .tabs-fade{
+    position:absolute;top:10px;right:0;bottom:0;width:40px;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.92) 70%);
+    pointer-events:none;opacity:0;transition:opacity .2s ease;z-index:2;
+  }
+  .tabs-fade.show{opacity:1;}
   .tab-btn{
     flex:0 0 auto;
     background:none;border:none;
@@ -512,6 +520,7 @@
 <div class="progress-wrap">
   <div class="progress-inner">
     <nav class="tabs" id="tabNav"></nav>
+    <div class="tabs-fade" id="tabsFade"></div>
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
   </div>
 </div>
@@ -599,6 +608,18 @@ sections.forEach((s,i)=>{
   btn.addEventListener("click", ()=>showSection(s.id));
   tabNav.appendChild(btn);
 });
+
+function updateTabsFade(){
+  const fade = document.getElementById("tabsFade");
+  if(!fade) return;
+  const scrollable = tabNav.scrollWidth > tabNav.clientWidth + 2;
+  const atEnd = tabNav.scrollLeft + tabNav.clientWidth >= tabNav.scrollWidth - 2;
+  fade.classList.toggle("show", scrollable && !atEnd);
+}
+tabNav.addEventListener("scroll", updateTabsFade);
+window.addEventListener("resize", updateTabsFade);
+window.addEventListener("load", updateTabsFade);
+updateTabsFade();
 
 function updateProgress(){
   const activeIdx = sections.findIndex(s=>s.id===currentId);
