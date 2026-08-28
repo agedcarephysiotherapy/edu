@@ -484,6 +484,12 @@
       </div>
 
       <div class="card">
+        <h2>Assignment Coverage</h2>
+        <p class="sub">Per document type, which approved staff don't have an active requirement assigned yet. They won't show up as "not submitted" anywhere else until you assign one.</p>
+        <div id="coverageList"><p class="empty">Loading&hellip;</p></div>
+      </div>
+
+      <div class="card">
         <h2>Assign a Requirement</h2>
         <p class="sub">Give a staff member a document type to hold, with a due date. They'll see it under their own Compliance Documents once assigned.</p>
         <div class="row">
@@ -1467,6 +1473,7 @@
         populateComplianceAssignForm();
         populateComplianceAuditFilters();
         renderComplianceAudit();
+        renderCoverage();
       });
     });
   }
@@ -1511,7 +1518,33 @@
     populateComplianceAssignForm();
     populateComplianceAuditFilters();
     renderComplianceAudit();
+    renderCoverage();
   });
+
+  // ---- Manager: Assignment Coverage ----
+  // A staff member with zero requirements assigned for a document type
+  // never appears as "not submitted" anywhere else — there's no
+  // compliance_requirements row for them to show up against. This is the
+  // only view that surfaces that silent gap.
+  function renderCoverage(){
+    const wrap = document.getElementById("coverageList");
+    if(allComplianceDocTypes.length === 0){
+      wrap.innerHTML = '<p class="empty">Add a document type first.</p>';
+      return;
+    }
+    const approvedStaff = allProfiles.filter(p => p.status === "approved");
+    wrap.innerHTML = allComplianceDocTypes.map(dt=>{
+      const assignedIds = new Set(allComplianceRequirements.filter(r => r.document_type_id === dt.id).map(r => r.staff_id));
+      const missing = approvedStaff.filter(p => !assignedIds.has(p.id));
+      const summary = missing.length === 0
+        ? '<span class="badge pass" style="margin-left:8px;">Everyone assigned</span>'
+        : `<span class="badge fail" style="margin-left:8px;">${missing.length} missing</span>`;
+      const names = missing.length
+        ? `<div class="chip-group" style="margin-top:6px;">${missing.map(p=>`<span class="cat-tag">${p.full_name || p.email}</span>`).join("")}</div>`
+        : "";
+      return `<div style="margin-bottom:14px;"><div style="font-weight:600;font-size:13.5px;">${dt.name}${summary}</div>${names}</div>`;
+    }).join("");
+  }
 
   // ---- Manager: Assign Requirement ----
   function populateComplianceAssignForm(){
@@ -1550,6 +1583,7 @@
         renderComplianceRequirementsTable();
         renderComplianceReview();
         renderComplianceAudit();
+        renderCoverage();
       });
     });
   }
@@ -1574,6 +1608,7 @@
     renderComplianceRequirementsTable();
     renderComplianceReview();
     renderComplianceAudit();
+    renderCoverage();
   });
 
   // ---- Manager: Review Submissions ----
@@ -1823,6 +1858,7 @@
       renderComplianceReview();
       populateComplianceAuditFilters();
       renderComplianceAudit();
+      renderCoverage();
     });
   });
 
