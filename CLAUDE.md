@@ -14,7 +14,7 @@ staff training tracker.
   with the CLI linked to the project).
 - `supabase/functions/*` — Edge Functions. Deploy with
   `supabase functions deploy <name>`. Each function's required secrets
-  (e.g. `ANTHROPIC_API_KEY`) must be set separately with
+  (e.g. `GEMINI_API_KEY`) must be set separately with
   `supabase secrets set` — they are never committed to the repo.
 
 ## Brand / design system for course modules

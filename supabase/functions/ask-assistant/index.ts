@@ -10,15 +10,20 @@
 // request retrieves 'staff' + 'manager'. This is the actual enforcement
 // point for "staff can't learn about manager features" — the frontend
 // widget doesn't need its own copy of this logic to be safe.
+//
+// Uses the Gemini API's free tier (Google AI Studio, not billed Vertex AI)
+// rather than a paid model — get a key at https://aistudio.google.com/apikey
+// and set it as the GEMINI_API_KEY secret. Called via plain fetch (no SDK)
+// so there's no package to keep in sync. GEMINI_MODEL is optional and
+// defaults below — override it if the default is ever retired; current
+// options are listed at https://ai.google.dev/gemini-api/docs/models.
 import { createClient } from "npm:@supabase/supabase-js@2";
-import Anthropic from "npm:@anthropic-ai/sdk";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
-
-const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
+const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") || "gemini-2.0-flash";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -110,17 +115,35 @@ Keep answers short and practical — a few sentences, plain language, no markdow
 Reference material:
 ${context || "(no help content has been added yet)"}`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-opus-5",
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: "user", content: question }],
-    });
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: "user", parts: [{ text: question }] }],
+          generationConfig: { maxOutputTokens: 1024 },
+        }),
+      },
+    );
 
-    const textBlock = response.content.find(
-      (b: { type: string }) => b.type === "text",
-    ) as { type: "text"; text: string } | undefined;
-    const answer = textBlock?.text ?? "Sorry, I couldn't generate an answer — try again.";
+    if (!geminiRes.ok) {
+      const errBody = await geminiRes.text();
+      console.error("Gemini API error:", geminiRes.status, errBody);
+      return json({ error: "Something went wrong answering that — try again." }, 502);
+    }
+
+    const geminiData = await geminiRes.json();
+    // The whole prompt can be blocked before any candidate is generated
+    // (promptFeedback.blockReason) — distinct from a per-candidate
+    // finishReason like SAFETY/RECITATION, which leaves candidates empty too.
+    const blockReason = geminiData?.promptFeedback?.blockReason;
+    const candidate = geminiData?.candidates?.[0];
+    const answer = candidate?.content?.parts?.[0]?.text
+      ?? (blockReason || candidate?.finishReason === "SAFETY"
+        ? "I can't answer that one — try rephrasing, or ask your line manager."
+        : "Sorry, I couldn't generate an answer — try again.");
 
     return json({ answer });
   } catch (err) {
