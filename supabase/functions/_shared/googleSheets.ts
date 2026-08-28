@@ -92,7 +92,7 @@ async function getGoogleAccessToken(serviceAccountJson: string): Promise<string>
   return tokenData.access_token as string;
 }
 
-// row = [staff name, signed_in_at, signed_out_at, raw_hours, payable_hours, in_address, out_address]
+// row = [staff name, signed_in_at, signed_out_at, raw_hours, payable_hours, delta, in_address, out_address]
 export async function appendTimesheetRow(row: (string | number)[]): Promise<void> {
   const serviceAccountJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
   const spreadsheetId = Deno.env.get("GOOGLE_SHEETS_SPREADSHEET_ID");
