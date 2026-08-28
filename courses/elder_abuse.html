@@ -1202,13 +1202,25 @@ function renderQuiz(){
 function showQuizScore(){
   const box = document.getElementById("quizScore");
   document.getElementById("quizScoreNum").textContent = `${quizScore}/${currentQuiz.length}`;
+  const pct = Math.round((quizScore / currentQuiz.length) * 100);
+  const passed = pct >= 80;
   let msg = "";
-  if (quizScore === currentQuiz.length) msg = "Excellent — full marks. Ready to apply this at the bedside.";
-  else if (quizScore >= currentQuiz.length - 1) msg = "Strong result — review the missed item above before applying at the bedside.";
-  else msg = "Worth revisiting the relevant sections above before applying this independently.";
+  if (passed){
+    if (quizScore === currentQuiz.length) msg = "Excellent — full marks. Ready to apply this at the bedside.";
+    else if (quizScore >= currentQuiz.length - 1) msg = "Strong result — review the missed item above before applying at the bedside.";
+    else msg = "Nice work — you've passed. Review the sections above to reinforce what you missed.";
+  } else {
+    msg = `You scored ${pct}% — 80% is required to complete this module. Please review the sections above, then use "Try again" to retake the quiz.`;
+  }
   document.getElementById("quizScoreMsg").textContent = msg;
   box.classList.add("show");
-  recordCompletion(`${quizScore}/${currentQuiz.length} correct`);
+  if (passed){
+    recordCompletion(`${quizScore}/${currentQuiz.length} correct (${pct}%)`);
+  } else {
+    const el = document.getElementById("completionStatus");
+    el.className = "completion-status err";
+    el.textContent = "Not recorded — a retake is required to complete this module.";
+  }
 }
 function resetQuiz(){
   document.getElementById("completionStatus").textContent = "";
