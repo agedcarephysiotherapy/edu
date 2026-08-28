@@ -1258,14 +1258,34 @@ const quizData = [
     explain:"Detergent cleans surfaces but doesn't reliably kill norovirus. High-touch surfaces need a disinfectant effective against norovirus, used at the correct concentration and contact time set by facility policy."
   }
 ];
+// Fisher-Yates shuffle — returns a new array, never mutates the input.
+function shuffleArray(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+// A fresh randomised copy of quizData for one attempt — question order and
+// each question's option order are both shuffled (with `correct` remapped
+// to match), so a result like "Q3 is B" can't just be shared between staff.
+function shuffleQuizForAttempt(){
+  return shuffleArray(quizData).map(q=>{
+    const order = shuffleArray(q.opts.map((_,i)=>i));
+    return { q: q.q, opts: order.map(i=>q.opts[i]), correct: order.indexOf(q.correct), explain: q.explain };
+  });
+}
 let quizScore = 0;
 let quizAnswered = 0;
+let currentQuiz = [];
 function renderQuiz(){
   quizScore = 0; quizAnswered = 0;
+  currentQuiz = shuffleQuizForAttempt();
   const area = document.getElementById("quizArea");
   area.innerHTML = "";
   document.getElementById("quizScore").classList.remove("show");
-  quizData.forEach((q,qi)=>{
+  currentQuiz.forEach((q,qi)=>{
     const card = document.createElement("div");
     card.className = "quiz-card";
     card.innerHTML = `<div class="quiz-q">${qi+1}. ${q.q}</div>
@@ -1279,26 +1299,26 @@ function renderQuiz(){
       const opts = area.querySelectorAll(`.quiz-opt[data-q="${qi}"]`);
       if (opts[0].disabled) return;
       opts.forEach(b=>b.disabled = true);
-      const correct = quizData[qi].correct;
+      const correct = currentQuiz[qi].correct;
       opts[correct].classList.add("correct");
       if (oi !== correct) opts[oi].classList.add("incorrect");
       else quizScore++;
       quizAnswered++;
       document.getElementById(`explain-${qi}`).classList.add("show");
-      if (quizAnswered === quizData.length) showQuizScore();
+      if (quizAnswered === currentQuiz.length) showQuizScore();
     });
   });
 }
 function showQuizScore(){
   const box = document.getElementById("quizScore");
-  document.getElementById("quizScoreNum").textContent = `${quizScore}/${quizData.length}`;
+  document.getElementById("quizScoreNum").textContent = `${quizScore}/${currentQuiz.length}`;
   let msg = "";
-  if (quizScore === quizData.length) msg = "Excellent — full marks. Ready to apply this at the bedside.";
-  else if (quizScore >= quizData.length - 1) msg = "Strong result — review the missed item above before applying at the bedside.";
+  if (quizScore === currentQuiz.length) msg = "Excellent — full marks. Ready to apply this at the bedside.";
+  else if (quizScore >= currentQuiz.length - 1) msg = "Strong result — review the missed item above before applying at the bedside.";
   else msg = "Worth revisiting the relevant sections above before applying this independently.";
   document.getElementById("quizScoreMsg").textContent = msg;
   box.classList.add("show");
-  recordCompletion(`${quizScore}/${quizData.length} correct`);
+  recordCompletion(`${quizScore}/${currentQuiz.length} correct`);
 }
 function resetQuiz(){
   document.getElementById("completionStatus").textContent = "";
