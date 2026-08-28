@@ -220,7 +220,7 @@
   @media print{
     @page { size: landscape; margin: 10mm; }
     #loginScreen, #pendingScreen, #nameScreen, header.top .who, .backup-row, .tabs,
-    #panel-add, #panel-courses, #panel-roles, #panel-mine,
+    #panel-add, #panel-courses, #panel-roles, #panel-mine, #panel-compliance,
     #staffFilterInput, #clearFilterBtn, #printRecordsBtn, label[for="staffFilterInput"],
     #auditFilterInput, #auditClearFilterBtn, #auditExportCsvBtn, #auditPrintBtn,
     label[for="auditFilterInput"], .audit-check-col {
@@ -325,6 +325,7 @@
       <button data-tab="add">Record Completion</button>
       <button data-tab="courses">Courses</button>
       <button data-tab="roles">Manage Staff</button>
+      <button data-tab="compliance">Compliance</button>
       <button data-tab="audit">Staff Audit</button>
     </div>
 
@@ -340,6 +341,11 @@
         <h2>My Completions</h2>
         <p class="sub">Training and course results recorded against your name.</p>
         <div id="mineTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+      <div class="card">
+        <h2>Compliance Documents</h2>
+        <p class="sub">Documents your manager needs on file — police check, NDIS screening, professional registration, etc. Upload before the due date; your manager reviews and approves each one.</p>
+        <div id="myComplianceList"><p class="empty">Loading&hellip;</p></div>
       </div>
     </div>
 
@@ -435,6 +441,77 @@
       </div>
     </div>
 
+    <!-- MANAGER: COMPLIANCE -->
+    <div id="panel-compliance" class="panel" style="display:none;">
+      <div class="card">
+        <h2>Document Types</h2>
+        <p class="sub">The catalogue of compliance documents staff can be required to hold — police check, NDIS worker screening, AHPRA registration, vaccination, etc.</p>
+        <div class="row">
+          <div>
+            <label for="newDocTypeName">Document Type Name</label>
+            <input type="text" id="newDocTypeName" placeholder="e.g. Police Check">
+          </div>
+          <div>
+            <label for="newDocTypeDesc">Description (optional)</label>
+            <input type="text" id="newDocTypeDesc" placeholder="Brief description">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="newDocTypeRenewalMode">Renewal</label>
+            <select id="newDocTypeRenewalMode">
+              <option value="rolling">Rolling — N months from issue date</option>
+              <option value="fixed">Fixed calendar date every year</option>
+            </select>
+          </div>
+          <div id="newDocTypeRollingWrap">
+            <label for="newDocTypeMonths">Renewal Period (months)</label>
+            <input type="text" id="newDocTypeMonths" value="12">
+          </div>
+          <div id="newDocTypeFixedWrap" style="display:none;">
+            <label for="newDocTypeFixedMonth">Fixed Renewal Date (month / day)</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="newDocTypeFixedMonth" placeholder="Month (1-12)">
+              <input type="text" id="newDocTypeFixedDay" placeholder="Day (1-31)">
+            </div>
+          </div>
+        </div>
+        <div style="height:12px;"></div>
+        <button class="btn" id="addDocTypeBtn">Add Document Type</button>
+        <div class="status-line" id="docTypeStatus"></div>
+        <div style="height:16px;"></div>
+        <div id="docTypesTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+
+      <div class="card">
+        <h2>Assign a Requirement</h2>
+        <p class="sub">Give a staff member a document type to hold, with a due date. They'll see it under their own Compliance Documents once assigned.</p>
+        <div class="row">
+          <div>
+            <label for="complianceAssignStaff">Staff Member</label>
+            <select id="complianceAssignStaff"></select>
+          </div>
+          <div>
+            <label for="complianceAssignDocType">Document Type</label>
+            <select id="complianceAssignDocType"></select>
+          </div>
+        </div>
+        <label for="complianceAssignDueDate">Due Date</label>
+        <input type="date" id="complianceAssignDueDate">
+        <div style="height:12px;"></div>
+        <button class="btn" id="complianceAssignBtn">Assign Requirement</button>
+        <div class="status-line" id="complianceAssignStatus"></div>
+        <div style="height:16px;"></div>
+        <div id="complianceRequirementsTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+
+      <div class="card">
+        <h2>Review Submissions</h2>
+        <p class="sub">Documents staff have uploaded that are waiting on your approval.</p>
+        <div id="complianceReviewTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+    </div>
+
     <!-- MANAGER: AUDIT -->
     <div id="panel-audit" class="panel" style="display:none;">
       <div class="card">
@@ -484,6 +561,14 @@
   let allCourseAssignments = [];  // {id, course_id, staff_id}
   let allCourseExclusions = [];   // {id, course_id, staff_id}
   let openCourseAdminId = null;   // which course's admin panel is expanded
+
+  // Compliance tracker — RLS already scopes requirements/submissions to
+  // "own" for staff and "all" for managers, so these arrays hold whatever
+  // the signed-in user is allowed to see; no extra client-side filtering
+  // needed for security, only for display grouping.
+  let allComplianceDocTypes = [];
+  let allComplianceRequirements = [];
+  let allComplianceSubmissions = [];
 
   const CATEGORIES = ["support_worker", "personal_care_worker", "physiotherapist"];
   const CATEGORY_LABELS = {
@@ -1267,8 +1352,334 @@
     URL.revokeObjectURL(url);
   });
 
+  // ---------- COMPLIANCE TRACKER ----------
+  async function loadComplianceData(){
+    const [dt, req, sub] = await Promise.all([
+      sb.from("compliance_document_types").select("*").eq("active", true).order("name"),
+      sb.from("compliance_requirements").select("*").eq("active", true),
+      sb.from("compliance_submissions").select("*")
+    ]);
+    allComplianceDocTypes = dt.data || [];
+    allComplianceRequirements = req.data || [];
+    allComplianceSubmissions = sub.data || [];
+  }
+
+  function computeExpiryDate(issueDateStr, docType){
+    const issueDate = new Date(issueDateStr + "T00:00:00");
+    if(docType.renewal_is_fixed_date){
+      let year = issueDate.getFullYear();
+      let candidate = new Date(year, docType.fixed_renewal_month - 1, docType.fixed_renewal_day);
+      if(candidate <= issueDate) candidate = new Date(year + 1, docType.fixed_renewal_month - 1, docType.fixed_renewal_day);
+      return candidate.toISOString().slice(0,10);
+    }
+    const expiry = new Date(issueDate);
+    expiry.setMonth(expiry.getMonth() + docType.renewal_months);
+    return expiry.toISOString().slice(0,10);
+  }
+
+  // Latest submission against a requirement decides its current status —
+  // an approved doc that's since expired reads as "expired", not
+  // "approved", so it still shows up as outstanding.
+  function complianceStatusFor(requirementId){
+    const subs = allComplianceSubmissions.filter(s => s.requirement_id === requirementId);
+    if(subs.length === 0) return {status:"none"};
+    subs.sort((a,b) => new Date(b.uploaded_at) - new Date(a.uploaded_at));
+    const latest = subs[0];
+    if(latest.status === "approved"){
+      const today = new Date().toISOString().slice(0,10);
+      return {status: latest.expiry_date >= today ? "approved" : "expired", submission: latest};
+    }
+    return {status: latest.status, submission: latest}; // pending_review | rejected
+  }
+
+  function complianceStatusBadge(status){
+    if(status === "approved") return '<span class="badge pass">Approved</span>';
+    if(status === "pending_review") return '<span class="badge other">Pending review</span>';
+    if(status === "rejected") return '<span class="badge fail">Rejected</span>';
+    if(status === "expired") return '<span class="badge fail">Expired</span>';
+    return '<span class="badge fail">Not submitted</span>';
+  }
+
+  async function signedComplianceUrl(path){
+    if(!path) return null;
+    const { data } = await sb.storage.from("compliance-docs").createSignedUrl(path, 300);
+    return data ? data.signedUrl : null;
+  }
+
+  // ---- Manager: Document Types ----
+  document.getElementById("newDocTypeRenewalMode").addEventListener("change", (e)=>{
+    const fixed = e.target.value === "fixed";
+    document.getElementById("newDocTypeRollingWrap").style.display = fixed ? "none" : "block";
+    document.getElementById("newDocTypeFixedWrap").style.display = fixed ? "block" : "none";
+  });
+
+  function renderDocTypesTable(){
+    const wrap = document.getElementById("docTypesTable");
+    if(allComplianceDocTypes.length === 0){
+      wrap.innerHTML = '<p class="empty">No document types added yet.</p>';
+      return;
+    }
+    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Renewal</th><th></th></tr></thead><tbody>` +
+      allComplianceDocTypes.map(dt=>{
+        const renewal = dt.renewal_is_fixed_date
+          ? `Fixed date — ${dt.fixed_renewal_month}/${dt.fixed_renewal_day} each year`
+          : `Every ${dt.renewal_months} month${dt.renewal_months===1?"":"s"} from issue`;
+        return `<tr>
+          <td>${dt.name}${dt.description ? `<div style="color:var(--muted);font-size:12px;">${dt.description}</div>` : ""}</td>
+          <td>${renewal}</td>
+          <td><button class="btn small ghost" data-retire-doctype="${dt.id}">Retire</button></td>
+        </tr>`;
+      }).join("") + `</tbody></table></div>`;
+    wrap.querySelectorAll("button[data-retire-doctype]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        if(!confirm("Retire this document type? Existing requirements/submissions are kept, but it won't be assignable anymore.")) return;
+        const { error } = await sb.from("compliance_document_types").update({active:false}).eq("id", btn.dataset.retireDoctype);
+        if(error){ alert("Couldn't retire — try again."); return; }
+        await loadComplianceData();
+        renderDocTypesTable();
+        populateComplianceAssignForm();
+      });
+    });
+  }
+
+  document.getElementById("addDocTypeBtn").addEventListener("click", async ()=>{
+    const name = document.getElementById("newDocTypeName").value.trim();
+    const description = document.getElementById("newDocTypeDesc").value.trim();
+    const isFixed = document.getElementById("newDocTypeRenewalMode").value === "fixed";
+    if(!name){
+      setStatus("docTypeStatus", "Document type name is required.", "err");
+      return;
+    }
+    const payload = { name, description: description || null, renewal_is_fixed_date: isFixed };
+    if(isFixed){
+      const month = parseInt(document.getElementById("newDocTypeFixedMonth").value, 10);
+      const day = parseInt(document.getElementById("newDocTypeFixedDay").value, 10);
+      if(!month || month<1 || month>12 || !day || day<1 || day>31){
+        setStatus("docTypeStatus", "Enter a valid month (1-12) and day (1-31).", "err");
+        return;
+      }
+      payload.fixed_renewal_month = month;
+      payload.fixed_renewal_day = day;
+      payload.renewal_months = 12;
+    }else{
+      const months = parseInt(document.getElementById("newDocTypeMonths").value, 10);
+      if(!months || months<1){
+        setStatus("docTypeStatus", "Enter a valid renewal period in months.", "err");
+        return;
+      }
+      payload.renewal_months = months;
+    }
+    const { error } = await sb.from("compliance_document_types").insert(payload);
+    if(error){
+      setStatus("docTypeStatus", "Couldn't add — try again.", "err");
+      return;
+    }
+    setStatus("docTypeStatus", "Document type added.", "ok");
+    document.getElementById("newDocTypeName").value = "";
+    document.getElementById("newDocTypeDesc").value = "";
+    await loadComplianceData();
+    renderDocTypesTable();
+    populateComplianceAssignForm();
+  });
+
+  // ---- Manager: Assign Requirement ----
+  function populateComplianceAssignForm(){
+    const staffSel = document.getElementById("complianceAssignStaff");
+    staffSel.innerHTML = allProfiles.filter(p=>p.status==="approved").map(p=>`<option value="${p.id}">${p.full_name || p.email}</option>`).join("");
+    const typeSel = document.getElementById("complianceAssignDocType");
+    typeSel.innerHTML = allComplianceDocTypes.map(dt=>`<option value="${dt.id}">${dt.name}</option>`).join("");
+    renderComplianceRequirementsTable();
+  }
+
+  function renderComplianceRequirementsTable(){
+    const wrap = document.getElementById("complianceRequirementsTable");
+    if(allComplianceRequirements.length === 0){
+      wrap.innerHTML = '<p class="empty">No requirements assigned yet.</p>';
+      return;
+    }
+    const nameOf = id => { const p = allProfiles.find(p=>p.id===id); return p ? (p.full_name || p.email) : "—"; };
+    const typeOf = id => { const dt = allComplianceDocTypes.find(dt=>dt.id===id); return dt ? dt.name : "—"; };
+    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Staff</th><th>Document</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>` +
+      allComplianceRequirements.map(r=>{
+        const st = complianceStatusFor(r.id);
+        return `<tr>
+          <td>${nameOf(r.staff_id)}</td>
+          <td>${typeOf(r.document_type_id)}</td>
+          <td>${fmtDate(r.due_date)}</td>
+          <td>${complianceStatusBadge(st.status)}</td>
+          <td><button class="btn small ghost" data-retire-requirement="${r.id}">Retire</button></td>
+        </tr>`;
+      }).join("") + `</tbody></table></div>`;
+    wrap.querySelectorAll("button[data-retire-requirement]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        if(!confirm("Retire this requirement? The staff member will no longer be expected to hold this document.")) return;
+        const { error } = await sb.from("compliance_requirements").update({active:false}).eq("id", btn.dataset.retireRequirement);
+        if(error){ alert("Couldn't retire — try again."); return; }
+        await loadComplianceData();
+        renderComplianceRequirementsTable();
+        renderComplianceReview();
+      });
+    });
+  }
+
+  document.getElementById("complianceAssignBtn").addEventListener("click", async ()=>{
+    const staffId = document.getElementById("complianceAssignStaff").value;
+    const docTypeId = document.getElementById("complianceAssignDocType").value;
+    const dueDate = document.getElementById("complianceAssignDueDate").value;
+    if(!staffId || !docTypeId || !dueDate){
+      setStatus("complianceAssignStatus", "Staff member, document type and due date are all required.", "err");
+      return;
+    }
+    const { error } = await sb.from("compliance_requirements").insert({
+      staff_id: staffId, document_type_id: docTypeId, due_date: dueDate, assigned_by: currentUser.id
+    });
+    if(error){
+      setStatus("complianceAssignStatus", error.code === "23505" ? "This staff member already has an active requirement for this document type." : "Couldn't assign — try again.", "err");
+      return;
+    }
+    setStatus("complianceAssignStatus", "Requirement assigned.", "ok");
+    await loadComplianceData();
+    renderComplianceRequirementsTable();
+    renderComplianceReview();
+  });
+
+  // ---- Manager: Review Submissions ----
+  function renderComplianceReview(){
+    const wrap = document.getElementById("complianceReviewTable");
+    const pending = allComplianceSubmissions.filter(s => s.status === "pending_review");
+    if(pending.length === 0){
+      wrap.innerHTML = '<p class="empty">Nothing waiting on review.</p>';
+      return;
+    }
+    const reqOf = id => allComplianceRequirements.find(r=>r.id===id);
+    const nameOf = id => { const p = allProfiles.find(p=>p.id===id); return p ? (p.full_name || p.email) : "—"; };
+    const typeOf = id => { const dt = allComplianceDocTypes.find(dt=>dt.id===id); return dt ? dt.name : "—"; };
+    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Staff</th><th>Document</th><th>Issued</th><th>Expires</th><th>File</th><th></th></tr></thead><tbody>` +
+      pending.map(s=>{
+        const req = reqOf(s.requirement_id);
+        return `<tr>
+          <td>${req ? nameOf(req.staff_id) : "—"}</td>
+          <td>${req ? typeOf(req.document_type_id) : "—"}</td>
+          <td>${fmtDate(s.issue_date)}</td>
+          <td>${fmtDate(s.expiry_date)}</td>
+          <td><a class="cert-link" href="#" data-view-compliance="${s.file_path}">View</a></td>
+          <td><div class="row-actions">
+            <button class="btn small green" data-approve-compliance="${s.id}">✓ Approve</button>
+            <button class="btn small ghost" data-reject-compliance="${s.id}">✕ Reject</button>
+          </div></td>
+        </tr>`;
+      }).join("") + `</tbody></table></div>`;
+    wrap.querySelectorAll("a[data-view-compliance]").forEach(a=>{
+      a.addEventListener("click", async (e)=>{
+        e.preventDefault();
+        const url = await signedComplianceUrl(a.dataset.viewCompliance);
+        if(url) window.open(url, "_blank");
+      });
+    });
+    wrap.querySelectorAll("button[data-approve-compliance]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const { error } = await sb.from("compliance_submissions").update({
+          status: "approved", reviewed_by: currentUser.id, reviewed_at: new Date().toISOString()
+        }).eq("id", btn.dataset.approveCompliance);
+        if(error){ alert("Couldn't approve — try again."); return; }
+        await loadComplianceData();
+        renderComplianceReview();
+        renderComplianceRequirementsTable();
+      });
+    });
+    wrap.querySelectorAll("button[data-reject-compliance]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const notes = prompt("Reason for rejection (shown to the staff member, optional):") || null;
+        const { error } = await sb.from("compliance_submissions").update({
+          status: "rejected", reviewed_by: currentUser.id, reviewed_at: new Date().toISOString(), reviewer_notes: notes
+        }).eq("id", btn.dataset.rejectCompliance);
+        if(error){ alert("Couldn't reject — try again."); return; }
+        await loadComplianceData();
+        renderComplianceReview();
+        renderComplianceRequirementsTable();
+      });
+    });
+  }
+
+  // ---- Staff: My Compliance Documents ----
+  function renderMyCompliance(){
+    const wrap = document.getElementById("myComplianceList");
+    const mine = allComplianceRequirements.filter(r => r.staff_id === currentUser.id);
+    if(mine.length === 0){
+      wrap.innerHTML = '<p class="empty">No compliance documents required of you right now.</p>';
+      return;
+    }
+    const typeOf = id => allComplianceDocTypes.find(dt=>dt.id===id);
+    wrap.innerHTML = mine.map(r=>{
+      const dt = typeOf(r.document_type_id);
+      const st = complianceStatusFor(r.id);
+      const notes = st.submission && st.submission.status === "rejected" && st.submission.reviewer_notes
+        ? `<p class="sub" style="margin:6px 0 0;color:var(--danger);">Reviewer note: ${st.submission.reviewer_notes}</p>` : "";
+      return `
+        <div class="course-admin" style="margin-top:10px;">
+          <div class="toggle-row" style="justify-content:space-between;">
+            <div>
+              <b>${dt ? dt.name : "—"}</b>
+              <div style="color:var(--muted);font-size:12.5px;">Due ${fmtDate(r.due_date)}${st.submission ? ` &middot; expires ${fmtDate(st.submission.expiry_date)}` : ""}</div>
+            </div>
+            ${complianceStatusBadge(st.status)}
+          </div>
+          ${notes}
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <label for="compIssueDate-${r.id}">Document Date</label>
+              <input type="date" id="compIssueDate-${r.id}">
+            </div>
+            <div>
+              <label for="compFile-${r.id}">File</label>
+              <input type="file" id="compFile-${r.id}" accept=".pdf,.jpg,.jpeg,.png">
+            </div>
+          </div>
+          <button class="btn small blue" data-upload-compliance="${r.id}">Upload</button>
+          <div class="status-line" id="compUploadStatus-${r.id}"></div>
+        </div>`;
+    }).join("");
+    wrap.querySelectorAll("button[data-upload-compliance]").forEach(btn=>{
+      btn.addEventListener("click", ()=>uploadComplianceDoc(btn.dataset.uploadCompliance));
+    });
+  }
+
+  async function uploadComplianceDoc(requirementId){
+    const req = allComplianceRequirements.find(r=>r.id===requirementId);
+    const dt = req && allComplianceDocTypes.find(dt=>dt.id===req.document_type_id);
+    const issueDate = document.getElementById(`compIssueDate-${requirementId}`).value;
+    const file = document.getElementById(`compFile-${requirementId}`).files[0];
+    const statusId = `compUploadStatus-${requirementId}`;
+    if(!req || !dt){
+      setStatus(statusId, "Couldn't find this requirement — refresh and try again.", "err");
+      return;
+    }
+    if(!issueDate || !file){
+      setStatus(statusId, "Document date and file are both required.", "err");
+      return;
+    }
+    setStatus(statusId, "Uploading...", "");
+    const path = `${currentUser.id}/${dt.id}/${crypto.randomUUID()}-${file.name}`;
+    const { error: upErr } = await sb.storage.from("compliance-docs").upload(path, file);
+    if(upErr){
+      setStatus(statusId, "Couldn't upload the file — try again.", "err");
+      return;
+    }
+    const expiryDate = computeExpiryDate(issueDate, dt);
+    const { error } = await sb.from("compliance_submissions").insert({
+      requirement_id: requirementId, file_path: path, issue_date: issueDate, expiry_date: expiryDate
+    });
+    if(error){
+      setStatus(statusId, "Couldn't save — try again.", "err");
+      return;
+    }
+    setStatus(statusId, "Uploaded — waiting on review.", "ok");
+    await loadComplianceData();
+    renderMyCompliance();
+  }
+
   // ---------- TABS (manager view) ----------
-  const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles", audit:"panel-audit"};
+  const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles", compliance:"panel-compliance", audit:"panel-audit"};
   document.getElementById("managerTabs").addEventListener("click", (e)=>{
     const btn = e.target.closest("button[data-tab]");
     if(!btn) return;
@@ -1276,6 +1687,11 @@
     Object.values(tabToPanel).forEach(id=>document.getElementById(id).style.display = "none");
     document.getElementById(tabToPanel[btn.dataset.tab]).style.display = "block";
     if(btn.dataset.tab === "audit") renderAudit();
+    if(btn.dataset.tab === "compliance") loadComplianceData().then(()=>{
+      renderDocTypesTable();
+      populateComplianceAssignForm();
+      renderComplianceReview();
+    });
   });
 
   // ---------- BOOT ----------
@@ -1333,6 +1749,8 @@
       await loadAllCourses();
       renderCoursesForStaff();
       renderMine();
+      await loadComplianceData();
+      renderMyCompliance();
     }
   }
 
