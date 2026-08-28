@@ -276,6 +276,11 @@
   .ts-delta{font-weight:700;}
   .ts-delta.neg{color:var(--blue-dark);}
   .ts-delta.pos{color:var(--brand);}
+  .ts-auto-badge{
+    display:inline-block;padding:1px 7px;border-radius:980px;font-size:10px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.3px;background:var(--warn-tint);color:#7a5d05;
+    vertical-align:middle;
+  }
   #timesheetMineTable table, #timesheetAllTable table{table-layout:fixed;}
   #timesheetMineTable td, #timesheetAllTable td{font-size:13px;}
   #timesheetMineTable td:not(.addr), #timesheetAllTable td:not(.addr){white-space:nowrap;}
@@ -2516,20 +2521,41 @@
     const cls = delta < 0 ? "neg" : "pos";
     return `<span class="ts-delta ${cls}">${delta > 0 ? "+" : ""}${delta.toFixed(2)}h</span>`;
   }
+  // A blank out_address on an auto-signed-out entry is expected (there was
+  // no client action to capture GPS from), not missing/broken data — shown
+  // distinctly so it doesn't read as an error.
+  function tsOutTimeHtml(e){
+    if(!e.signed_out_at) return '<span style="color:var(--success);font-weight:600;">Open</span>';
+    return tsFmtTime(e.signed_out_at) + (e.auto_signed_out ? ' <span class="ts-auto-badge" title="Automatically signed out after 9 hours — staff member did not sign out">Auto</span>' : "");
+  }
+  function tsOutAddressHtml(e){
+    if(e.auto_signed_out) return '<span style="color:var(--muted);font-style:italic;">Auto signed out — no location</span>';
+    return e.out_address || "—";
+  }
 
   async function tsRenderPayPeriodStat(){
     const wrap = document.getElementById("tsPayPeriodStat");
     const { start, end } = tsPayPeriodRange(new Date());
-    const { data } = await sb.from("timesheet_entries")
-      .select("payable_hours")
-      .eq("staff_id", currentUser.id)
-      .gte("signed_in_at", start.toISOString())
-      .lt("signed_in_at", end.toISOString());
-    const total = (data || []).reduce((sum, e) => sum + (Number(e.payable_hours) || 0), 0);
+    const [periodRes, totalRes] = await Promise.all([
+      sb.from("timesheet_entries")
+        .select("payable_hours")
+        .eq("staff_id", currentUser.id)
+        .gte("signed_in_at", start.toISOString())
+        .lt("signed_in_at", end.toISOString()),
+      // All-time total — sum of raw_hours (not payable_hours), i.e. actual
+      // logged time regardless of any staff adjustment at sign-out.
+      sb.from("timesheet_entries")
+        .select("raw_hours")
+        .eq("staff_id", currentUser.id),
+    ]);
+    const periodTotal = (periodRes.data || []).reduce((sum, e) => sum + (Number(e.payable_hours) || 0), 0);
+    const allTimeTotal = (totalRes.data || []).reduce((sum, e) => sum + (Number(e.raw_hours) || 0), 0);
     const lastDay = new Date(end); lastDay.setDate(lastDay.getDate() - 1);
     const fmtOpt = { day: "numeric", month: "short" };
     const label = `${start.toLocaleDateString("en-AU", fmtOpt)} – ${lastDay.toLocaleDateString("en-AU", fmtOpt)}`;
-    wrap.innerHTML = `<div class="ts-stat-chip"><span class="ts-stat-num">${total.toFixed(2)}h</span><span class="ts-stat-label">This pay period · ${label}</span></div>`;
+    wrap.innerHTML = `
+      <div class="ts-stat-chip"><span class="ts-stat-num">${periodTotal.toFixed(2)}h</span><span class="ts-stat-label">This pay period · ${label}</span></div>
+      <div class="ts-stat-chip"><span class="ts-stat-num">${allTimeTotal.toFixed(2)}h</span><span class="ts-stat-label">Total logged hours</span></div>`;
   }
 
   function tsFlash(html, cls){
@@ -2670,12 +2696,12 @@
       data.map(e => `<tr>
           <td>${tsFmtDateShort(e.signed_in_at)}</td>
           <td>${tsFmtTime(e.signed_in_at)}</td>
-          <td>${e.signed_out_at ? tsFmtTime(e.signed_out_at) : '<span style="color:var(--success);font-weight:600;">Open</span>'}</td>
+          <td>${tsOutTimeHtml(e)}</td>
           <td>${tsFmtHours(e.raw_hours)}</td>
           <td>${tsFmtHours(e.payable_hours)}</td>
           <td>${tsDeltaHtml(e.raw_hours, e.payable_hours)}</td>
           <td class="addr" title="${e.in_address || ""}">${e.in_address || "—"}</td>
-          <td class="addr" title="${e.out_address || ""}">${e.out_address || "—"}</td>
+          <td class="addr" title="${e.out_address || ""}">${tsOutAddressHtml(e)}</td>
         </tr>`).join("") +
       `</tbody></table></div>`;
   }
@@ -2883,12 +2909,12 @@
           <td>${e.profiles?.full_name || e.profiles?.email || "—"}</td>
           <td>${tsFmtDateShort(e.signed_in_at)}</td>
           <td>${tsFmtTime(e.signed_in_at)}</td>
-          <td>${e.signed_out_at ? tsFmtTime(e.signed_out_at) : '<span style="color:var(--success);font-weight:600;">Open</span>'}</td>
+          <td>${tsOutTimeHtml(e)}</td>
           <td>${tsFmtHours(e.raw_hours)}</td>
           <td>${tsFmtHours(e.payable_hours)}</td>
           <td>${tsDeltaHtml(e.raw_hours, e.payable_hours)}</td>
           <td class="addr" title="${e.in_address || ""}">${e.in_address || "—"}</td>
-          <td class="addr" title="${e.out_address || ""}">${e.out_address || "—"}</td>
+          <td class="addr" title="${e.out_address || ""}">${tsOutAddressHtml(e)}</td>
         </tr>`).join("") +
       `</tbody></table></div>`;
   }
@@ -2908,7 +2934,7 @@
       alert("No timesheet entries match the current filter to export.");
       return;
     }
-    const header = ["Staff", "Date", "Signed In", "Signed Out", "Raw Hours", "Payable Hours", "Delta", "In Address", "Out Address"];
+    const header = ["Staff", "Date", "Signed In", "Signed Out", "Raw Hours", "Payable Hours", "Delta", "In Address", "Out Address", "Auto Sign-Out"];
     const lines = [header];
     rows.forEach(e=>{
       const delta = (e.raw_hours!==null && e.payable_hours!==null) ? Math.round((e.payable_hours - e.raw_hours) * 100) / 100 : "";
@@ -2921,7 +2947,8 @@
         e.payable_hours ?? "",
         delta,
         e.in_address || "",
-        e.out_address || "",
+        e.auto_signed_out ? "" : (e.out_address || ""),
+        e.auto_signed_out ? "Yes" : "No",
       ]);
     });
     const csv = lines.map(row => row.map(csvEscape).join(",")).join("\r\n");

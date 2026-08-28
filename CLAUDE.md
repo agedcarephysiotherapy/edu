@@ -37,15 +37,32 @@ and timesheet tracker.
     optional/best-effort and log-and-continue if unset.
   - `timesheet-sheets-sync` — standalone wrapper around the same Sheets sync
     logic as `timesheet`, for manual testing.
+  - `timesheet-auto-signout` — safety-net sweep, deployed with
+    `verify_jwt=false` (see the function's own doc comment for why — this
+    project uses Supabase's newer publishable/secret key format rather than
+    legacy JWTs, so it skips the platform JWT gate rather than gamble on
+    compatibility; it's safe to call unauthenticated since it's idempotent
+    and only ever acts on entries already provably 9+ hours overdue by
+    wall-clock time). Scheduled via `pg_cron` + `pg_net` (see the
+    `schedule_timesheet_auto_signout` migration, job name
+    `timesheet_auto_signout`, runs every 15 minutes) to close any
+    `timesheet_entries` row left `status='open'` for 9+ hours — a mandatory
+    30-minute break is deducted the same as a normal sign-out,
+    `out_lat`/`out_lng`/`out_address` are left null (expected — there's no
+    client to capture GPS from), and `auto_signed_out` is set true so the UI
+    can render it distinctly (an "Auto" badge + "no location" label, not a
+    blank/error state). Emails both the staff member and all approved
+    managers. Uses the same `RESEND_API_KEY`/`RESEND_FROM_EMAIL` secrets as
+    `timesheet`.
   - `_shared/googleSheets.ts` — shared helper (not its own deployed
     function): appends every closed timesheet entry to the spreadsheet's
     first tab, and upserts a rolling per-staff, per-fortnight total into a
     self-creating "Fortnight Summary" tab for payroll reconciliation.
   - `timesheet_entries` / `timesheet_gps_failures` tables have **no
     insert/update RLS policy for authenticated/anon** — all writes go
-    through the `timesheet` function's service-role key. Don't add one; that
-    server-side-only path is what makes `raw_hours` untamperable from the
-    client.
+    through the `timesheet` (or `timesheet-auto-signout`) function's
+    service-role key. Don't add a client-write policy; that server-side-only
+    path is what makes `raw_hours` untamperable from the client.
 
 ## Brand / design system for course modules
 
