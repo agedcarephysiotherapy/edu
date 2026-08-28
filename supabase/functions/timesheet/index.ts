@@ -11,16 +11,26 @@
 // tampered with client-side.
 //
 // Actions (POST body: { action: 'sign_in' | 'sign_out' | 'report_gps_failure', ... }):
-//   sign_in             — { lat, lng }
-//   sign_out            — { lat, lng, payable_hours? }
+//   sign_in             — { lat, lng, fit_to_work_declared }
+//   sign_out            — { lat, lng, payable_hours?, pay_period_start?, pay_period_end?, pay_period_key? }
 //   report_gps_failure  — { attempted_action, error_type }
 //
 // IMPORTANT: sign_in/sign_out success never sends email. Only
 // report_gps_failure emails managers — this was a deliberate choice so
 // managers aren't spammed with every ordinary sign-in/out (they see those
 // in the Timesheets tab / Google Sheet instead).
+//
+// pay_period_start/end/key (sign_out only) are supplied by the client,
+// computed from the same fortnight-anchor logic already used for the
+// on-screen "this pay period" stat — the browser's local clock is the
+// simplest reliable source of "what pay period is this shift in" without
+// hand-rolling timezone-aware date math in the Edge Function. This only
+// affects the Google Sheets "Fortnight Summary" convenience tab (paired
+// with a matching key for upsert), never the actual paid hours: raw_hours
+// and payable_hours on the entry itself remain fully server-computed and
+// authoritative regardless of what period info the client sends.
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { appendTimesheetRow } from "../_shared/googleSheets.ts";
+import { appendTimesheetRow, upsertFortnightSummary } from "../_shared/googleSheets.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -279,6 +289,35 @@ Deno.serve(async (req: Request) => {
           ]);
         } catch (err) {
           console.error("sign_out: Sheets sync failed (non-blocking):", err);
+        }
+
+        // Rolling per-staff pay-period total, for payroll reconciliation —
+        // also fire-and-forget, entirely independent of the row-log append
+        // above (one failing never blocks or affects the other).
+        try {
+          const periodStart = typeof payload.pay_period_start === "string" ? payload.pay_period_start : null;
+          const periodEnd = typeof payload.pay_period_end === "string" ? payload.pay_period_end : null;
+          const periodKey = typeof payload.pay_period_key === "string" ? payload.pay_period_key : null;
+          if (periodStart && periodEnd && periodKey) {
+            const { data: periodEntries, error: periodErr } = await adminClient
+              .from("timesheet_entries")
+              .select("payable_hours")
+              .eq("staff_id", staffId)
+              .eq("status", "closed")
+              .gte("signed_in_at", periodStart)
+              .lt("signed_in_at", periodEnd);
+            if (periodErr) {
+              console.error("sign_out: pay-period total query failed:", periodErr);
+            } else {
+              const totalHours = (periodEntries ?? []).reduce(
+                (sum: number, e: { payable_hours: number | null }) => sum + (Number(e.payable_hours) || 0),
+                0,
+              );
+              await upsertFortnightSummary(staffName, periodKey, totalHours);
+            }
+          }
+        } catch (err) {
+          console.error("sign_out: Fortnight summary sync failed (non-blocking):", err);
         }
       })();
 
