@@ -47,6 +47,21 @@
   }
   .card h2{font-size:19px;font-weight:600;margin:0 0 4px;letter-spacing:-0.2px;}
   .card .sub{font-size:14px;color:var(--muted);margin:0 0 16px;line-height:1.5;}
+
+  /* ---- Collapsible cards / sections (staff dashboard decluttering) ---- */
+  .collapsible .card-toggle{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    cursor:pointer;user-select:none;
+  }
+  .collapsible .card-toggle h2, .collapsible .card-toggle h4{margin:0;}
+  .card-chevron{
+    flex:none;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;
+    background:#fff;transition:transform .18s ease;
+  }
+  .collapsible[data-collapsed="true"] .card-chevron{transform:rotate(-90deg);}
+  .collapsible[data-collapsed="true"] > .card-body{display:none;}
+  .collapsible:not([data-collapsed="true"]) .card-toggle{margin-bottom:4px;}
   .card-banner{
     width:calc(100% + 52px); margin:-26px -26px 20px; display:block;
     height:180px; object-fit:cover; border-radius:20px 20px 0 0;
@@ -460,25 +475,47 @@
           <button class="btn" id="tsActionBtn" style="width:100%;" disabled>Loading&hellip;</button>
           <div id="tsAdjustWrap"></div>
         </div>
-        <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin:0 0 10px;">My last 50 entries</h4>
-        <div id="timesheetMineTable"><p class="empty">Loading&hellip;</p></div>
+        <div id="cardTsHistory" class="collapsible" data-collapsed="true">
+          <div class="card-toggle">
+            <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin:0;">My last 50 entries</h4>
+            <span class="card-chevron">▾</span>
+          </div>
+          <div class="card-body" style="margin-top:10px;">
+            <div id="timesheetMineTable"><p class="empty">Loading&hellip;</p></div>
+          </div>
+        </div>
       </div>
 
-      <div class="card">
+      <div id="cardCourses" class="card collapsible" data-collapsed="false">
         <img class="card-banner" src="https://images.unsplash.com/photo-1664382953481-141e97ad9825?fm=jpg&amp;q=80&amp;w=900&amp;auto=format&amp;fit=crop" alt="Staff training session">
-        <h2>Available Courses</h2>
-        <p class="sub">Open a course to work through it. It's marked complete automatically when you finish.</p>
-        <div id="coursesForStaff"><p class="empty">Loading&hellip;</p></div>
+        <div class="card-toggle">
+          <h2>Available Courses</h2>
+          <span class="card-chevron">▾</span>
+        </div>
+        <div class="card-body">
+          <p class="sub">Open a course to work through it. It's marked complete automatically when you finish.</p>
+          <div id="coursesForStaff"><p class="empty">Loading&hellip;</p></div>
+        </div>
       </div>
-      <div class="card">
-        <h2>My Completions</h2>
-        <p class="sub">Training and course results recorded against your name.</p>
-        <div id="mineTable"><p class="empty">Loading&hellip;</p></div>
+      <div id="cardMyCompletions" class="card collapsible" data-collapsed="true">
+        <div class="card-toggle">
+          <h2>My Completions</h2>
+          <span class="card-chevron">▾</span>
+        </div>
+        <div class="card-body">
+          <p class="sub">Training and course results recorded against your name.</p>
+          <div id="mineTable"><p class="empty">Loading&hellip;</p></div>
+        </div>
       </div>
-      <div class="card">
-        <h2>Compliance Documents</h2>
-        <p class="sub">Documents your manager needs on file — police check, NDIS screening, professional registration, etc. Upload before the due date; your manager reviews and approves each one.</p>
-        <div id="myComplianceList"><p class="empty">Loading&hellip;</p></div>
+      <div id="cardMyCompliance" class="card collapsible" data-collapsed="false">
+        <div class="card-toggle">
+          <h2>Compliance Documents</h2>
+          <span class="card-chevron">▾</span>
+        </div>
+        <div class="card-body">
+          <p class="sub">Documents your manager needs on file — police check, NDIS screening, professional registration, etc. Upload before the due date; your manager reviews and approves each one.</p>
+          <div id="myComplianceList"><p class="empty">Loading&hellip;</p></div>
+        </div>
       </div>
     </div>
 
@@ -2806,6 +2843,24 @@
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   });
+
+  // ---------- COLLAPSIBLE CARDS/SECTIONS (staff dashboard decluttering) ----------
+  // Remembers each section's open/closed state per browser via localStorage,
+  // falling back to the markup's data-collapsed default on first visit.
+  function initCollapsible(id){
+    const el = document.getElementById(id);
+    const toggle = el && el.querySelector(".card-toggle");
+    if(!el || !toggle) return;
+    let stored = null;
+    try{ stored = localStorage.getItem(`collapse:${id}`); }catch{}
+    if(stored !== null) el.dataset.collapsed = stored;
+    toggle.addEventListener("click", ()=>{
+      const collapsed = el.dataset.collapsed === "true";
+      el.dataset.collapsed = collapsed ? "false" : "true";
+      try{ localStorage.setItem(`collapse:${id}`, el.dataset.collapsed); }catch{}
+    });
+  }
+  ["cardTsHistory","cardCourses","cardMyCompletions","cardMyCompliance"].forEach(initCollapsible);
 
   // ---------- TABS (manager view) ----------
   const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles", compliance:"panel-compliance", audit:"panel-audit", timesheets:"panel-timesheets", help:"panel-help"};
