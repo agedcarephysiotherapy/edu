@@ -11,7 +11,15 @@
     --blue:#336699; --blue-dark:#25507A; --blue-light:#EAF1F7;
     --ink:#1D1D1F; --muted:#6E6E73; --paper:#EDEEF2; --card:#FFFFFF;
     --line:#D2D2D7; --success:#2F7D4F; --danger:#B23A2E; --warn:#B8860B; --warn-tint:#FBF3DD;
+    /* Content column width — one variable shared by the header and main so
+       they stay aligned, widened progressively for tablet/desktop so large
+       screens aren't left with huge empty side margins around a narrow
+       phone-width column. */
+    --content-max:760px;
   }
+  @media (min-width:900px){ :root{ --content-max:880px; } }
+  @media (min-width:1280px){ :root{ --content-max:1160px; } }
+  @media (min-width:1600px){ :root{ --content-max:1320px; } }
   *{box-sizing:border-box;}
   body{
     margin:0;
@@ -30,7 +38,7 @@
     padding:14px 20px;
     position:sticky; top:0; z-index:50;
   }
-  .top-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .top-inner{max-width:var(--content-max);margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
   header.top img.logo{height:34px;width:auto;display:block;flex:none;}
   header.top h1{font-size:15px;font-weight:600;margin:0;letter-spacing:-0.1px;color:var(--ink);flex:1 1 auto;}
   header.top .who{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -41,7 +49,8 @@
     font-size:12px; padding:6px 14px; border-radius:980px; transition:background .15s;
   }
   header.top .who button:hover{background:#eaeaec;}
-  main{max-width:760px;margin:0 auto;padding:32px 16px 80px;}
+  main{max-width:var(--content-max);margin:0 auto;padding:32px 16px 80px;}
+  @media (min-width:1280px){ main{padding-top:40px;} }
   .card{
     background:var(--card);border:1px solid var(--line);border-radius:20px;
     padding:26px;margin-bottom:18px;
