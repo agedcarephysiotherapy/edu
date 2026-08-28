@@ -1615,16 +1615,12 @@
       const st = complianceStatusFor(r.id);
       const notes = st.submission && st.submission.status === "rejected" && st.submission.reviewer_notes
         ? `<p class="sub" style="margin:6px 0 0;color:var(--danger);">Reviewer note: ${st.submission.reviewer_notes}</p>` : "";
-      return `
-        <div class="course-admin" style="margin-top:10px;">
-          <div class="toggle-row" style="justify-content:space-between;">
-            <div>
-              <b>${dt ? dt.name : "—"}</b>
-              <div style="color:var(--muted);font-size:12.5px;">Due ${fmtDate(r.due_date)}${st.submission ? ` &middot; expires ${fmtDate(st.submission.expiry_date)}` : ""}</div>
-            </div>
-            ${complianceStatusBadge(st.status)}
-          </div>
-          ${notes}
+      // Once a submission is approved and still current, there's nothing
+      // left to do here — showing an upload form next to it just invites
+      // staff to needlessly re-upload. Only offer the upload control while
+      // something is actually outstanding (never submitted, pending
+      // review, rejected, or expired).
+      const uploadBlock = st.status === "approved" ? "" : `
           <div class="row" style="margin-top:10px;">
             <div>
               <label for="compIssueDate-${r.id}">Document Date</label>
@@ -1636,7 +1632,17 @@
             </div>
           </div>
           <button class="btn small blue" data-upload-compliance="${r.id}">Upload</button>
-          <div class="status-line" id="compUploadStatus-${r.id}"></div>
+          <div class="status-line" id="compUploadStatus-${r.id}"></div>`;
+      return `
+        <div class="course-admin" style="margin-top:10px;">
+          <div class="toggle-row" style="justify-content:space-between;">
+            <div>
+              <b>${dt ? dt.name : "—"}</b>
+              <div style="color:var(--muted);font-size:12.5px;">Due ${fmtDate(r.due_date)}${st.submission ? ` &middot; expires ${fmtDate(st.submission.expiry_date)}` : ""}</div>
+            </div>
+            ${complianceStatusBadge(st.status)}
+          </div>
+          ${notes}${uploadBlock}
         </div>`;
     }).join("");
     wrap.querySelectorAll("button[data-upload-compliance]").forEach(btn=>{
