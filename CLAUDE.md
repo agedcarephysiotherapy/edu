@@ -64,6 +64,68 @@ and timesheet tracker.
     service-role key. Don't add a client-write policy; that server-side-only
     path is what makes `raw_hours` untamperable from the client.
 
+## Staff categories (`staff_categories` table)
+
+Staff categories (Support Worker / Personal Care Worker / Physiotherapist,
+plus whatever managers add) are **not** hardcoded — they live in the
+`staff_categories` table (`id`, `key` unique/immutable, `label`, `sort_order`,
+`active`, `created_at`), managed from a "Staff Categories" card in the
+Manage Staff (Roles) tab. Managers can add a new category (key + label) and
+rename an existing label; the `key` itself is never editable from the UI
+once created, since `profiles.staff_categories` and `course_categories.category`
+reference it by that string everywhere.
+
+`index.html`'s `CATEGORIES`/`CATEGORY_LABELS` are still the variable names
+every call site reads (course visibility chips, the Roles table's category
+checkboxes, compliance bulk-assign-by-category, the first-sign-in "which
+best describes your role" picker, etc.) — they're just populated at runtime
+by `loadStaffCategories()` (called early in `bootApp()`, before anything
+else reads them) instead of being literals. If a fetch fails, they fall back
+to the three original hardcoded values so the app degrades rather than
+breaking.
+
+`profiles.staff_categories` and `course_categories.category` were originally
+a Postgres enum (`staff_category`) rather than free text — enums can't grow
+from a client insert, which is what "add a category from the UI" requires,
+so the `staff_categories_table` migration converts both columns to
+`text[]`/`text`. The old `staff_category` enum type is still in the
+database, unused.
+
+RLS: any authenticated user can `select` `staff_categories` (the sign-up
+picker runs before a profile is approved); only managers can `insert`/
+`update`.
+
+## Manager: recording things on a staff member's behalf
+
+Two manager-only "enter this directly, bypassing the normal staff-driven
+flow" patterns exist side by side and are meant to stay consistent with
+each other:
+
+- **Record a Completion** (`panel-add`) — course completions, into
+  `completions`.
+- **Record a Compliance Document** (Compliance tab, next to "Review
+  Submissions") — compliance documents, into `compliance_submissions`,
+  submitted pre-approved (`status='approved'`, `reviewed_by`/`reviewed_at`
+  set to the manager/now) since a manager entering it manually *is* the
+  approval. `compliance_submissions.requirement_id` is NOT NULL, so if the
+  target staff member doesn't already have an active
+  `compliance_requirements` row for the chosen document type, one is
+  auto-created on the fly (same shape as "Assign a Requirement", due-dated
+  to the issue date) rather than requiring a separate assignment step
+  first. The file upload is optional here (unlike the staff self-upload
+  flow) — `compliance_submissions.file_path` was changed from NOT NULL to
+  nullable for this reason, covering the "manager has the physical
+  original, no scan" case the feature exists for. Uses the same
+  `compliance-docs` storage bucket and `${staffId}/${docTypeId}/...` path
+  convention as the staff upload flow; managers have their own storage
+  INSERT policy (the staff one is scoped to their own `auth.uid()` folder).
+
+Manage Staff (Roles tab) also lets a manager correct a staff member's
+`profiles.full_name` inline (click the pencil next to a name → text input +
+Save/Cancel) — covered by the same `profiles` RLS update policy managers
+already use for role/status/category edits in that table, no new policy
+needed.
+
 ## Brand / design system for course modules
 
 All course pages share one visual identity — keep new modules consistent
