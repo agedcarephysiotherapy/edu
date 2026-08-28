@@ -631,7 +631,7 @@
         }
         .quick-ref-item strong { display: block; margin-bottom: 0.3rem; }
 
-        /* ---- Auth gate & completion tracking (added for training tracker) ---- */
+        /* ---- Auth gate & completion tracking (added for ACP Staff Hub) ---- */
         #authGate{
             min-height:100vh;display:flex;align-items:center;justify-content:center;
             padding:24px;background:linear-gradient(135deg, var(--primary) 0%, var(--dark) 100%);
@@ -665,8 +665,8 @@
 <div id="authGate" style="display:none;">
   <div class="gate-card">
     <h2>Sign in required</h2>
-    <p>You need to be signed in to the ACP Training Tracker to complete this course and have it recorded against your name.</p>
-    <a class="gate-link" href="../index.html">Go to the Training Tracker</a>
+    <p>You need to be signed in to the ACP Staff Hub to complete this course and have it recorded against your name.</p>
+    <a class="gate-link" href="../index.html">Go to ACP Staff Hub</a>
   </div>
 </div>
 
@@ -2293,9 +2293,9 @@
 
     <script>
         /* ---------------------------------------------------------
-           TRAINING TRACKER INTEGRATION
+           ACP STAFF HUB INTEGRATION
            COURSE_ID for this course, copied from the Courses tab in
-           the training tracker. SUPABASE_URL/ANON_KEY are the same
+           ACP Staff Hub. SUPABASE_URL/ANON_KEY are the same
            for every course page (same edu project as index.html).
         --------------------------------------------------------- */
         var COURSE_ID = "3009c2c6-b3e9-4e2d-a728-c01f6233efd7";
