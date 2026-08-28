@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aged Care Physiotherapy — Training Modules Dashboard</title>
+<title>Aged Care Physiotherapy — Training &amp; Compliance Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root{
@@ -266,8 +266,8 @@
 
 <div id="loginScreen">
   <img class="auth-logo" src="https://forms.acphysio.com.au/acplogo" alt="Aged Care Physiotherapy">
-  <h1 class="auth-heading">Training Modules Dashboard</h1>
-  <p class="auth-sub">Sign in with your email to access your training courses.</p>
+  <h1 class="auth-heading">Training &amp; Compliance Dashboard</h1>
+  <p class="auth-sub">Sign in with your email to access your training and compliance records.</p>
   <img class="auth-hero-photo" src="https://images.unsplash.com/photo-1664382953481-141e97ad9825?fm=jpg&amp;q=80&amp;w=1200&amp;auto=format&amp;fit=crop" alt="A trainer leading a group training session">
   <div class="card">
     <label for="emailInput">Work Email</label>
@@ -308,7 +308,7 @@
   <header class="top">
     <div class="top-inner">
       <img class="logo" src="https://forms.acphysio.com.au/acplogo" alt="ACP">
-      <h1>Training Modules Dashboard</h1>
+      <h1>Training &amp; Compliance Dashboard</h1>
       <div class="who">
         Signed in as <strong id="whoAmI"></strong>
         <span id="roleTag"></span>
@@ -1673,7 +1673,7 @@
 
     let rows = allComplianceRequirements.map(r => {
       const st = complianceStatusFor(r.id);
-      return {req: r, status: st.status};
+      return {req: r, status: st.status, submission: st.submission};
     });
     if(staffFilter) rows = rows.filter(x => x.req.staff_id === staffFilter);
     if(statusFilter) rows = rows.filter(x => x.status === statusFilter);
@@ -1690,17 +1690,33 @@
       wrap.innerHTML = '<p class="empty">No requirements match this filter.</p>';
       return;
     }
-    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Staff</th><th>Document</th><th>Due</th><th>Days</th><th>Status</th></tr></thead><tbody>` +
+    // File view is available for any status with an actual upload on file
+    // (approved, rejected, pending review, or expired-but-was-approved) —
+    // this is the only place a manager can retrieve an approved or
+    // rejected document once it's dropped off the Review Submissions
+    // queue, so it isn't limited to pending items.
+    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Staff</th><th>Document</th><th>Due</th><th>Days</th><th>Status</th><th>File</th></tr></thead><tbody>` +
       rows.map(x=>{
         const days = complianceDaysLabel(x.req.due_date, x.status);
+        const fileLink = x.submission
+          ? `<a class="cert-link" href="#" data-view-compliance="${x.submission.file_path}">View</a>`
+          : `<span style="color:var(--muted);font-size:12px;">—</span>`;
         return `<tr>
           <td>${nameOf(x.req.staff_id)}</td>
           <td>${typeOf(x.req.document_type_id)}</td>
           <td>${fmtDate(x.req.due_date)}</td>
           <td style="${days.style}">${days.text}</td>
           <td>${complianceStatusBadge(x.status)}</td>
+          <td>${fileLink}</td>
         </tr>`;
       }).join("") + `</tbody></table></div>`;
+    wrap.querySelectorAll("a[data-view-compliance]").forEach(a=>{
+      a.addEventListener("click", async (e)=>{
+        e.preventDefault();
+        const url = await signedComplianceUrl(a.dataset.viewCompliance);
+        if(url) window.open(url, "_blank");
+      });
+    });
   }
   ["complianceAuditFilterStaff","complianceAuditFilterStatus","complianceAuditFilterDocType"].forEach(id=>{
     document.getElementById(id).addEventListener("change", renderComplianceAudit);
