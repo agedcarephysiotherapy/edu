@@ -291,6 +291,21 @@
     #timesheetMineTable table, #timesheetAllTable table{table-layout:auto;min-width:640px;}
   }
 
+  /* Completions/audit views (#mineTable, #allTable) and the Compliance
+     Audit table (#complianceAuditTable) are dense, many-column tables that
+     don't lend themselves to hiding columns (every column is information a
+     manager is actively filtering/scanning for) — same technique as the
+     timesheet tables above: below a breakpoint, stop trying to squash into
+     the viewport and give the table a real min-width so .table-wrap's
+     existing overflow-x:auto produces a smooth horizontal scroll instead of
+     unreadable slivers or forced page-level overflow.
+     #mineTable's table is narrower (4 columns, no staff/email) so it gets a
+     smaller floor than the 6-column tables. */
+  @media (max-width:640px){
+    #allTable table, #complianceAuditTable table{min-width:640px;}
+    #mineTable table{min-width:420px;}
+  }
+
   #helpWidget{position:fixed;right:20px;bottom:20px;z-index:200;font-size:14px;}
   #helpWidgetToggle{
     background:var(--blue);color:#fff;border:none;border-radius:999px;padding:12px 18px;
@@ -369,6 +384,27 @@
     th,td{padding:8px 4px;}
     .btn{width:100%;justify-content:center;}
     .btn.small{width:auto;}
+    /* Dense manager tables: bigger touch targets for buttons and checkboxes
+       packed into table cells (row actions, category chip-checks) — the
+       default sizing is fine on desktop pointer input but too cramped to
+       tap reliably at phone width. */
+    .table-wrap .btn.small{padding:9px 12px;font-size:12px;}
+    .table-wrap .row-actions{gap:8px;}
+    .table-wrap .chip-check{padding:7px 11px !important;font-size:11.5px !important;}
+    .table-wrap input[type="checkbox"]{width:17px;height:17px;}
+    /* Manage Staff table: Email is the lowest-priority of its six columns
+       at this width (name/status/role/category/actions all matter more for
+       an at-a-glance approve/promote/categorise pass) — drop it rather than
+       let the row get so cramped the category chips and action buttons
+       stop being tappable. Still reachable via the staff filter or a wider
+       screen. */
+    #rolesTable table{min-width:0;}
+    #rolesTable th:nth-child(2),#rolesTable td:nth-child(2){display:none;}
+    #rolesTable th:nth-child(1),#rolesTable td:nth-child(1){width:22%;}
+    #rolesTable th:nth-child(3),#rolesTable td:nth-child(3){width:15%;}
+    #rolesTable th:nth-child(4),#rolesTable td:nth-child(4){width:14%;}
+    #rolesTable th:nth-child(5),#rolesTable td:nth-child(5){width:27%;}
+    #rolesTable th:nth-child(6),#rolesTable td:nth-child(6){width:22%;}
   }
   @media print{
     @page { size: landscape; margin: 10mm; }
@@ -640,6 +676,26 @@
         <p class="sub">Approve new sign-ins before they can see anything, and promote a staff member to manager or step someone back down. Be careful with manager access — managers can see and edit everyone's records. Confirm each person's role category here too — it's what decides which courses they see by default.</p>
         <div id="rolesTable"><p class="empty">Loading&hellip;</p></div>
       </div>
+
+      <div class="card">
+        <h2>Staff Categories</h2>
+        <p class="sub">The categories staff can be tagged with (Manage Staff above, and the "which best describes your role" picker at first sign-in), used to target course visibility and bulk-assign compliance requirements. Renaming a label only changes how it displays — it doesn't affect any existing assignment. The key itself can't be changed once created, since it's what existing records reference.</p>
+        <div class="row">
+          <div>
+            <label for="newCatKey">Key (fixed, e.g. "kitchen_staff")</label>
+            <input type="text" id="newCatKey" placeholder="lowercase_with_underscores">
+          </div>
+          <div>
+            <label for="newCatLabel">Label (shown in the app)</label>
+            <input type="text" id="newCatLabel" placeholder="e.g. Kitchen Staff">
+          </div>
+        </div>
+        <div style="height:12px;"></div>
+        <button class="btn" id="addCatBtn">Add Category</button>
+        <div class="status-line" id="catStatus"></div>
+        <div style="height:16px;"></div>
+        <div id="staffCategoriesTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
     </div>
 
     <!-- MANAGER: COMPLIANCE -->
@@ -736,6 +792,37 @@
         <h2>Review Submissions</h2>
         <p class="sub">Documents staff have uploaded that are waiting on your approval.</p>
         <div id="complianceReviewTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+
+      <!-- MANAGER: RECORD COMPLIANCE DOCUMENT -->
+      <div class="card">
+        <h2>Record a Compliance Document</h2>
+        <p class="sub">For cases where you have the original in hand, or are backfilling historical records — this records the document as already reviewed and approved, skipping the normal upload-then-review step. If the staff member doesn't already have this document type assigned, a requirement is created for them automatically.</p>
+        <div class="row">
+          <div>
+            <label for="recCompStaffSelect">Staff Member</label>
+            <select id="recCompStaffSelect"></select>
+          </div>
+          <div>
+            <label for="recCompDocTypeSelect">Document Type</label>
+            <select id="recCompDocTypeSelect"></select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="recCompIssueDate">Issue Date</label>
+            <input type="date" id="recCompIssueDate">
+          </div>
+          <div>
+            <label for="recCompExpiryDate">Expiry Date</label>
+            <input type="date" id="recCompExpiryDate">
+          </div>
+        </div>
+        <label for="recCompFile">Document Scan/Photo (optional)</label>
+        <input type="file" id="recCompFile" accept=".pdf,.jpg,.jpeg,.png">
+        <div style="height:12px;"></div>
+        <button class="btn" id="recCompBtn">Save Compliance Record</button>
+        <div class="status-line" id="recCompStatus"></div>
       </div>
 
       <div class="card">
@@ -889,6 +976,7 @@
   let allCourses = [];
   let allCompletionsCache = [];
   let editingCourseId = null;
+  let editingProfileNameId = null;  // which staff row's name cell is in edit mode, in the Manage Staff table
   let allCourseCategories = [];   // {course_id, category}
   let allCourseAssignments = [];  // {id, course_id, staff_id}
   let allCourseExclusions = [];   // {id, course_id, staff_id}
@@ -902,12 +990,28 @@
   let allComplianceRequirements = [];
   let allComplianceSubmissions = [];
 
-  const CATEGORIES = ["support_worker", "personal_care_worker", "physiotherapist"];
-  const CATEGORY_LABELS = {
+  // Populated at runtime from the staff_categories table (loadStaffCategories(),
+  // called early in bootApp() before anything reads these) — the hardcoded
+  // values here are only the fallback shown for the instant before that
+  // fetch resolves. Every downstream call site keeps reading these same two
+  // variable names, so nothing else needed to change to become
+  // admin-editable.
+  let CATEGORIES = ["support_worker", "personal_care_worker", "physiotherapist"];
+  let CATEGORY_LABELS = {
     support_worker: "Support Worker",
     personal_care_worker: "Personal Care Worker",
     physiotherapist: "Physiotherapist"
   };
+  let allStaffCategories = []; // raw {id,key,label,sort_order,active} rows
+
+  async function loadStaffCategories(){
+    const { data, error } = await sb.from("staff_categories").select("*").eq("active", true).order("sort_order");
+    if(error || !data || data.length === 0) return; // keep the hardcoded fallback above
+    allStaffCategories = data;
+    CATEGORIES = data.map(c => c.key);
+    CATEGORY_LABELS = {};
+    data.forEach(c => { CATEGORY_LABELS[c.key] = c.label; });
+  }
 
   function setStatus(id, msg, cls){
     const el = document.getElementById(id);
@@ -1040,14 +1144,14 @@
       wrap.innerHTML = '<p class="empty">No completions recorded yet.</p>';
       return;
     }
-    let html = `<table><thead><tr><th>Course</th><th>Date</th><th>Result</th><th>Certificate</th></tr></thead><tbody>`;
+    let html = `<div class="table-wrap"><table><thead><tr><th>Course</th><th>Date</th><th>Result</th><th>Certificate</th></tr></thead><tbody>`;
     for(const c of data){
       const certLink = c.certificate_path
         ? `<a class="cert-link" href="#" data-path="${c.certificate_path}">View</a>`
         : "—";
       html += `<tr><td>${c.courses?.name || "—"}</td><td>${fmtDate(c.completion_date)}</td><td>${resultBadge(c.result)}</td><td>${certLink}</td></tr>`;
     }
-    html += `</tbody></table>`;
+    html += `</tbody></table></div>`;
     wrap.innerHTML = html;
     wrap.querySelectorAll("a[data-path]").forEach(a=>{
       a.addEventListener("click", async (e)=>{
@@ -1082,14 +1186,14 @@
       wrap.innerHTML = `<p class="empty">${needle ? "No completions match that name or email." : "No completions recorded yet."}</p>`;
       return;
     }
-    let html = `<table><thead><tr><th>Staff</th><th>Email</th><th>Course</th><th>Date</th><th>Result</th><th>Certificate</th></tr></thead><tbody>`;
+    let html = `<div class="table-wrap"><table><thead><tr><th>Staff</th><th>Email</th><th>Course</th><th>Date</th><th>Result</th><th>Certificate</th></tr></thead><tbody>`;
     for(const c of rows){
       const certLink = c.certificate_path
         ? `<a class="cert-link" href="#" data-path="${c.certificate_path}">View</a>`
         : "—";
       html += `<tr><td>${c.profiles?.full_name || "—"}</td><td>${c.profiles?.email || "—"}</td><td>${c.courses?.name || "—"}</td><td>${fmtDate(c.completion_date)}</td><td>${resultBadge(c.result)}</td><td>${certLink}</td></tr>`;
     }
-    html += `</tbody></table>`;
+    html += `</tbody></table></div>`;
     wrap.innerHTML = html;
     wrap.querySelectorAll("a[data-path]").forEach(a=>{
       a.addEventListener("click", async (e)=>{
@@ -1458,9 +1562,16 @@
                   ${CATEGORY_LABELS[cat]}
                 </label>`).join("")}
             </div>`;
+        const nameCell = editingProfileNameId === p.id
+          ? `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+              <input type="text" id="editProfileName-${p.id}" value="${(p.full_name||"").replace(/"/g,'&quot;')}" style="width:140px;">
+              <button class="btn small blue" data-save-name="${p.id}">Save</button>
+              <button class="btn small ghost" data-cancel-name="${p.id}">Cancel</button>
+            </div>`
+          : `${p.full_name || "—"} <button class="btn small ghost" data-edit-name="${p.id}" title="Edit name" style="padding:2px 7px;font-size:11px;">&#9998;</button>`;
         return `
         <tr>
-          <td>${p.full_name || "—"}</td>
+          <td>${nameCell}</td>
           <td>${p.email || "—"}</td>
           <td>${statusTag}</td>
           <td><span class="role-tag on-light">${p.role}</span></td>
@@ -1468,6 +1579,39 @@
           <td>${actions}</td>
         </tr>`;
       }).join("") + `</tbody></table></div>`;
+    wrap.querySelectorAll("button[data-edit-name]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        editingProfileNameId = btn.dataset.editName;
+        renderRoles();
+      });
+    });
+    wrap.querySelectorAll("button[data-cancel-name]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        editingProfileNameId = null;
+        renderRoles();
+      });
+    });
+    wrap.querySelectorAll("button[data-save-name]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const profileId = btn.dataset.saveName;
+        const input = document.getElementById(`editProfileName-${profileId}`);
+        const newName = input.value.trim();
+        if(!newName){
+          alert("Name can't be empty.");
+          return;
+        }
+        const { error } = await sb.from("profiles").update({full_name: newName}).eq("id", profileId);
+        if(error){
+          alert("Couldn't save the name — try again.");
+          return;
+        }
+        editingProfileNameId = null;
+        await loadAllProfiles();
+        renderRoles();
+        renderAudit();
+        populateAddForm();
+      });
+    });
     wrap.querySelectorAll("button[data-toggle]").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
         const newRole = btn.dataset.role === "manager" ? "staff" : "manager";
@@ -1510,6 +1654,93 @@
       });
     });
   }
+
+  // ---- Manager: Staff Categories admin ----
+  let editingCatKey = null; // which category's label is in edit mode
+
+  function renderStaffCategoriesTable(){
+    const wrap = document.getElementById("staffCategoriesTable");
+    if(allStaffCategories.length === 0){
+      wrap.innerHTML = '<p class="empty">No categories yet.</p>';
+      return;
+    }
+    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Key</th><th>Label</th><th></th></tr></thead><tbody>` +
+      allStaffCategories.map(c=>{
+        const labelCell = editingCatKey === c.key
+          ? `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+              <input type="text" id="editCatLabel-${c.id}" value="${c.label.replace(/"/g,'&quot;')}" style="width:160px;">
+              <button class="btn small blue" data-save-cat="${c.id}">Save</button>
+              <button class="btn small ghost" data-cancel-cat="${c.key}">Cancel</button>
+            </div>`
+          : `${c.label} <button class="btn small ghost" data-edit-cat="${c.key}" title="Rename label" style="padding:2px 7px;font-size:11px;">&#9998;</button>`;
+        return `<tr>
+          <td><code style="font-size:11px;background:var(--paper);padding:2px 6px;border-radius:4px;">${c.key}</code></td>
+          <td>${labelCell}</td>
+          <td></td>
+        </tr>`;
+      }).join("") + `</tbody></table></div>`;
+    wrap.querySelectorAll("button[data-edit-cat]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        editingCatKey = btn.dataset.editCat;
+        renderStaffCategoriesTable();
+      });
+    });
+    wrap.querySelectorAll("button[data-cancel-cat]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        editingCatKey = null;
+        renderStaffCategoriesTable();
+      });
+    });
+    wrap.querySelectorAll("button[data-save-cat]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const id = btn.dataset.saveCat;
+        const newLabel = document.getElementById(`editCatLabel-${id}`).value.trim();
+        if(!newLabel){
+          alert("Label can't be empty.");
+          return;
+        }
+        const { error } = await sb.from("staff_categories").update({label: newLabel}).eq("id", id);
+        if(error){
+          alert("Couldn't save — try again.");
+          return;
+        }
+        editingCatKey = null;
+        await loadStaffCategories();
+        renderStaffCategoriesTable();
+        renderRoles();
+        renderAudit();
+        populateAddForm();
+        populateComplianceAssignForm();
+      });
+    });
+  }
+
+  document.getElementById("addCatBtn").addEventListener("click", async ()=>{
+    const keyInput = document.getElementById("newCatKey");
+    const labelInput = document.getElementById("newCatLabel");
+    const key = keyInput.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    const label = labelInput.value.trim();
+    if(!key || !label){
+      setStatus("catStatus", "Both a key and a label are required.", "err");
+      return;
+    }
+    setStatus("catStatus", "Saving...", "");
+    const { error } = await sb.from("staff_categories").insert({
+      key, label, sort_order: allStaffCategories.length
+    });
+    if(error){
+      setStatus("catStatus", error.code === "23505" ? "That key already exists." : "Couldn't add — try again.", "err");
+      return;
+    }
+    setStatus("catStatus", "Category added.", "ok");
+    keyInput.value = "";
+    labelInput.value = "";
+    await loadStaffCategories();
+    renderStaffCategoriesTable();
+    renderRoles();
+    populateAddForm();
+    populateComplianceAssignForm();
+  });
 
   // ---------- AUDIT ----------
   let auditSelectedIds = null; // Set of staff ids to include in print/export; null = not yet initialised
@@ -1889,8 +2120,91 @@
     const bulkTypeSel = document.getElementById("complianceBulkDocType");
     bulkTypeSel.innerHTML = allComplianceDocTypes.map(dt=>`<option value="${dt.id}">${dt.name}</option>`).join("");
 
+    const recStaffSel = document.getElementById("recCompStaffSelect");
+    recStaffSel.innerHTML = allProfiles.filter(p=>p.status==="approved").map(p=>`<option value="${p.id}">${p.full_name || p.email}</option>`).join("");
+    const recTypeSel = document.getElementById("recCompDocTypeSelect");
+    recTypeSel.innerHTML = allComplianceDocTypes.map(dt=>`<option value="${dt.id}">${dt.name}</option>`).join("");
+
     renderComplianceRequirementsTable();
   }
+
+  // ---- Manager: Record a Compliance Document (pre-approved, on a staff
+  // member's behalf) ----
+  // Keep the expiry date in sync with the chosen document type's renewal
+  // rule whenever the issue date or document type changes — the manager can
+  // still override it manually afterwards.
+  function recCompAutofillExpiry(){
+    const dt = allComplianceDocTypes.find(dt => dt.id === document.getElementById("recCompDocTypeSelect").value);
+    const issueDate = document.getElementById("recCompIssueDate").value;
+    if(dt && issueDate){
+      document.getElementById("recCompExpiryDate").value = computeExpiryDate(issueDate, dt);
+    }
+  }
+  document.getElementById("recCompDocTypeSelect").addEventListener("change", recCompAutofillExpiry);
+  document.getElementById("recCompIssueDate").addEventListener("change", recCompAutofillExpiry);
+
+  document.getElementById("recCompBtn").addEventListener("click", async ()=>{
+    const staffId = document.getElementById("recCompStaffSelect").value;
+    const docTypeId = document.getElementById("recCompDocTypeSelect").value;
+    const issueDate = document.getElementById("recCompIssueDate").value;
+    const expiryDate = document.getElementById("recCompExpiryDate").value;
+    const file = document.getElementById("recCompFile").files[0];
+    if(!staffId || !docTypeId || !issueDate || !expiryDate){
+      setStatus("recCompStatus", "Staff member, document type, issue date and expiry date are all required.", "err");
+      return;
+    }
+    setStatus("recCompStatus", "Saving...", "");
+
+    // The staff member may not already have an active requirement for this
+    // document type (compliance_submissions.requirement_id is NOT NULL, so
+    // one must exist) — reuse it if present, otherwise create it on the fly
+    // the same way "Assign a Requirement" does, due today since it's being
+    // recorded as already satisfied.
+    let requirement = allComplianceRequirements.find(r => r.staff_id === staffId && r.document_type_id === docTypeId);
+    if(!requirement){
+      const { data: newReq, error: reqErr } = await sb.from("compliance_requirements").insert({
+        staff_id: staffId, document_type_id: docTypeId, due_date: issueDate, assigned_by: currentUser.id
+      }).select().single();
+      if(reqErr){
+        setStatus("recCompStatus", "Couldn't create a requirement for this staff member — try again.", "err");
+        return;
+      }
+      requirement = newReq;
+      allComplianceRequirements.push(requirement);
+    }
+
+    let filePath = null;
+    if(file){
+      const path = `${staffId}/${docTypeId}/${crypto.randomUUID()}-${file.name}`;
+      const { error: upErr } = await sb.storage.from("compliance-docs").upload(path, file);
+      if(upErr){
+        setStatus("recCompStatus", "Couldn't upload the file — try again.", "err");
+        return;
+      }
+      filePath = path;
+    }
+
+    const { error } = await sb.from("compliance_submissions").insert({
+      requirement_id: requirement.id,
+      file_path: filePath,
+      issue_date: issueDate,
+      expiry_date: expiryDate,
+      status: "approved",
+      reviewed_by: currentUser.id,
+      reviewed_at: new Date().toISOString()
+    });
+    if(error){
+      setStatus("recCompStatus", "Couldn't save — try again.", "err");
+      return;
+    }
+    setStatus("recCompStatus", "Saved as approved.", "ok");
+    document.getElementById("recCompFile").value = "";
+    await loadComplianceData();
+    populateComplianceAssignForm();
+    renderComplianceReview();
+    renderComplianceAudit();
+    renderCoverage();
+  });
 
   function renderComplianceRequirementsTable(){
     const wrap = document.getElementById("complianceRequirementsTable");
@@ -2116,7 +2430,7 @@
     wrap.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Staff</th><th>Document</th><th>Due</th><th>Days</th><th>Status</th><th>File</th></tr></thead><tbody>` +
       rows.map(x=>{
         const days = complianceDaysLabel(x.req.due_date, x.status);
-        const fileLink = x.submission
+        const fileLink = (x.submission && x.submission.file_path)
           ? `<a class="cert-link" href="#" data-view-compliance="${x.submission.file_path}">View</a>`
           : `<span style="color:var(--muted);font-size:12px;">—</span>`;
         return `<tr>
@@ -3004,6 +3318,12 @@
   async function bootApp(session){
     currentUser = session.user;
     await loadMyProfile();
+    // Refresh CATEGORIES/CATEGORY_LABELS from the DB before anything below
+    // reads them (the name-capture chip picker included) — readable by any
+    // authenticated user regardless of approval status, so this is safe to
+    // run this early.
+    await loadStaffCategories();
+    buildNameCaptureCategories();
 
     document.getElementById("loginScreen").style.display = "none";
 
@@ -3049,6 +3369,7 @@
       await renderAll();
       renderCourses();
       renderRoles();
+      renderStaffCategoriesTable();
       renderAudit();
       populateAddForm();
     }else{
@@ -3064,9 +3385,12 @@
     }
   }
 
-  // Build the category chip group once — options are static, only their
-  // checked state changes per-visit.
-  (function buildNameCaptureCategories(){
+  // Rebuilds the category chip group from whatever CATEGORIES/CATEGORY_LABELS
+  // currently hold — called once at parse time with the hardcoded fallback,
+  // then again from bootApp() once loadStaffCategories() has resolved the
+  // real list, so the name-capture screen (which can show before a manager
+  // ever visits any other tab) still reflects live categories.
+  function buildNameCaptureCategories(){
     const wrap = document.getElementById("nameCaptureCategories");
     wrap.innerHTML = CATEGORIES.map(cat => `
       <label class="chip-check" data-nc-chip="${cat}">
@@ -3078,7 +3402,8 @@
         cb.closest("label").classList.toggle("on", cb.checked);
       });
     });
-  })();
+  }
+  buildNameCaptureCategories();
 
   document.getElementById("nameCaptureBtn").addEventListener("click", async ()=>{
     const name = document.getElementById("nameCaptureInput").value.trim();
