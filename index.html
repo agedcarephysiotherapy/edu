@@ -186,6 +186,26 @@
   .nudge-banner a{color:inherit;font-weight:600;text-decoration:underline;white-space:nowrap;}
 
   /* ---- Timesheet (staff sign-in/out + manager tab) ---- */
+  .ts-card{position:relative;overflow:hidden;}
+  .ts-card::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:5px;
+    background:linear-gradient(90deg,var(--brand),var(--blue));
+  }
+  .ts-eyebrow{
+    font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;
+    color:var(--blue-dark);margin:2px 0 4px;
+  }
+  .ts-panel{
+    background:linear-gradient(165deg,var(--brand-light) 0%,var(--blue-light) 100%);
+    border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:18px;
+  }
+  .ts-stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .ts-stat-chip{
+    background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 16px;
+    box-shadow:0 2px 8px -4px rgba(0,0,0,.12);
+  }
+  .ts-stat-num{display:block;font-size:20px;font-weight:700;letter-spacing:-0.3px;color:var(--ink);}
+  .ts-stat-label{display:block;font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.2px;margin-top:2px;}
   .ts-flash{
     border-radius:14px;padding:14px 18px;margin-bottom:16px;font-size:14px;line-height:1.5;
     display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
@@ -204,14 +224,31 @@
   }
   .ts-status-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--line);}
   .ts-status-pill.open .dot{background:var(--success);}
+  .ts-declare{
+    display:flex;align-items:flex-start;gap:10px;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13.5px;line-height:1.4;color:var(--ink);
+  }
+  .ts-declare input{margin:2px 0 0;flex:none;width:16px;height:16px;accent-color:var(--brand);cursor:pointer;}
+  .ts-declare label{
+    display:block;margin:0;text-transform:none;font-weight:400;font-size:13.5px;letter-spacing:normal;
+    color:var(--ink);cursor:pointer;
+  }
   .ts-adjust{
-    border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px;background:var(--paper);
+    border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px;background:#fff;
   }
   .ts-adjust label{margin-top:0;}
   .ts-delta{font-weight:700;}
   .ts-delta.neg{color:var(--danger);}
   .ts-delta.pos{color:var(--blue-dark);}
-  #timesheetMineTable td.addr, #timesheetAllTable td.addr{font-size:12px;color:var(--muted);max-width:200px;}
+  #timesheetMineTable table, #timesheetAllTable table{table-layout:fixed;}
+  #timesheetMineTable td, #timesheetAllTable td{font-size:13px;}
+  #timesheetMineTable td:not(.addr), #timesheetAllTable td:not(.addr){white-space:nowrap;}
+  #timesheetMineTable td.addr, #timesheetAllTable td.addr{
+    font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  @media (max-width:640px){
+    #timesheetMineTable table, #timesheetAllTable table{table-layout:auto;min-width:640px;}
+  }
 
   #helpWidget{position:fixed;right:20px;bottom:20px;z-index:200;font-size:14px;}
   #helpWidgetToggle{
@@ -410,15 +447,19 @@
     <div id="panel-mine" class="panel">
       <div id="complianceNudgeBanner"></div>
 
-      <div class="card">
+      <div class="card ts-card">
+        <div class="ts-eyebrow">Time &amp; attendance</div>
         <h2>Timesheet</h2>
         <p class="sub">Sign in when you arrive, sign out when you leave. Your location is captured each time so shifts can be verified.</p>
         <div id="tsFlash"></div>
-        <div id="tsStatusPill" class="ts-status-pill"><span class="dot"></span><span id="tsStatusText">Loading&hellip;</span></div>
-        <div id="tsGpsHelp" style="display:none;"></div>
-        <button class="btn" id="tsActionBtn" style="width:100%;" disabled>Loading&hellip;</button>
-        <div id="tsAdjustWrap"></div>
-        <div style="height:20px;"></div>
+        <div id="tsPayPeriodStat" class="ts-stats"></div>
+        <div class="ts-panel">
+          <div id="tsStatusPill" class="ts-status-pill"><span class="dot"></span><span id="tsStatusText">Loading&hellip;</span></div>
+          <div id="tsGpsHelp" style="display:none;"></div>
+          <div id="tsDeclareWrap"></div>
+          <button class="btn" id="tsActionBtn" style="width:100%;" disabled>Loading&hellip;</button>
+          <div id="tsAdjustWrap"></div>
+        </div>
         <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin:0 0 10px;">My last 50 entries</h4>
         <div id="timesheetMineTable"><p class="empty">Loading&hellip;</p></div>
       </div>
@@ -683,7 +724,8 @@
 
     <!-- MANAGER: TIMESHEETS -->
     <div id="panel-timesheets" class="panel" style="display:none;">
-      <div class="card">
+      <div class="card ts-card">
+        <div class="ts-eyebrow">Time &amp; attendance</div>
         <h2>Timesheets</h2>
         <p class="sub">Every staff sign-in/out, with raw vs. payable hours. Deltas (where a staff member adjusted their payable hours) are flagged.</p>
         <div class="row" style="align-items:end;">
@@ -2318,7 +2360,21 @@
 
   let tsOpenEntry = null;       // the signed-in staff member's own open entry, or null
   let tsGeoBusy = false;        // guards double-clicks while a geolocation/API round trip is in flight
+  let tsFitDeclared = false;    // "fit to work" checkbox state, reset each time the panel re-renders as "not signed in"
   let allTimesheetEntries = []; // manager "Timesheets" tab cache
+
+  // Fortnightly pay period, anchored to Mon 17 Aug 2026 (local time) as
+  // instructed — period N covers [anchor + 14N days, anchor + 14(N+1) days).
+  const TS_PAY_PERIOD_ANCHOR = new Date(2026, 7, 17);
+  function tsPayPeriodRange(ref){
+    const anchor0 = new Date(TS_PAY_PERIOD_ANCHOR.getFullYear(), TS_PAY_PERIOD_ANCHOR.getMonth(), TS_PAY_PERIOD_ANCHOR.getDate());
+    const ref0 = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate());
+    const diffDays = Math.floor((ref0 - anchor0) / 86400000);
+    const periodIndex = Math.floor(diffDays / 14);
+    const start = new Date(anchor0); start.setDate(start.getDate() + periodIndex * 14);
+    const end = new Date(start); end.setDate(start.getDate() + 14);
+    return { start, end };
+  }
 
   const TS_GPS_ERROR_TYPE = { 1: "permission_denied", 2: "position_unavailable", 3: "timeout" };
   const TS_GPS_INSTRUCTIONS = {
@@ -2353,6 +2409,21 @@
     if(delta === 0) return `<span style="color:var(--muted);">0.00h</span>`;
     const cls = delta < 0 ? "neg" : "pos";
     return `<span class="ts-delta ${cls}">${delta > 0 ? "+" : ""}${delta.toFixed(2)}h</span>`;
+  }
+
+  async function tsRenderPayPeriodStat(){
+    const wrap = document.getElementById("tsPayPeriodStat");
+    const { start, end } = tsPayPeriodRange(new Date());
+    const { data } = await sb.from("timesheet_entries")
+      .select("payable_hours")
+      .eq("staff_id", currentUser.id)
+      .gte("signed_in_at", start.toISOString())
+      .lt("signed_in_at", end.toISOString());
+    const total = (data || []).reduce((sum, e) => sum + (Number(e.payable_hours) || 0), 0);
+    const lastDay = new Date(end); lastDay.setDate(lastDay.getDate() - 1);
+    const fmtOpt = { day: "numeric", month: "short" };
+    const label = `${start.toLocaleDateString("en-AU", fmtOpt)} – ${lastDay.toLocaleDateString("en-AU", fmtOpt)}`;
+    wrap.innerHTML = `<div class="ts-stat-chip"><span class="ts-stat-num">${total.toFixed(2)}h</span><span class="ts-stat-label">This pay period · ${label}</span></div>`;
   }
 
   function tsFlash(html, cls){
@@ -2432,15 +2503,29 @@
     const btn = document.getElementById("tsActionBtn");
     const pill = document.getElementById("tsStatusPill");
     const text = document.getElementById("tsStatusText");
-    btn.disabled = tsGeoBusy;
+    const declareWrap = document.getElementById("tsDeclareWrap");
     if(tsOpenEntry){
       btn.textContent = "Sign Out";
       pill.classList.add("open");
       text.textContent = `Signed in since ${tsFmtTime(tsOpenEntry.signed_in_at)}`;
+      declareWrap.innerHTML = "";
+      btn.disabled = tsGeoBusy;
     }else{
       btn.textContent = "Sign In";
       pill.classList.remove("open");
       text.textContent = "Not signed in";
+      if(!declareWrap.querySelector("#tsFitCheckbox")){
+        declareWrap.innerHTML = `
+          <div class="ts-declare">
+            <input type="checkbox" id="tsFitCheckbox" ${tsFitDeclared ? "checked" : ""}>
+            <label for="tsFitCheckbox">I confirm I am fit to work today.</label>
+          </div>`;
+        document.getElementById("tsFitCheckbox").addEventListener("change", (e)=>{
+          tsFitDeclared = e.target.checked;
+          tsRenderButton();
+        });
+      }
+      btn.disabled = tsGeoBusy || !tsFitDeclared;
     }
   }
 
@@ -2467,7 +2552,13 @@
       wrap.innerHTML = '<p class="empty">No timesheet entries yet.</p>';
       return;
     }
-    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr>
+    wrap.innerHTML = `<div class="table-wrap"><table>
+      <colgroup>
+        <col style="width:13%"><col style="width:9%"><col style="width:9%">
+        <col style="width:8%"><col style="width:9%"><col style="width:8%">
+        <col style="width:22%"><col style="width:22%">
+      </colgroup>
+      <thead><tr>
         <th>Date</th><th>In</th><th>Out</th><th>Raw</th><th>Payable</th><th>Δ</th><th>In address</th><th>Out address</th>
       </tr></thead><tbody>` +
       data.map(e => `<tr>
@@ -2477,22 +2568,28 @@
           <td>${tsFmtHours(e.raw_hours)}</td>
           <td>${tsFmtHours(e.payable_hours)}</td>
           <td>${tsDeltaHtml(e.raw_hours, e.payable_hours)}</td>
-          <td class="addr">${e.in_address || "—"}</td>
-          <td class="addr">${e.out_address || "—"}</td>
+          <td class="addr" title="${e.in_address || ""}">${e.in_address || "—"}</td>
+          <td class="addr" title="${e.out_address || ""}">${e.out_address || "—"}</td>
         </tr>`).join("") +
       `</tbody></table></div>`;
   }
 
   async function tsHandleSignIn(){
+    if(!tsFitDeclared){
+      tsFlash("Please confirm you're fit to work before signing in.", "err");
+      return;
+    }
     tsGeoBusy = true; tsRenderButton();
     tsHideGpsHelp();
     try{
       const {lat, lng} = await tsGetPosition();
-      const result = await tsCallFunction({ action: "sign_in", lat, lng });
+      const result = await tsCallFunction({ action: "sign_in", lat, lng, fit_to_work_declared: true });
       const staffName = currentProfile?.full_name || currentUser.email;
       tsFlash(`✅ Signed in — <b>${staffName}</b>, ${tsFmtTime(result.signed_in_at)}${result.address ? `, ${result.address}` : ""}`, "ok");
+      tsFitDeclared = false;
       await tsLoadOpenEntry();
       await renderMyTimesheetTable();
+      await tsRenderPayPeriodStat();
     }catch(err){
       if(err && typeof err.code === "number"){
         const errorType = TS_GPS_ERROR_TYPE[err.code] || "position_unavailable";
@@ -2596,6 +2693,7 @@
       tsPendingSignOutCoords = null;
       await tsLoadOpenEntry();
       await renderMyTimesheetTable();
+      await tsRenderPayPeriodStat();
     }catch(err){
       tsFlash(err.message || "Couldn't sign out — try again.", "err");
       if(confirmBtn){ confirmBtn.disabled = false; confirmBtn.textContent = "Confirm Sign Out"; }
@@ -2643,7 +2741,13 @@
       wrap.innerHTML = '<p class="empty">No timesheet entries match this filter.</p>';
       return;
     }
-    wrap.innerHTML = `<div class="table-wrap"><table><thead><tr>
+    wrap.innerHTML = `<div class="table-wrap"><table>
+      <colgroup>
+        <col style="width:14%"><col style="width:11%"><col style="width:8%"><col style="width:8%">
+        <col style="width:7%"><col style="width:8%"><col style="width:7%">
+        <col style="width:18.5%"><col style="width:18.5%">
+      </colgroup>
+      <thead><tr>
         <th>Staff</th><th>Date</th><th>In</th><th>Out</th><th>Raw</th><th>Payable</th><th>Δ</th><th>In address</th><th>Out address</th>
       </tr></thead><tbody>` +
       rows.map(e => `<tr>
@@ -2654,8 +2758,8 @@
           <td>${tsFmtHours(e.raw_hours)}</td>
           <td>${tsFmtHours(e.payable_hours)}</td>
           <td>${tsDeltaHtml(e.raw_hours, e.payable_hours)}</td>
-          <td class="addr">${e.in_address || "—"}</td>
-          <td class="addr">${e.out_address || "—"}</td>
+          <td class="addr" title="${e.in_address || ""}">${e.in_address || "—"}</td>
+          <td class="addr" title="${e.out_address || ""}">${e.out_address || "—"}</td>
         </tr>`).join("") +
       `</tbody></table></div>`;
   }
@@ -2784,6 +2888,7 @@
       renderMyCompliance();
       await tsLoadOpenEntry();
       renderMyTimesheetTable();
+      tsRenderPayPeriodStat();
     }
   }
 

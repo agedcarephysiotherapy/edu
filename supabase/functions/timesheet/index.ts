@@ -168,6 +168,11 @@ Deno.serve(async (req: Request) => {
       if (!isFiniteNumber(lat) || !isFiniteNumber(lng)) {
         return json({ error: "lat and lng are required" }, 400);
       }
+      // Enforced server-side, not just as a disabled button client-side —
+      // same posture as the GPS hard gate.
+      if (payload.fit_to_work_declared !== true) {
+        return json({ error: "You must confirm you're fit to work before signing in." }, 400);
+      }
 
       const { data: openEntry, error: openErr } = await adminClient
         .from("timesheet_entries")
@@ -192,6 +197,7 @@ Deno.serve(async (req: Request) => {
         in_lng: lng,
         in_address: address,
         status: "open",
+        fit_to_work_declared: true,
       });
       if (insertErr) {
         console.error("sign_in: insert failed:", insertErr);
