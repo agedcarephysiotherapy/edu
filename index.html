@@ -2536,26 +2536,24 @@
   async function tsRenderPayPeriodStat(){
     const wrap = document.getElementById("tsPayPeriodStat");
     const { start, end } = tsPayPeriodRange(new Date());
-    const [periodRes, totalRes] = await Promise.all([
-      sb.from("timesheet_entries")
-        .select("payable_hours")
-        .eq("staff_id", currentUser.id)
-        .gte("signed_in_at", start.toISOString())
-        .lt("signed_in_at", end.toISOString()),
-      // All-time total — sum of raw_hours (not payable_hours), i.e. actual
-      // logged time regardless of any staff adjustment at sign-out.
-      sb.from("timesheet_entries")
-        .select("raw_hours")
-        .eq("staff_id", currentUser.id),
-    ]);
-    const periodTotal = (periodRes.data || []).reduce((sum, e) => sum + (Number(e.payable_hours) || 0), 0);
-    const allTimeTotal = (totalRes.data || []).reduce((sum, e) => sum + (Number(e.raw_hours) || 0), 0);
+    const { data } = await sb.from("timesheet_entries")
+      .select("raw_hours, payable_hours")
+      .eq("staff_id", currentUser.id)
+      .gte("signed_in_at", start.toISOString())
+      .lt("signed_in_at", end.toISOString());
+    // Same pay period for both figures: payable_hours (what's actually
+    // paid, after any staff adjustment) vs. raw_hours (actual logged time,
+    // i.e. sum of signed-in/out durations with the mandatory break rule
+    // applied, before any adjustment) — so the delta between the two chips
+    // is directly comparable.
+    const payableTotal = (data || []).reduce((sum, e) => sum + (Number(e.payable_hours) || 0), 0);
+    const rawTotal = (data || []).reduce((sum, e) => sum + (Number(e.raw_hours) || 0), 0);
     const lastDay = new Date(end); lastDay.setDate(lastDay.getDate() - 1);
     const fmtOpt = { day: "numeric", month: "short" };
     const label = `${start.toLocaleDateString("en-AU", fmtOpt)} – ${lastDay.toLocaleDateString("en-AU", fmtOpt)}`;
     wrap.innerHTML = `
-      <div class="ts-stat-chip"><span class="ts-stat-num">${periodTotal.toFixed(2)}h</span><span class="ts-stat-label">This pay period · ${label}</span></div>
-      <div class="ts-stat-chip"><span class="ts-stat-num">${allTimeTotal.toFixed(2)}h</span><span class="ts-stat-label">Total logged hours</span></div>`;
+      <div class="ts-stat-chip"><span class="ts-stat-num">${payableTotal.toFixed(2)}h</span><span class="ts-stat-label">This pay period · ${label}</span></div>
+      <div class="ts-stat-chip"><span class="ts-stat-num">${rawTotal.toFixed(2)}h</span><span class="ts-stat-label">Total logged hours · ${label}</span></div>`;
   }
 
   function tsFlash(html, cls){
