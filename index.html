@@ -507,6 +507,26 @@
         <div style="height:12px;"></div>
         <button class="btn" id="complianceAssignBtn">Assign Requirement</button>
         <div class="status-line" id="complianceAssignStatus"></div>
+
+        <div class="course-admin" style="margin-top:18px;">
+          <h4>Or assign to a whole category at once</h4>
+          <div class="row">
+            <div>
+              <label for="complianceBulkCategory">Category</label>
+              <select id="complianceBulkCategory"></select>
+            </div>
+            <div>
+              <label for="complianceBulkDocType">Document Type</label>
+              <select id="complianceBulkDocType"></select>
+            </div>
+          </div>
+          <label for="complianceBulkDueDate">Due Date</label>
+          <input type="date" id="complianceBulkDueDate">
+          <div style="height:12px;"></div>
+          <button class="btn blue small" id="complianceBulkAssignBtn">Assign to Everyone in Category</button>
+          <div class="status-line" id="complianceBulkAssignStatus"></div>
+        </div>
+
         <div style="height:16px;"></div>
         <div id="complianceRequirementsTable"><p class="empty">Loading&hellip;</p></div>
       </div>
@@ -539,6 +559,9 @@
           <div>
             <label for="complianceAuditFilterDocType">Document Type</label>
             <select id="complianceAuditFilterDocType"><option value="">All Types</option></select>
+          </div>
+          <div style="display:flex;align-items:end;">
+            <button class="btn small blue" id="complianceAuditExportCsvBtn">⬇ Export CSV</button>
           </div>
         </div>
         <div id="complianceAuditTable"><p class="empty">Loading&hellip;</p></div>
@@ -1552,6 +1575,12 @@
     staffSel.innerHTML = allProfiles.filter(p=>p.status==="approved").map(p=>`<option value="${p.id}">${p.full_name || p.email}</option>`).join("");
     const typeSel = document.getElementById("complianceAssignDocType");
     typeSel.innerHTML = allComplianceDocTypes.map(dt=>`<option value="${dt.id}">${dt.name}</option>`).join("");
+
+    const bulkCatSel = document.getElementById("complianceBulkCategory");
+    bulkCatSel.innerHTML = CATEGORIES.map(c=>`<option value="${c}">${CATEGORY_LABELS[c]}</option>`).join("");
+    const bulkTypeSel = document.getElementById("complianceBulkDocType");
+    bulkTypeSel.innerHTML = allComplianceDocTypes.map(dt=>`<option value="${dt.id}">${dt.name}</option>`).join("");
+
     renderComplianceRequirementsTable();
   }
 
@@ -1604,6 +1633,45 @@
       return;
     }
     setStatus("complianceAssignStatus", "Requirement assigned.", "ok");
+    await loadComplianceData();
+    renderComplianceRequirementsTable();
+    renderComplianceReview();
+    renderComplianceAudit();
+    renderCoverage();
+  });
+
+  document.getElementById("complianceBulkAssignBtn").addEventListener("click", async ()=>{
+    const category = document.getElementById("complianceBulkCategory").value;
+    const docTypeId = document.getElementById("complianceBulkDocType").value;
+    const dueDate = document.getElementById("complianceBulkDueDate").value;
+    if(!category || !docTypeId || !dueDate){
+      setStatus("complianceBulkAssignStatus", "Category, document type and due date are all required.", "err");
+      return;
+    }
+    const targets = allProfiles.filter(p => p.status === "approved" && (p.staff_categories || []).includes(category));
+    if(targets.length === 0){
+      setStatus("complianceBulkAssignStatus", "No approved staff in that category.", "err");
+      return;
+    }
+    // Skip anyone who already has an active requirement for this document
+    // type — the DB's unique constraint would reject the whole batch
+    // insert on the first duplicate otherwise.
+    const existingIds = new Set(allComplianceRequirements.filter(r => r.document_type_id === docTypeId).map(r => r.staff_id));
+    const toInsert = targets.filter(p => !existingIds.has(p.id)).map(p => ({
+      staff_id: p.id, document_type_id: docTypeId, due_date: dueDate, assigned_by: currentUser.id
+    }));
+    if(toInsert.length === 0){
+      setStatus("complianceBulkAssignStatus", "Everyone in that category already has this requirement.", "ok");
+      return;
+    }
+    setStatus("complianceBulkAssignStatus", `Assigning to ${toInsert.length} staff member${toInsert.length===1?"":"s"}...`, "");
+    const { error } = await sb.from("compliance_requirements").insert(toInsert);
+    if(error){
+      setStatus("complianceBulkAssignStatus", "Couldn't assign — try again.", "err");
+      return;
+    }
+    const skipped = targets.length - toInsert.length;
+    setStatus("complianceBulkAssignStatus", `Assigned to ${toInsert.length} staff member${toInsert.length===1?"":"s"}${skipped ? ` (${skipped} already had it)` : ""}.`, "ok");
     await loadComplianceData();
     renderComplianceRequirementsTable();
     renderComplianceReview();
@@ -1698,13 +1766,12 @@
     return {text:`Due in ${diffDays} day${diffDays===1?"":"s"}`, style:"color:var(--muted);"};
   }
 
-  function renderComplianceAudit(){
-    const wrap = document.getElementById("complianceAuditTable");
+  // Shared by the table render and the CSV export, so "export" always
+  // matches exactly what's currently on screen under the active filters.
+  function getComplianceAuditRows(){
     const staffFilter = document.getElementById("complianceAuditFilterStaff").value;
     const statusFilter = document.getElementById("complianceAuditFilterStatus").value;
     const typeFilter = document.getElementById("complianceAuditFilterDocType").value;
-    const nameOf = id => { const p = allProfiles.find(p=>p.id===id); return p ? (p.full_name || p.email) : "—"; };
-    const typeOf = id => { const dt = allComplianceDocTypes.find(dt=>dt.id===id); return dt ? dt.name : "—"; };
 
     let rows = allComplianceRequirements.map(r => {
       const st = complianceStatusFor(r.id);
@@ -1720,6 +1787,14 @@
       if((a.status === "approved") !== (b.status === "approved")) return a.status === "approved" ? 1 : -1;
       return new Date(a.req.due_date) - new Date(b.req.due_date);
     });
+    return rows;
+  }
+
+  function renderComplianceAudit(){
+    const wrap = document.getElementById("complianceAuditTable");
+    const nameOf = id => { const p = allProfiles.find(p=>p.id===id); return p ? (p.full_name || p.email) : "—"; };
+    const typeOf = id => { const dt = allComplianceDocTypes.find(dt=>dt.id===id); return dt ? dt.name : "—"; };
+    const rows = getComplianceAuditRows();
 
     if(rows.length === 0){
       wrap.innerHTML = '<p class="empty">No requirements match this filter.</p>';
@@ -1755,6 +1830,32 @@
   }
   ["complianceAuditFilterStaff","complianceAuditFilterStatus","complianceAuditFilterDocType"].forEach(id=>{
     document.getElementById(id).addEventListener("change", renderComplianceAudit);
+  });
+
+  document.getElementById("complianceAuditExportCsvBtn").addEventListener("click", ()=>{
+    const rows = getComplianceAuditRows();
+    if(rows.length === 0){
+      alert("No requirements match the current filter to export.");
+      return;
+    }
+    const nameOf = id => { const p = allProfiles.find(p=>p.id===id); return p ? (p.full_name || p.email) : "—"; };
+    const typeOf = id => { const dt = allComplianceDocTypes.find(dt=>dt.id===id); return dt ? dt.name : "—"; };
+    const header = ["Staff", "Document Type", "Due Date", "Days", "Status"];
+    const lines = [header];
+    rows.forEach(x=>{
+      const days = complianceDaysLabel(x.req.due_date, x.status);
+      lines.push([nameOf(x.req.staff_id), typeOf(x.req.document_type_id), fmtDate(x.req.due_date), days.text, x.status]);
+    });
+    const csv = lines.map(row => row.map(csvEscape).join(",")).join("\r\n");
+    const blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `compliance-audit-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   });
 
   // ---- Staff: My Compliance Documents ----
