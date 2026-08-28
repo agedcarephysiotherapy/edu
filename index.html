@@ -415,13 +415,14 @@
 <div id="loginScreen">
   <img class="auth-logo" src="https://forms.acphysio.com.au/acplogo" alt="Aged Care Physiotherapy">
   <h1 class="auth-heading">ACP Staff Hub</h1>
-  <p class="auth-sub">Sign in with your email to access your training and compliance records.</p>
+  <p class="auth-sub">Sign in with your email to access your training, compliance, and timesheet records.</p>
   <img class="auth-hero-photo" src="https://filedn.com/lxdUsd2fuiqh1gicF9WU3Sp/Untitled.png" alt="A carer supporting an elderly client">
   <div class="card">
     <label for="emailInput">Work Email</label>
     <input type="email" id="emailInput" placeholder="you@acphysio.com.au">
     <div style="height:10px;"></div>
     <button class="btn" id="magicLinkBtn" style="width:100%;">Email Me a Sign-In Link</button>
+    <div id="loginFlash"></div>
     <div class="status-line" id="loginStatus"></div>
   </div>
 </div>
@@ -920,14 +921,46 @@
   }
 
   // ---------- AUTH ----------
-  document.getElementById("magicLinkBtn").addEventListener("click", async ()=>{
+  // The magic-link send used to just set a small muted status-line below
+  // the button — easy to miss, so staff kept re-clicking "Email Me a
+  // Sign-In Link" not realising it had already gone out (each click sends
+  // another email/OTP request). Now the button itself visibly changes
+  // state (disabled + relabelled) AND a prominent flash banner appears, so
+  // there's no way to miss that the click was actioned.
+  const magicLinkBtn = document.getElementById("magicLinkBtn");
+  function loginFlash(html, cls){
+    document.getElementById("loginFlash").innerHTML = `<div class="ts-flash ${cls}" style="margin-top:14px;text-align:left;"><div>${html}</div></div>`;
+  }
+  magicLinkBtn.addEventListener("click", async ()=>{
     const email = document.getElementById("emailInput").value.trim();
     if(!email){
       setStatus("loginStatus", "Enter your email first.", "err");
       return;
     }
+    document.getElementById("loginFlash").innerHTML = "";
+    setStatus("loginStatus", "", "");
+    magicLinkBtn.disabled = true;
+    magicLinkBtn.textContent = "Sending…";
     const { error } = await sb.auth.signInWithOtp({ email });
-    setStatus("loginStatus", error ? "Couldn't send the link — try again." : "Check your email for a sign-in link.", error ? "err" : "ok");
+    if(error){
+      loginFlash("❌ Couldn't send the link — try again.", "err");
+      magicLinkBtn.disabled = false;
+      magicLinkBtn.textContent = "Email Me a Sign-In Link";
+      return;
+    }
+    magicLinkBtn.textContent = "✓ Sign-In Link Sent";
+    loginFlash(
+      `📧 <b>Check your email</b> — we've sent a sign-in link to <b>${email}</b>. Click the link in that email to continue; no need to click this button again.<br>
+       <a href="#" id="loginResendLink" style="color:inherit;text-decoration:underline;font-size:12.5px;">Wrong email, or didn't get it? Click here to try again.</a>`,
+      "ok"
+    );
+    document.getElementById("loginResendLink").addEventListener("click", (e)=>{
+      e.preventDefault();
+      document.getElementById("loginFlash").innerHTML = "";
+      magicLinkBtn.disabled = false;
+      magicLinkBtn.textContent = "Email Me a Sign-In Link";
+      document.getElementById("emailInput").focus();
+    });
   });
   document.getElementById("signOutBtn").addEventListener("click", async ()=>{
     await sb.auth.signOut();
