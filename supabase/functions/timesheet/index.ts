@@ -267,6 +267,7 @@ Deno.serve(async (req: Request) => {
             signedOutAt.toISOString(),
             rawHours,
             payableHours,
+            Math.round((payableHours - rawHours) * 100) / 100,
             entryRow?.in_address ?? "",
             address ?? "",
           ]);
