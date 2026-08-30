@@ -21,6 +21,7 @@
 //                                who finds the URL
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withTimestamp, wrapHtml, wrapText } from "../_shared/emailTemplate.ts";
 
 const REMINDER_SUBJECTS: Record<string, string> = {
   "30_day": "Compliance document due in 30 days",
@@ -45,10 +46,29 @@ function buildEmailBody(row: {
   });
 
   if (row.reminder_type === "overdue") {
-    return `Hi ${row.staff_name},\n\nYour ${row.document_type_name} was due on ${dueDateFormatted} and is now overdue. Please upload it as soon as possible via the ACP staff portal.\n\nKind regards,\nACP Compliance`;
+    return `Hi ${row.staff_name},\n\nYour ${row.document_type_name} was due on ${dueDateFormatted} and is now overdue. Please upload it as soon as possible via the ACP Staff Hub so your compliance record stays current.`;
   }
 
-  return `Hi ${row.staff_name},\n\nThis is a reminder that your ${row.document_type_name} is due on ${dueDateFormatted}. Please upload it via the ACP staff portal before this date.\n\nKind regards,\nACP Compliance`;
+  return `Hi ${row.staff_name},\n\nThis is a reminder that your ${row.document_type_name} is due on ${dueDateFormatted}. Please upload it via the ACP Staff Hub before this date so there's no gap in your compliance record.`;
+}
+
+function buildEmailBodyHtml(row: {
+  staff_name: string;
+  document_type_name: string;
+  due_date: string;
+  reminder_type: string;
+}) {
+  const dueDateFormatted = new Date(row.due_date).toLocaleDateString("en-AU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  if (row.reminder_type === "overdue") {
+    return `<p>Hi ${row.staff_name},</p><p>Your <b>${row.document_type_name}</b> was due on <b>${dueDateFormatted}</b> and is now overdue. Please upload it as soon as possible via the ACP Staff Hub so your compliance record stays current.</p>`;
+  }
+
+  return `<p>Hi ${row.staff_name},</p><p>This is a reminder that your <b>${row.document_type_name}</b> is due on <b>${dueDateFormatted}</b>. Please upload it via the ACP Staff Hub before this date so there's no gap in your compliance record.</p>`;
 }
 
 async function sendReminders(
@@ -77,8 +97,9 @@ async function sendReminders(
         body: JSON.stringify({
           from: "ACP Compliance <compliance@edu.acponline.com.au>",
           to: row.staff_email,
-          subject: REMINDER_SUBJECTS[row.reminder_type],
-          text: buildEmailBody(row),
+          subject: withTimestamp(REMINDER_SUBJECTS[row.reminder_type]),
+          text: wrapText(buildEmailBody(row)),
+          html: wrapHtml(buildEmailBodyHtml(row)),
         }),
       });
 

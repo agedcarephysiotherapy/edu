@@ -44,6 +44,7 @@
 //     correct in the source-of-truth database and the Timesheets tab.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { appendTimesheetRow } from "../_shared/googleSheets.ts";
+import { withTimestamp, wrapHtml, wrapText } from "../_shared/emailTemplate.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -154,23 +155,32 @@ Deno.serve(async (req: Request) => {
       if (staffEmail) {
         await sendEmail(
           [staffEmail],
-          "You were automatically signed out — please remember to sign out",
-          `You signed in at ${whenIn} and hadn't signed out after ${AUTO_SIGNOUT_HOURS} hours, so the system automatically signed you out at ${whenOut} to keep your timesheet accurate.\n\n` +
-            `Recorded hours: ${rawHours}h (mandatory 30-minute unpaid break already deducted). No location was recorded for this sign-out since it wasn't done from your device.\n\n` +
-            `Please remember to sign out at the end of each shift. If ${rawHours}h doesn't reflect your actual hours worked, contact your manager to have it corrected.`,
-          `<p>You signed in at <b>${whenIn}</b> and hadn't signed out after ${AUTO_SIGNOUT_HOURS} hours, so the system automatically signed you out at <b>${whenOut}</b> to keep your timesheet accurate.</p>` +
-            `<p><b>Recorded hours:</b> ${rawHours}h (mandatory 30-minute unpaid break already deducted). No location was recorded for this sign-out since it wasn't done from your device.</p>` +
-            `<p>Please remember to sign out at the end of each shift. If ${rawHours}h doesn't reflect your actual hours worked, contact your manager to have it corrected.</p>`,
+          withTimestamp("You were automatically signed out — please remember to sign out"),
+          wrapText(
+            `Hi ${staffName},\n\nYou signed in at ${whenIn} and hadn't signed out after ${AUTO_SIGNOUT_HOURS} hours, so the system automatically signed you out at ${whenOut} to keep your timesheet accurate.\n\n` +
+              `Recorded hours: ${rawHours}h (mandatory 30-minute unpaid break already deducted). No location was recorded for this sign-out since it wasn't done from your device.\n\n` +
+              `Please remember to sign out at the end of each shift. If ${rawHours}h doesn't reflect your actual hours worked, contact your manager to have it corrected.`,
+          ),
+          wrapHtml(
+            `<p>Hi ${staffName},</p>` +
+              `<p>You signed in at <b>${whenIn}</b> and hadn't signed out after ${AUTO_SIGNOUT_HOURS} hours, so the system automatically signed you out at <b>${whenOut}</b> to keep your timesheet accurate.</p>` +
+              `<p><b>Recorded hours:</b> ${rawHours}h (mandatory 30-minute unpaid break already deducted). No location was recorded for this sign-out since it wasn't done from your device.</p>` +
+              `<p>Please remember to sign out at the end of each shift. If ${rawHours}h doesn't reflect your actual hours worked, contact your manager to have it corrected.</p>`,
+          ),
         );
       }
       if (managerEmails.length > 0) {
         await sendEmail(
           managerEmails,
-          `Auto sign-out — ${staffName}`,
-          `${staffName} signed in at ${whenIn} and was automatically signed out at ${whenOut} after ${AUTO_SIGNOUT_HOURS} hours without signing out themselves.\n\n` +
-            `Recorded hours: ${rawHours}h (mandatory break deducted). No location was recorded for this sign-out. Staff member has also been notified by email.`,
-          `<p><b>${staffName}</b> signed in at ${whenIn} and was automatically signed out at <b>${whenOut}</b> after ${AUTO_SIGNOUT_HOURS} hours without signing out themselves.</p>` +
-            `<p><b>Recorded hours:</b> ${rawHours}h (mandatory break deducted). No location was recorded for this sign-out. The staff member has also been notified by email.</p>`,
+          withTimestamp(`Auto sign-out — ${staffName}`),
+          wrapText(
+            `${staffName} signed in at ${whenIn} and was automatically signed out at ${whenOut} after ${AUTO_SIGNOUT_HOURS} hours without signing out themselves.\n\n` +
+              `Recorded hours: ${rawHours}h (mandatory break deducted). No location was recorded for this sign-out. Staff member has also been notified by email.`,
+          ),
+          wrapHtml(
+            `<p><b>${staffName}</b> signed in at ${whenIn} and was automatically signed out at <b>${whenOut}</b> after ${AUTO_SIGNOUT_HOURS} hours without signing out themselves.</p>` +
+              `<p><b>Recorded hours:</b> ${rawHours}h (mandatory break deducted). No location was recorded for this sign-out. The staff member has also been notified by email.</p>`,
+          ),
         );
       }
 
