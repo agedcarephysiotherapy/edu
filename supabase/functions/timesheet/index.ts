@@ -32,6 +32,7 @@
 // authoritative regardless of what period info the client sends.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { appendTimesheetRow, upsertFortnightSummary } from "../_shared/googleSheets.ts";
+import { withTimestamp, wrapHtml, wrapText } from "../_shared/emailTemplate.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -103,10 +104,14 @@ async function emailManagersOfGpsFailure(
     const when = new Date().toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" });
     const actionLabel = attemptedAction === "sign_in" ? "sign in" : "sign out";
     const errorLabel = { permission_denied: "Location permission denied", position_unavailable: "Location unavailable", timeout: "Location request timed out" }[errorType] || errorType;
-    const subject = `Timesheet GPS failure — ${staffName}`;
-    const text = `${staffName} tried to ${actionLabel} on the timesheet but their device couldn't provide a location.\n\nAction attempted: ${actionLabel}\nError: ${errorLabel}\nTime: ${when}`;
-    const html = `<p><strong>${staffName}</strong> tried to ${actionLabel} on the timesheet but their device couldn't provide a location.</p>
-      <p><b>Action attempted:</b> ${actionLabel}<br><b>Error:</b> ${errorLabel}<br><b>Time:</b> ${when}</p>`;
+    const subject = withTimestamp(`Timesheet GPS failure — ${staffName}`);
+    const text = wrapText(
+      `${staffName} tried to ${actionLabel} on the timesheet but their device couldn't provide a location. This means their shift hasn't been recorded yet, so it's worth a quick check-in with them.\n\nAction attempted: ${actionLabel}\nError: ${errorLabel}\nTime: ${when}`,
+    );
+    const html = wrapHtml(
+      `<p><strong>${staffName}</strong> tried to ${actionLabel} on the timesheet but their device couldn't provide a location. This means their shift hasn't been recorded yet, so it's worth a quick check-in with them.</p>
+      <p><b>Action attempted:</b> ${actionLabel}<br><b>Error:</b> ${errorLabel}<br><b>Time:</b> ${when}</p>`,
+    );
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
