@@ -163,6 +163,35 @@
   }
   .chip-check input{margin:0;}
   .chip-check.on{background:var(--blue-light);border-color:var(--blue);color:var(--blue-dark);}
+
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(20,20,25,0.55);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;z-index:500;
+  }
+  .modal-box{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    width:100%;max-width:720px;max-height:85vh;
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .modal-header{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+    padding:18px 20px;border-bottom:1px solid var(--line);flex-shrink:0;
+  }
+  .modal-body{
+    padding:20px;overflow-y:auto;white-space:pre-wrap;
+    font-size:13.5px;line-height:1.6;
+  }
+  .modal-footer{
+    padding:14px 20px;border-top:1px solid var(--line);flex-shrink:0;
+    display:flex;justify-content:flex-end;gap:10px;
+  }
+  .modal-footer:empty{display:none;}
+  @media (max-width:640px){
+    .modal-box{max-height:92vh;}
+    .modal-body{font-size:13px;}
+  }
   .course-admin{
     border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:10px;background:var(--paper);
   }
@@ -979,6 +1008,23 @@
     </div>
 
   </main>
+</div>
+
+<!-- Policy/procedure viewer — shared by the staff "Policies & Procedures"
+     card and the manager "Policies" tab, so the long document text never
+     has to sit inline on the dashboard. -->
+<div id="policyModalOverlay" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <h3 id="policyModalTitle" style="margin:0;"></h3>
+        <div id="policyModalCategory" style="color:var(--muted);font-size:12.5px;"></div>
+      </div>
+      <button id="policyModalCloseBtn" class="btn small ghost" aria-label="Close">✕</button>
+    </div>
+    <div id="policyModalBody" class="modal-body"></div>
+    <div id="policyModalFooter" class="modal-footer"></div>
+  </div>
 </div>
 
 <!-- Ask-for-help widget — visible to any signed-in, approved user once
@@ -2674,49 +2720,20 @@
     const myAckedIds = new Set(allPolicyAcks.filter(a=>a.staff_id===currentUser.id).map(a=>a.policy_id));
     wrap.innerHTML = allPolicies.map(p=>{
       const acked = myAckedIds.has(p.id);
-      const ackRow = p.requires_acknowledgment
-        ? (acked
-            ? `<span class="badge pass">✓ Acknowledged</span>`
-            : `<button class="btn small blue" data-ack-policy="${p.id}">I have read and acknowledge this policy</button>`)
+      const statusBadge = p.requires_acknowledgment
+        ? (acked ? `<span class="badge pass">✓ Acknowledged</span>` : `<span class="badge other">Acknowledgment needed</span>`)
         : "";
       return `
-        <div class="course-admin" style="margin-top:10px;">
-          <div class="toggle-row" data-policy-toggle="${p.id}" style="cursor:pointer;">
-            <div>
-              <b>${escText(p.title)}</b>
-              <div style="color:var(--muted);font-size:12.5px;">${escText(p.category)}</div>
-            </div>
-            <span class="card-chevron">▾</span>
+        <div class="course-admin toggle-row" data-view-policy="${p.id}" style="margin-top:10px;cursor:pointer;">
+          <div>
+            <b>${escText(p.title)}</b>
+            <div style="color:var(--muted);font-size:12.5px;">${escText(p.category)}</div>
           </div>
-          <div id="policyBody-${p.id}" style="display:none;margin-top:10px;">
-            <div style="white-space:pre-wrap;font-size:13.5px;line-height:1.55;max-height:420px;overflow-y:auto;padding:10px 12px;background:var(--paper);border:1px solid var(--line);border-radius:8px;">${escText(p.body)}</div>
-            <div style="margin-top:10px;">${ackRow}</div>
-          </div>
+          ${statusBadge}
         </div>`;
     }).join("");
-    wrap.querySelectorAll("[data-policy-toggle]").forEach(row=>{
-      row.addEventListener("click", ()=>{
-        const body = document.getElementById(`policyBody-${row.dataset.policyToggle}`);
-        body.style.display = body.style.display === "none" ? "block" : "none";
-      });
-    });
-    wrap.querySelectorAll("button[data-ack-policy]").forEach(btn=>{
-      btn.addEventListener("click", async ()=>{
-        btn.disabled = true;
-        btn.textContent = "Saving…";
-        const { error } = await sb.from("policy_acknowledgments").insert({
-          policy_id: btn.dataset.ackPolicy,
-          staff_id: currentUser.id
-        });
-        if(error){
-          btn.disabled = false;
-          btn.textContent = "I have read and acknowledge this policy";
-          alert("Couldn't save your acknowledgment — try again.");
-          return;
-        }
-        await loadPoliciesData();
-        renderMyPolicies();
-      });
+    wrap.querySelectorAll("[data-view-policy]").forEach(row=>{
+      row.addEventListener("click", ()=>openPolicyModal(row.dataset.viewPolicy, {forStaff:true}));
     });
   }
 
@@ -2733,26 +2750,68 @@
         ? `<span class="badge ${ackCount>=approvedStaffCount && approvedStaffCount>0 ? "pass" : "other"}">${ackCount}/${approvedStaffCount} acknowledged</span>`
         : `<span class="badge other">Not required</span>`;
       return `
-        <div class="course-admin" style="margin-top:10px;">
-          <div class="toggle-row" data-mpolicy-toggle="${p.id}" style="cursor:pointer;">
-            <div>
-              <b>${escText(p.title)}</b>
-              <div style="color:var(--muted);font-size:12.5px;">${escText(p.category)}</div>
-            </div>
-            ${coverage}
+        <div class="course-admin toggle-row" data-view-policy="${p.id}" style="margin-top:10px;cursor:pointer;">
+          <div>
+            <b>${escText(p.title)}</b>
+            <div style="color:var(--muted);font-size:12.5px;">${escText(p.category)}</div>
           </div>
-          <div id="mpolicyBody-${p.id}" style="display:none;margin-top:10px;">
-            <div style="white-space:pre-wrap;font-size:13.5px;line-height:1.55;max-height:420px;overflow-y:auto;padding:10px 12px;background:var(--paper);border:1px solid var(--line);border-radius:8px;">${escText(p.body)}</div>
-          </div>
+          ${coverage}
         </div>`;
     }).join("");
-    wrap.querySelectorAll("[data-mpolicy-toggle]").forEach(row=>{
-      row.addEventListener("click", ()=>{
-        const body = document.getElementById(`mpolicyBody-${row.dataset.mpolicyToggle}`);
-        body.style.display = body.style.display === "none" ? "block" : "none";
-      });
+    wrap.querySelectorAll("[data-view-policy]").forEach(row=>{
+      row.addEventListener("click", ()=>openPolicyModal(row.dataset.viewPolicy, {forStaff:false}));
     });
   }
+
+  function openPolicyModal(policyId, {forStaff}){
+    const p = allPolicies.find(x=>x.id===policyId);
+    if(!p) return;
+    document.getElementById("policyModalTitle").textContent = p.title;
+    document.getElementById("policyModalCategory").textContent = p.category;
+    document.getElementById("policyModalBody").textContent = p.body;
+
+    const footer = document.getElementById("policyModalFooter");
+    footer.innerHTML = "";
+    if(forStaff && p.requires_acknowledgment){
+      const acked = allPolicyAcks.some(a=>a.staff_id===currentUser.id && a.policy_id===p.id);
+      if(acked){
+        footer.innerHTML = `<span class="badge pass">✓ Acknowledged</span>`;
+      }else{
+        footer.innerHTML = `<button class="btn small blue" id="policyModalAckBtn">I have read and acknowledge this policy</button>`;
+        document.getElementById("policyModalAckBtn").addEventListener("click", async (e)=>{
+          const btn = e.target;
+          btn.disabled = true;
+          btn.textContent = "Saving…";
+          const { error } = await sb.from("policy_acknowledgments").insert({
+            policy_id: p.id,
+            staff_id: currentUser.id
+          });
+          if(error){
+            btn.disabled = false;
+            btn.textContent = "I have read and acknowledge this policy";
+            alert("Couldn't save your acknowledgment — try again.");
+            return;
+          }
+          await loadPoliciesData();
+          renderMyPolicies();
+          closePolicyModal();
+        });
+      }
+    }
+
+    document.getElementById("policyModalOverlay").style.display = "flex";
+  }
+
+  function closePolicyModal(){
+    document.getElementById("policyModalOverlay").style.display = "none";
+  }
+  document.getElementById("policyModalCloseBtn").addEventListener("click", closePolicyModal);
+  document.getElementById("policyModalOverlay").addEventListener("click", (e)=>{
+    if(e.target.id === "policyModalOverlay") closePolicyModal();
+  });
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape" && document.getElementById("policyModalOverlay").style.display !== "none") closePolicyModal();
+  });
 
   document.getElementById("addPolicyBtn").addEventListener("click", async ()=>{
     const title = document.getElementById("newPolicyTitle").value.trim();
