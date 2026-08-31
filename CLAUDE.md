@@ -54,10 +54,25 @@ and timesheet tracker.
     blank/error state). Emails both the staff member and all approved
     managers. Uses the same `RESEND_API_KEY`/`RESEND_FROM_EMAIL` secrets as
     `timesheet`.
+  - `send-compliance-reminders` — called daily by a scheduled GitHub Action
+    (`.github/workflows/compliance-reminders.yml`, `x-cron-secret` header
+    auth against `CRON_SECRET`): emails staff their 30/14/7-day and overdue
+    compliance reminders via Resend, then purges `compliance_submissions`
+    older than 2 years (Privacy Act 1988 retention policy) by deleting the
+    storage file — the `on_compliance_doc_deleted` DB trigger cascades the
+    row deletion. Requires `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`,
+    `CRON_SECRET`.
   - `_shared/googleSheets.ts` — shared helper (not its own deployed
     function): appends every closed timesheet entry to the spreadsheet's
     first tab, and upserts a rolling per-staff, per-fortnight total into a
     self-creating "Fortnight Summary" tab for payroll reconciliation.
+  - `_shared/emailTemplate.ts` — shared helper used by every Resend-sending
+    function (`timesheet`, `timesheet-auto-signout`,
+    `send-compliance-reminders`): appends a `dd/mm/yy hh:mm:ss` (Australia/
+    Sydney) timestamp to every subject line, wraps HTML bodies in Lexend
+    10px with an "Aged Care Physiotherapy / Staff HUB" signature. Keep any
+    new Resend-sending function consistent with this rather than
+    hand-rolling its own subject/signature formatting.
   - `timesheet_entries` / `timesheet_gps_failures` tables have **no
     insert/update RLS policy for authenticated/anon** — all writes go
     through the `timesheet` (or `timesheet-auto-signout`) function's
@@ -125,6 +140,43 @@ Manage Staff (Roles tab) also lets a manager correct a staff member's
 Save/Cancel) — covered by the same `profiles` RLS update policy managers
 already use for role/status/category edits in that table, no new policy
 needed.
+
+## Policies & Procedures (`policies` / `policy_acknowledgments` tables)
+
+A reference library + acknowledgment tracker, built inside `index.html`
+(not a separate page — see below) as a staff-facing card and a manager
+"Policies" tab. `policies` (`title`, `category`, `body` — plain text,
+`requires_acknowledgment`, `sort_order`, `active`) holds the content;
+`policy_acknowledgments` (`policy_id`, `staff_id`, `acknowledged_at`,
+unique per pair) records who has confirmed they've read it. RLS: any
+approved staff can `select` active policies; only managers can
+insert/update/delete them. A staff member can `select`/`insert` only their
+own acknowledgment rows; managers can `select` everyone's (needed for the
+manager tab's "12/14 acknowledged" coverage count).
+
+Seeded from the ACP Policy & Procedure Manual (a Google Doc) as 6
+documents at migration time — the table is the source of truth going
+forward, editable by managers in-app via the "Add a Policy or Procedure"
+form on the Policies tab.
+
+**Why this lives in `index.html`, not `courses/*.html`:** the
+`courses/*.html` pattern (separate self-contained page, own Supabase
+client) exists for one-shot quiz/certificate flows. Policies are an
+ongoing reference library staff dip into repeatedly and managers monitor
+acknowledgment coverage for — the same shape as the existing Compliance
+tab — so it reuses the already-initialized client/auth/RLS state instead
+of duplicating it in a new page.
+
+**Modal viewer pattern** (`#policyModalOverlay`, `openPolicyModal()` /
+`closePolicyModal()` in `index.html`): policy content can run to several
+KB of text, so both the staff card and manager tab list only title +
+category + status, and the full body only renders in a shared modal when
+a row is clicked. This is the general pattern to reach for whenever a new
+feature needs to show long text/content inline in a dashboard card or
+table row — expanding it inline (as the first version of this feature
+did) makes the whole page longer for everyone regardless of whether they
+open it; a shared modal keeps the list scannable and only pays the
+rendering cost on demand.
 
 ## Brand / design system for course modules
 

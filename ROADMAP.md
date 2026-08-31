@@ -49,17 +49,6 @@ ad-hoc emails/texts for things like roster changes or general reminders.
   — same thinking as the compliance-docs 2-year purge job, decided up front
   rather than retrofitted.
 
-## Policies & procedures section
-
-- `policies` table — title, category, `file_path` in a new private storage
-  bucket, version, effective_date.
-- `policy_acknowledgments` table — `staff_id`, `policy_id`,
-  `acknowledged_at` — same acknowledgment pattern as compliance documents,
-  giving an audit trail of who has/hasn't signed off on the current version
-  of each policy.
-- **Decided:** acknowledgment-tracked (not just a read-only library) —
-  reuses existing storage/RLS conventions rather than inventing new ones.
-
 ## Terms of Use / Privacy Notice link on sign-in page
 
 Small addition: two links near the sign-in form in `index.html`, pointing
