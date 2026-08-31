@@ -409,7 +409,7 @@
   @media print{
     @page { size: landscape; margin: 10mm; }
     #loginScreen, #pendingScreen, #nameScreen, header.top .who, .backup-row, .tabs,
-    #panel-add, #panel-courses, #panel-roles, #panel-mine, #panel-compliance, #panel-help,
+    #panel-add, #panel-courses, #panel-roles, #panel-mine, #panel-compliance, #panel-policies, #panel-help,
     #staffFilterInput, #clearFilterBtn, #printRecordsBtn, label[for="staffFilterInput"],
     #auditFilterInput, #auditClearFilterBtn, #auditExportCsvBtn, #auditPrintBtn,
     label[for="auditFilterInput"], .audit-check-col {
@@ -516,6 +516,7 @@
       <button data-tab="courses">Courses</button>
       <button data-tab="roles">Manage Staff</button>
       <button data-tab="compliance">Compliance</button>
+      <button data-tab="policies">Policies</button>
       <button data-tab="audit">Staff Audit</button>
       <button data-tab="timesheets">Timesheets</button>
       <button data-tab="help">Help Content</button>
@@ -582,6 +583,16 @@
         <div class="card-body">
           <p class="sub">Documents your manager needs on file — police check, NDIS screening, professional registration, etc. Upload before the due date; your manager reviews and approves each one.</p>
           <div id="myComplianceList"><p class="empty">Loading&hellip;</p></div>
+        </div>
+      </div>
+      <div id="cardMyPolicies" class="card collapsible" data-collapsed="true">
+        <div class="card-toggle">
+          <h2>Policies &amp; Procedures</h2>
+          <span class="card-chevron">▾</span>
+        </div>
+        <div class="card-body">
+          <p class="sub">Reference material and organisational policies. Some require you to confirm you've read them.</p>
+          <div id="myPoliciesList"><p class="empty">Loading&hellip;</p></div>
         </div>
       </div>
     </div>
@@ -853,6 +864,40 @@
           </div>
         </div>
         <div id="complianceAuditTable"><p class="empty">Loading&hellip;</p></div>
+      </div>
+    </div>
+
+    <!-- MANAGER: POLICIES & PROCEDURES -->
+    <div id="panel-policies" class="panel" style="display:none;">
+      <div class="card">
+        <h2>Add a Policy or Procedure</h2>
+        <p class="sub">Content is plain text — paste it in as-is, line breaks are preserved.</p>
+        <div class="row">
+          <div>
+            <label for="newPolicyTitle">Title</label>
+            <input type="text" id="newPolicyTitle" placeholder="e.g. Manual Handling Policy">
+          </div>
+          <div>
+            <label for="newPolicyCategory">Category</label>
+            <input type="text" id="newPolicyCategory" placeholder="e.g. General, Clinical Guides, HR &amp; Compliance">
+          </div>
+        </div>
+        <label for="newPolicyBody">Content</label>
+        <textarea id="newPolicyBody" rows="10" placeholder="Paste the policy text here" style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-family:inherit;font-size:15px;background:var(--paper);color:var(--ink);resize:vertical;"></textarea>
+        <div style="height:8px;"></div>
+        <label class="chip-check" style="display:inline-flex;">
+          <input type="checkbox" id="newPolicyRequiresAck" checked>
+          Require staff to acknowledge they've read this
+        </label>
+        <div style="height:12px;"></div>
+        <button class="btn" id="addPolicyBtn">Save Policy</button>
+        <div class="status-line" id="policyStatus"></div>
+      </div>
+
+      <div class="card">
+        <h2>Policies &amp; Procedures</h2>
+        <p class="sub">Who has acknowledged each policy. Click a title to view/edit its content.</p>
+        <div id="policiesManagerTable"><p class="empty">Loading&hellip;</p></div>
       </div>
     </div>
 
@@ -2598,6 +2643,146 @@
       </div>`;
   }
 
+  // ---------- POLICIES & PROCEDURES ----------
+  let allPolicies = [];
+  // RLS scopes what comes back here: staff only ever see their own rows,
+  // managers see everyone's — same select works for both, same pattern as
+  // allComplianceSubmissions above.
+  let allPolicyAcks = [];
+
+  function escText(s){
+    const d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
+
+  async function loadPoliciesData(){
+    const [pol, ack] = await Promise.all([
+      sb.from("policies").select("*").eq("active", true).order("sort_order"),
+      sb.from("policy_acknowledgments").select("*")
+    ]);
+    allPolicies = pol.data || [];
+    allPolicyAcks = ack.data || [];
+  }
+
+  function renderMyPolicies(){
+    const wrap = document.getElementById("myPoliciesList");
+    if(allPolicies.length === 0){
+      wrap.innerHTML = '<p class="empty">No policies published yet.</p>';
+      return;
+    }
+    const myAckedIds = new Set(allPolicyAcks.filter(a=>a.staff_id===currentUser.id).map(a=>a.policy_id));
+    wrap.innerHTML = allPolicies.map(p=>{
+      const acked = myAckedIds.has(p.id);
+      const ackRow = p.requires_acknowledgment
+        ? (acked
+            ? `<span class="badge pass">✓ Acknowledged</span>`
+            : `<button class="btn small blue" data-ack-policy="${p.id}">I have read and acknowledge this policy</button>`)
+        : "";
+      return `
+        <div class="course-admin" style="margin-top:10px;">
+          <div class="toggle-row" data-policy-toggle="${p.id}" style="cursor:pointer;">
+            <div>
+              <b>${escText(p.title)}</b>
+              <div style="color:var(--muted);font-size:12.5px;">${escText(p.category)}</div>
+            </div>
+            <span class="card-chevron">▾</span>
+          </div>
+          <div id="policyBody-${p.id}" style="display:none;margin-top:10px;">
+            <div style="white-space:pre-wrap;font-size:13.5px;line-height:1.55;max-height:420px;overflow-y:auto;padding:10px 12px;background:var(--paper);border:1px solid var(--line);border-radius:8px;">${escText(p.body)}</div>
+            <div style="margin-top:10px;">${ackRow}</div>
+          </div>
+        </div>`;
+    }).join("");
+    wrap.querySelectorAll("[data-policy-toggle]").forEach(row=>{
+      row.addEventListener("click", ()=>{
+        const body = document.getElementById(`policyBody-${row.dataset.policyToggle}`);
+        body.style.display = body.style.display === "none" ? "block" : "none";
+      });
+    });
+    wrap.querySelectorAll("button[data-ack-policy]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        btn.disabled = true;
+        btn.textContent = "Saving…";
+        const { error } = await sb.from("policy_acknowledgments").insert({
+          policy_id: btn.dataset.ackPolicy,
+          staff_id: currentUser.id
+        });
+        if(error){
+          btn.disabled = false;
+          btn.textContent = "I have read and acknowledge this policy";
+          alert("Couldn't save your acknowledgment — try again.");
+          return;
+        }
+        await loadPoliciesData();
+        renderMyPolicies();
+      });
+    });
+  }
+
+  function renderPoliciesManager(){
+    const wrap = document.getElementById("policiesManagerTable");
+    if(allPolicies.length === 0){
+      wrap.innerHTML = '<p class="empty">No policies added yet.</p>';
+      return;
+    }
+    const approvedStaffCount = allProfiles.filter(p=>p.status==="approved").length;
+    wrap.innerHTML = allPolicies.map(p=>{
+      const ackCount = allPolicyAcks.filter(a=>a.policy_id===p.id).length;
+      const coverage = p.requires_acknowledgment
+        ? `<span class="badge ${ackCount>=approvedStaffCount && approvedStaffCount>0 ? "pass" : "other"}">${ackCount}/${approvedStaffCount} acknowledged</span>`
+        : `<span class="badge other">Not required</span>`;
+      return `
+        <div class="course-admin" style="margin-top:10px;">
+          <div class="toggle-row" data-mpolicy-toggle="${p.id}" style="cursor:pointer;">
+            <div>
+              <b>${escText(p.title)}</b>
+              <div style="color:var(--muted);font-size:12.5px;">${escText(p.category)}</div>
+            </div>
+            ${coverage}
+          </div>
+          <div id="mpolicyBody-${p.id}" style="display:none;margin-top:10px;">
+            <div style="white-space:pre-wrap;font-size:13.5px;line-height:1.55;max-height:420px;overflow-y:auto;padding:10px 12px;background:var(--paper);border:1px solid var(--line);border-radius:8px;">${escText(p.body)}</div>
+          </div>
+        </div>`;
+    }).join("");
+    wrap.querySelectorAll("[data-mpolicy-toggle]").forEach(row=>{
+      row.addEventListener("click", ()=>{
+        const body = document.getElementById(`mpolicyBody-${row.dataset.mpolicyToggle}`);
+        body.style.display = body.style.display === "none" ? "block" : "none";
+      });
+    });
+  }
+
+  document.getElementById("addPolicyBtn").addEventListener("click", async ()=>{
+    const title = document.getElementById("newPolicyTitle").value.trim();
+    const category = document.getElementById("newPolicyCategory").value.trim();
+    const body = document.getElementById("newPolicyBody").value.trim();
+    const requiresAck = document.getElementById("newPolicyRequiresAck").checked;
+    if(!title || !category || !body){
+      setStatus("policyStatus", "Fill in title, category, and content.", "err");
+      return;
+    }
+    setStatus("policyStatus", "Saving...", "");
+    const { error } = await sb.from("policies").insert({
+      title, category, body,
+      requires_acknowledgment: requiresAck,
+      sort_order: allPolicies.length,
+      created_by: currentUser.id
+    });
+    if(error){
+      setStatus("policyStatus", "Couldn't save — try again.", "err");
+      return;
+    }
+    document.getElementById("newPolicyTitle").value = "";
+    document.getElementById("newPolicyCategory").value = "";
+    document.getElementById("newPolicyBody").value = "";
+    document.getElementById("newPolicyRequiresAck").checked = true;
+    setStatus("policyStatus", "Policy saved.", "ok");
+    await loadPoliciesData();
+    renderPoliciesManager();
+  });
+
   async function uploadComplianceDoc(requirementId){
     const req = allComplianceRequirements.find(r=>r.id===requirementId);
     const dt = req && allComplianceDocTypes.find(dt=>dt.id===req.document_type_id);
@@ -3291,10 +3476,10 @@
       try{ localStorage.setItem(`collapse:${id}`, el.dataset.collapsed); }catch{}
     });
   }
-  ["cardTimesheet","cardTsHistory","cardCourses","cardMyCompletions","cardMyCompliance"].forEach(initCollapsible);
+  ["cardTimesheet","cardTsHistory","cardCourses","cardMyCompletions","cardMyCompliance","cardMyPolicies"].forEach(initCollapsible);
 
   // ---------- TABS (manager view) ----------
-  const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles", compliance:"panel-compliance", audit:"panel-audit", timesheets:"panel-timesheets", help:"panel-help"};
+  const tabToPanel = {all:"panel-all", add:"panel-add", courses:"panel-courses", roles:"panel-roles", compliance:"panel-compliance", policies:"panel-policies", audit:"panel-audit", timesheets:"panel-timesheets", help:"panel-help"};
   document.getElementById("managerTabs").addEventListener("click", (e)=>{
     const btn = e.target.closest("button[data-tab]");
     if(!btn) return;
@@ -3310,6 +3495,7 @@
       renderComplianceAudit();
       renderCoverage();
     });
+    if(btn.dataset.tab === "policies") loadPoliciesData().then(renderPoliciesManager);
     if(btn.dataset.tab === "timesheets"){ populateTsFilterStaff(); loadAllTimesheets(); }
     if(btn.dataset.tab === "help") loadHelpArticles().then(renderHelpArticlesTable);
   });
@@ -3379,6 +3565,8 @@
       renderMine();
       await loadComplianceData();
       renderMyCompliance();
+      await loadPoliciesData();
+      renderMyPolicies();
       await tsLoadOpenEntry();
       renderMyTimesheetTable();
       tsRenderPayPeriodStat();
