@@ -82,31 +82,33 @@ the compliance status, course progress, and policy acknowledgments of a
 specific subset of staff. Not full manager access — no approve/reject, no
 roster/role management, nothing editable.
 
-- **Needs deciding before this is built** — who is a "facility manager"?
-  Two different features hide behind that one phrase: (a) an internal ACP
-  team lead overseeing a sub-group of ACP's own staff, or (b) an external
-  contact at an aged-care facility ACP services, wanting assurance that the
-  ACP staff **allocated to their site** are currently compliant, trained,
-  and police-checked before being on-site. (b) is the more common shape
-  for this kind of request in aged care, but changes who provisions the
-  account and what "allocated" means, so worth confirming before scoping
-  the data model further.
-- Data model (works under either reading above): a `facilities` table
-  (`id`, `name`, `active`); a `facility_staff_allocations` table
-  (`facility_id`, `staff_id`) — manager-assignable, same shape as the
-  existing `staff_categories`/course-visibility pattern; `profiles.role`
-  gets a third value (`'facility'`) plus a nullable `profiles.facility_id`
-  saying which facility that account represents.
+**Decided:** a facility management account is just another sign-in email,
+same as any staff/manager account today. A manager (or "master user")
+assigns it a specific subset of staff to see — a direct per-account
+allocation, not tied to any separate physical-facility concept, and one
+facility account's assigned subset is independent of any other's.
+
+- `profiles.role` gets a third value (`'facility'`).
+- `facility_staff_allocations` table — `facility_profile_id` (references
+  the facility account's own `profiles.id`), `staff_id` (the staff member
+  they're allowed to see), `created_by`, `created_at`. Manager-assignable
+  only — same shape as the existing `staff_categories`/course-visibility
+  pattern, just a direct account-to-staff mapping rather than going
+  through a category or a separate facilities table.
 - RLS: a facility-role account can `select` — never write — `completions`,
   `compliance_requirements`, `compliance_submissions`, and
-  `policy_acknowledgments` rows, only for `staff_id`s in their facility's
-  allocation list. Reuses the existing `is_manager()`-style helper-function
-  RLS pattern (see `policies`/`policy_acknowledgments`), just scoped
-  further by facility instead of granting everything.
-- UI: mostly a cut-down, read-only version of the existing manager audit
-  views (Staff Audit / Compliance Audit) — naturally filtered by RLS
-  rather than needing new query logic. Every write/admin control (Approve,
-  Reject, Record Completion, Manage Staff, etc.) is hidden for this role.
+  `policy_acknowledgments` rows, only for `staff_id`s present in its own
+  `facility_staff_allocations` rows. Reuses the existing
+  `is_manager()`-style helper-function RLS pattern (see
+  `policies`/`policy_acknowledgments`), scoped per-account instead of
+  granting everything.
+- UI: a manager-only "assign visibility" control (checkbox list of staff,
+  modeled on the existing "Assign to Everyone in Category" bulk-assign
+  pattern) plus, for the facility account itself, mostly a cut-down,
+  read-only version of the existing manager audit views (Staff Audit /
+  Compliance Audit) — naturally filtered by RLS rather than needing new
+  query logic. Every write/admin control (Approve, Reject, Record
+  Completion, Manage Staff, etc.) is hidden for this role.
 - Decide up front (same reasoning as the compliance-docs 2-year purge
   job): whether a facility account can see the actual uploaded document
   (e.g. a police check PDF) or only pass/fail status — likely the latter,
