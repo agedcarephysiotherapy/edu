@@ -260,7 +260,7 @@ Deno.serve(async (req: Request) => {
         ? Math.round(clientPayableHours * 100) / 100
         : rawHours;
 
-      const { error: updateErr } = await adminClient
+      const { data: updated, error: updateErr } = await adminClient
         .from("timesheet_entries")
         .update({
           signed_out_at: signedOutAt.toISOString(),
@@ -272,10 +272,27 @@ Deno.serve(async (req: Request) => {
           status: "closed",
           updated_at: new Date().toISOString(),
         })
-        .eq("id", openEntry.id);
+        .eq("id", openEntry.id)
+        .eq("status", "open") // guard against a duplicate/retried sign_out racing itself
+        .select("id");
       if (updateErr) {
         console.error("sign_out: update failed:", updateErr);
         return json({ error: "Couldn't sign you out — try again." }, 500);
+      }
+      if (!updated || updated.length === 0) {
+        // Someone else (a retried request, a double-tap) already closed
+        // this exact entry between our SELECT above and this UPDATE.
+        // Report success rather than erroring — the shift genuinely is
+        // signed out — but skip the fire-and-forget block below so this
+        // request doesn't append a second duplicate Sheets row for it.
+        return json({
+          success: true,
+          signed_out_at: signedOutAt.toISOString(),
+          raw_hours: rawHours,
+          payable_hours: payableHours,
+          delta: Math.round((payableHours - rawHours) * 100) / 100,
+          address,
+        });
       }
 
       // Fire-and-forget Google Sheets sync — never blocks or fails the
