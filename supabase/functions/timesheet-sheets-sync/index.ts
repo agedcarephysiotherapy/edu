@@ -9,7 +9,17 @@
 // network hop. This function exists as an independently invokable/testable
 // endpoint doing the exact same append, useful for manually verifying the
 // Google auth flow in isolation once real credentials are set.
+//
+// It writes to the exact same production spreadsheet as the real sign_out
+// flow, so it's manager-gated the same way ask-assistant resolves role
+// server-side from the caller's own JWT — never call appendTimesheetRow()
+// here on the strength of anything the request body itself claims.
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { appendTimesheetRow } from "../_shared/googleSheets.ts";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -33,13 +43,38 @@ Deno.serve(async (req: Request) => {
     return json({ error: "Method not allowed" }, 405);
   }
   try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return json({ error: "Missing Authorization header" }, 401);
+    }
+    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return json({ error: "Not signed in" }, 401);
+    }
+
+    const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const { data: profile, error: profileErr } = await adminClient
+      .from("profiles")
+      .select("role, status")
+      .eq("id", userData.user.id)
+      .single();
+    if (profileErr || !profile || profile.status !== "approved" || profile.role !== "manager") {
+      return json({ error: "Managers only" }, 403);
+    }
+
     const body = await req.json().catch(() => ({}));
+    const rawHours = Number(body.rawHours) || 0;
+    const payableHours = Number(body.payableHours) || 0;
     const row = [
       body.staffName ?? "",
       body.signedInAt ?? "",
       body.signedOutAt ?? "",
-      body.rawHours ?? "",
-      body.payableHours ?? "",
+      rawHours,
+      payableHours,
+      Math.round((payableHours - rawHours) * 100) / 100,
       body.inAddress ?? "",
       body.outAddress ?? "",
     ];

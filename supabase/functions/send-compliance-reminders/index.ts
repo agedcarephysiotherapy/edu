@@ -152,28 +152,61 @@ async function purgeExpiredSubmissions(
     return { purged: 0, failed: 0, failures: [] };
   }
 
-  // Deleting the storage object is the source-of-truth action — the
-  // on_compliance_doc_deleted DB trigger then removes the matching
-  // compliance_submissions row automatically, so the file and its record
-  // stay in sync regardless of how the file gets deleted (here, from the
-  // Storage dashboard, or from a future manager "delete" button).
-  const paths = expired.map((r: { file_path: string }) => r.file_path);
-  const { data: removed, error: removeError } = await supabase.storage
-    .from(COMPLIANCE_BUCKET)
-    .remove(paths);
+  // file_path is nullable — a manager can record a compliance document
+  // with no scan uploaded (physical original only), and that row has no
+  // storage object to delete. Route those straight to a DB delete instead
+  // of into storage.remove(), which would either silently never confirm
+  // them removed (leaving them past the 2-year retention cutoff forever)
+  // or, depending on how the Storage API treats a null entry in the
+  // batch, fail the whole call and block purging every other expired row
+  // too.
+  const withFile = expired.filter((r: { file_path: string | null }) => !!r.file_path);
+  const withoutFile = expired.filter((r: { file_path: string | null }) => !r.file_path);
 
-  if (removeError) {
-    console.error("storage remove failed:", removeError);
-    return { purged: 0, failed: expired.length, failures: [`storage remove: ${removeError.message}`] };
+  let purged = 0;
+  const failures: string[] = [];
+
+  if (withoutFile.length > 0) {
+    const ids = withoutFile.map((r: { id: string }) => r.id);
+    const { error: deleteErr } = await supabase
+      .from("compliance_submissions")
+      .delete()
+      .in("id", ids);
+    if (deleteErr) {
+      console.error("purge (no file) delete failed:", deleteErr);
+      failures.push(...ids.map((id: string) => `submission ${id} (no file): delete failed — ${deleteErr.message}`));
+    } else {
+      purged += ids.length;
+    }
   }
 
-  // deno-lint-ignore no-explicit-any
-  const removedPaths = new Set((removed ?? []).map((f: any) => f.name));
-  const failures = expired
-    .filter((r: { file_path: string }) => !removedPaths.has(r.file_path))
-    .map((r: { id: string; file_path: string }) => `submission ${r.id} (${r.file_path}): not confirmed removed`);
+  if (withFile.length > 0) {
+    // Deleting the storage object is the source-of-truth action — the
+    // on_compliance_doc_deleted DB trigger then removes the matching
+    // compliance_submissions row automatically, so the file and its record
+    // stay in sync regardless of how the file gets deleted (here, from the
+    // Storage dashboard, or from a future manager "delete" button).
+    const paths = withFile.map((r: { file_path: string }) => r.file_path);
+    const { data: removed, error: removeError } = await supabase.storage
+      .from(COMPLIANCE_BUCKET)
+      .remove(paths);
 
-  return { purged: removedPaths.size, failed: failures.length, failures };
+    if (removeError) {
+      console.error("storage remove failed:", removeError);
+      failures.push(...paths.map((p: string) => `path ${p}: storage remove failed — ${removeError.message}`));
+    } else {
+      // deno-lint-ignore no-explicit-any
+      const removedPaths = new Set((removed ?? []).map((f: any) => f.name));
+      purged += removedPaths.size;
+      failures.push(
+        ...withFile
+          .filter((r: { file_path: string }) => !removedPaths.has(r.file_path))
+          .map((r: { id: string; file_path: string }) => `submission ${r.id} (${r.file_path}): not confirmed removed`),
+      );
+    }
+  }
+
+  return { purged, failed: failures.length, failures };
 }
 
 Deno.serve(async (req) => {

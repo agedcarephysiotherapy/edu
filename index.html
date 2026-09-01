@@ -1943,6 +1943,13 @@
 
   // ---------- AUDIT ----------
   let auditSelectedIds = null; // Set of staff ids to include in print/export; null = not yet initialised
+  // Every staff id renderAudit() has ever seen — used to detect a staff
+  // member who's new since the last render (e.g. just approved from the
+  // Roles tab) so they can be opted in by default, same as everyone was
+  // on the very first render. Without this, a newly-approved staff member
+  // silently never gets added to auditSelectedIds and is missing from
+  // every print/export until someone notices their unchecked row.
+  let auditKnownIds = new Set();
 
   // A completions row existing is not the same as having actually passed —
   // "Fail"/"In Progress" are explicit non-completions, and free-text quiz
@@ -1997,7 +2004,10 @@
     }
     if(auditSelectedIds === null){
       auditSelectedIds = new Set(rows.map(r => r.profile.id));
+    }else{
+      rows.forEach(r => { if(!auditKnownIds.has(r.profile.id)) auditSelectedIds.add(r.profile.id); });
     }
+    auditKnownIds = new Set(rows.map(r => r.profile.id));
     renderAuditTable(document.getElementById("auditFilterInput")?.value.trim() || "");
   }
 
@@ -3133,11 +3143,22 @@
   // instructed — period N covers [anchor + 14N days, anchor + 14(N+1) days).
   const TS_PAY_PERIOD_ANCHOR = new Date(2026, 7, 17);
   function tsPayPeriodRange(ref){
-    const anchor0 = new Date(TS_PAY_PERIOD_ANCHOR.getFullYear(), TS_PAY_PERIOD_ANCHOR.getMonth(), TS_PAY_PERIOD_ANCHOR.getDate());
-    const ref0 = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate());
-    const diffDays = Math.floor((ref0 - anchor0) / 86400000);
+    // Day count must go through Date.UTC on the plain (y,m,d) components,
+    // not a real ms difference between two local-midnight Dates — the
+    // latter is off by an hour (and so a whole day, after Math.floor)
+    // whenever the anchor and ref fall on opposite sides of a DST
+    // transition, since local midnight-to-midnight isn't always 24h.
+    // Date.UTC has no DST, so the same calendar-date components always
+    // divide evenly by 86400000 regardless of which side of a transition
+    // either date falls on.
+    const anchorUTC = Date.UTC(TS_PAY_PERIOD_ANCHOR.getFullYear(), TS_PAY_PERIOD_ANCHOR.getMonth(), TS_PAY_PERIOD_ANCHOR.getDate());
+    const refUTC = Date.UTC(ref.getFullYear(), ref.getMonth(), ref.getDate());
+    const diffDays = Math.round((refUTC - anchorUTC) / 86400000);
     const periodIndex = Math.floor(diffDays / 14);
-    const start = new Date(anchor0); start.setDate(start.getDate() + periodIndex * 14);
+    // setDate() on a local-midnight Date correctly re-normalises across
+    // DST when adding whole days, so this part was never the problem.
+    const start = new Date(TS_PAY_PERIOD_ANCHOR.getFullYear(), TS_PAY_PERIOD_ANCHOR.getMonth(), TS_PAY_PERIOD_ANCHOR.getDate());
+    start.setDate(start.getDate() + periodIndex * 14);
     const end = new Date(start); end.setDate(start.getDate() + 14);
     return { start, end };
   }
@@ -3427,7 +3448,7 @@
         <label for="tsPayableInput">Payable hours (estimated worked time — adjust if needed, e.g. to exclude an unpaid break)</label>
         <input type="text" id="tsPayableInput" value="${initial.toFixed(2)}">
         <p class="sub" id="tsEstimateNote" style="margin:8px 0 0;">Estimated worked time so far: <b>${initial.toFixed(2)}h</b> (shifts over 5h already have the mandatory 30-minute unpaid break deducted). The exact figure is calculated when you confirm.</p>
-        <div id="tsOverrideNotice" class="ts-gps-help" style="display:none;margin:10px 0 0;padding:12px 14px;">⚠ Adjusting the hours away from the calculated time will require manager approval.</div>
+        <div id="tsOverrideNotice" class="ts-gps-help" style="display:none;margin:10px 0 0;padding:12px 14px;">⚠ Adjusting the hours away from the calculated time is recorded immediately and shown to your manager on the Timesheets tab (with the difference flagged) — only do this if the calculated time doesn't reflect what you actually worked.</div>
         <div style="height:12px;"></div>
         <button class="btn" id="tsConfirmSignOutBtn" style="width:100%;">Confirm Sign Out</button>
         <button class="btn ghost" id="tsCancelSignOutBtn" style="width:100%;margin-top:8px;">Cancel</button>
@@ -3604,7 +3625,7 @@
       const delta = (e.raw_hours!==null && e.payable_hours!==null) ? Math.round((e.payable_hours - e.raw_hours) * 100) / 100 : "";
       lines.push([
         e.profiles?.full_name || e.profiles?.email || "",
-        fmtDate(e.signed_in_at.slice(0,10)),
+        tsFmtDateShort(e.signed_in_at),
         tsFmtDateTime(e.signed_in_at),
         e.signed_out_at ? tsFmtDateTime(e.signed_out_at) : "Open",
         e.raw_hours ?? "",
@@ -3777,6 +3798,12 @@
       setStatus("nameCaptureStatus", "Couldn't save — try again.", "err");
       return;
     }
+    // currentProfile can still be unset here if the profile-creation
+    // trigger hadn't fired even after loadMyProfile()'s retry — the
+    // update() above still succeeded (it targets currentUser.id
+    // directly), so don't let a missing local cache throw and strand the
+    // user on this screen.
+    if(!currentProfile) currentProfile = { id: currentUser.id };
     currentProfile.full_name = name;
     currentProfile.staff_categories = indicatedCategories;
     const { data } = await sb.auth.getSession();

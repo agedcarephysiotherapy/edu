@@ -7,14 +7,15 @@
 //
 // Triggered on a schedule by pg_cron + pg_net (see the
 // `schedule_timesheet_auto_signout` migration) — NOT meant to be called by
-// end users. It authenticates the same way any Edge Function does (a valid
-// Supabase-signed JWT is required — verify_jwt stays on, and the cron job
-// passes the project's anon key, which is already public, as the bearer
-// token; this function only ever acts via its own service-role client
-// regardless of who/what calls it, same as `timesheet`). It's also safe to
-// invoke repeatedly/concurrently: after the first sweep closes everything
-// past the 9h cutoff, there's nothing left to act on until more time
-// passes, so accidental re-runs are harmless no-ops.
+// end users. Deployed with verify_jwt=false, so it's callable with no
+// Authorization header at all (the migration's pg_net call sends none) —
+// safe to leave unauthenticated because this function only ever acts via
+// its own service-role client regardless of who/what calls it, and every
+// action it takes is idempotent and self-limiting: it only ever touches
+// entries already provably 9+ hours overdue by wall-clock time, and the
+// `.eq("status","open")` guard on each update means a row it's already
+// closed (or that a real sign-out closed first) is simply skipped on any
+// re-run, never re-processed or double-charged.
 //
 // What happens to a swept entry:
 //   - signed_out_at is set to exactly signed_in_at + 9 hours (not "now" —
@@ -121,7 +122,7 @@ Deno.serve(async (req: Request) => {
       const rawHours = Math.round((rawDiffHours > 5 ? rawDiffHours - 0.5 : rawDiffHours) * 100) / 100;
       const payableHours = rawHours;
 
-      const { error: updateErr } = await adminClient
+      const { data: updated, error: updateErr } = await adminClient
         .from("timesheet_entries")
         .update({
           signed_out_at: signedOutAt.toISOString(),
@@ -135,9 +136,20 @@ Deno.serve(async (req: Request) => {
           updated_at: new Date().toISOString(),
         })
         .eq("id", entry.id)
-        .eq("status", "open"); // guard against a real sign-out racing this sweep
+        .eq("status", "open") // guard against a real sign-out racing this sweep
+        .select("id");
       if (updateErr) {
         console.error(`timesheet-auto-signout: update failed for entry ${entry.id}:`, updateErr);
+        continue;
+      }
+      // A plain .update() reports no error even when the WHERE clause
+      // matched zero rows — which is exactly what happens when the guard
+      // above wins its race (a real sign-out closed this entry between
+      // the SELECT above and this UPDATE). Without checking the actual
+      // affected rows, this would still send "you were auto signed out"
+      // emails and log a duplicate Sheets row for a shift the staff
+      // member had already correctly signed out of themselves.
+      if (!updated || updated.length === 0) {
         continue;
       }
       closed++;
