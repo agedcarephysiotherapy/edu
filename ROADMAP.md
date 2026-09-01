@@ -49,6 +49,71 @@ ad-hoc emails/texts for things like roster changes or general reminders.
   — same thinking as the compliance-docs 2-year purge job, decided up front
   rather than retrofitted.
 
+## Printable course completion certificates
+
+A couple of course modules (`PCPM.html`, `pca_orientation.html`) already
+have an ad-hoc, in-page `buildCertificateHTML` generator shown once, right
+after the quiz is passed. This item is the dashboard-level version: any
+completed course, reprintable at any time from `index.html` — not limited
+to the moment of completion, and not limited to the two modules that
+happen to have their own generator today.
+
+- One shared `buildCertificateHTML(staffName, courseTitle, completionDate,
+  result)` in `index.html`, built from the two existing per-course
+  generators as the design reference (brand palette, logo, border) rather
+  than duplicated per course.
+- A "Print Certificate" button per row in both "My Completions" (staff)
+  and "All Staff Completions" (manager) — reuses the existing `completions`
+  + `courses` tables, no new table needed.
+- Print via the same pattern already used for "Print Records"/"Print
+  Selected" (`@media print` scoping to just the certificate content +
+  `window.print()`) rather than opening a new tab/window.
+- Worth deciding: one generic template for every course, or a couple of
+  template variants (e.g. plain "Attendance" vs. "Competency" showing a
+  score) — the two existing per-course generators already differ on this.
+- Out of scope for v1 unless asked: a certificate registry/audit table of
+  what's been printed and when; PDF download as a distinct feature (vs.
+  browser print-to-PDF, which already covers this for free).
+
+## Facility management read-only role
+
+A third account type, alongside staff/manager: read-only visibility into
+the compliance status, course progress, and policy acknowledgments of a
+specific subset of staff. Not full manager access — no approve/reject, no
+roster/role management, nothing editable.
+
+**Decided:** a facility management account is just another sign-in email,
+same as any staff/manager account today. A manager (or "master user")
+assigns it a specific subset of staff to see — a direct per-account
+allocation, not tied to any separate physical-facility concept, and one
+facility account's assigned subset is independent of any other's.
+
+- `profiles.role` gets a third value (`'facility'`).
+- `facility_staff_allocations` table — `facility_profile_id` (references
+  the facility account's own `profiles.id`), `staff_id` (the staff member
+  they're allowed to see), `created_by`, `created_at`. Manager-assignable
+  only — same shape as the existing `staff_categories`/course-visibility
+  pattern, just a direct account-to-staff mapping rather than going
+  through a category or a separate facilities table.
+- RLS: a facility-role account can `select` — never write — `completions`,
+  `compliance_requirements`, `compliance_submissions`, and
+  `policy_acknowledgments` rows, only for `staff_id`s present in its own
+  `facility_staff_allocations` rows. Reuses the existing
+  `is_manager()`-style helper-function RLS pattern (see
+  `policies`/`policy_acknowledgments`), scoped per-account instead of
+  granting everything.
+- UI: a manager-only "assign visibility" control (checkbox list of staff,
+  modeled on the existing "Assign to Everyone in Category" bulk-assign
+  pattern) plus, for the facility account itself, mostly a cut-down,
+  read-only version of the existing manager audit views (Staff Audit /
+  Compliance Audit) — naturally filtered by RLS rather than needing new
+  query logic. Every write/admin control (Approve, Reject, Record
+  Completion, Manage Staff, etc.) is hidden for this role.
+- Decide up front (same reasoning as the compliance-docs 2-year purge
+  job): whether a facility account can see the actual uploaded document
+  (e.g. a police check PDF) or only pass/fail status — likely the latter,
+  for privacy.
+
 ## Terms of Use / Privacy Notice link on sign-in page
 
 Small addition: two links near the sign-in form in `index.html`, pointing
