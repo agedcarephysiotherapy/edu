@@ -242,10 +242,16 @@ completion-tracking + quiz/certificate pattern:
 
 - `courses/pbspcc.html` or `courses/gerimeds.html` — good reference for the
   `header.site` / `.brandrow` / `.brandmark` header pattern.
-- `courses/PCPM.html` or `courses/Physio_Competency.html` — good reference
-  for the `.topbar` / `.brand` / `.brand-logo` header pattern, plus a
-  printable-certificate generator (`buildCertificateHTML`) if the new module
-  needs one.
+- `courses/PCPM.html`, `courses/pca_orientation.html`, or
+  `courses/Physio_Competency.html` — good reference for the `.topbar` /
+  `.brand` / `.brand-logo` header pattern. Of those, only
+  `pca_orientation.html` and `Physio_Competency.html` also have a
+  printable-certificate generator (`buildCertificateHTML`, shown right
+  after the quiz is passed) — `PCPM.html` doesn't have one, despite
+  looking like it should from the header pattern alone. For printing a
+  certificate later, at any time, rather than only at the moment of
+  completion, see `index.html`'s own `buildCourseCertificateHTML`
+  instead (documented above).
 
 After copying: update the page title, `COURSE_ID` (get this from the
 Courses tab in `index.html` after registering the new course there — "Add
