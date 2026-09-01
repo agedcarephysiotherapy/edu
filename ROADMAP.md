@@ -49,32 +49,6 @@ ad-hoc emails/texts for things like roster changes or general reminders.
   — same thinking as the compliance-docs 2-year purge job, decided up front
   rather than retrofitted.
 
-## Printable course completion certificates
-
-A couple of course modules (`PCPM.html`, `pca_orientation.html`) already
-have an ad-hoc, in-page `buildCertificateHTML` generator shown once, right
-after the quiz is passed. This item is the dashboard-level version: any
-completed course, reprintable at any time from `index.html` — not limited
-to the moment of completion, and not limited to the two modules that
-happen to have their own generator today.
-
-- One shared `buildCertificateHTML(staffName, courseTitle, completionDate,
-  result)` in `index.html`, built from the two existing per-course
-  generators as the design reference (brand palette, logo, border) rather
-  than duplicated per course.
-- A "Print Certificate" button per row in both "My Completions" (staff)
-  and "All Staff Completions" (manager) — reuses the existing `completions`
-  + `courses` tables, no new table needed.
-- Print via the same pattern already used for "Print Records"/"Print
-  Selected" (`@media print` scoping to just the certificate content +
-  `window.print()`) rather than opening a new tab/window.
-- Worth deciding: one generic template for every course, or a couple of
-  template variants (e.g. plain "Attendance" vs. "Competency" showing a
-  score) — the two existing per-course generators already differ on this.
-- Out of scope for v1 unless asked: a certificate registry/audit table of
-  what's been printed and when; PDF download as a distinct feature (vs.
-  browser print-to-PDF, which already covers this for free).
-
 ## Facility management read-only role
 
 A third account type, alongside staff/manager: read-only visibility into

@@ -9,6 +9,19 @@ and timesheet tracker.
   timesheet (sign in/out, pay-period totals, manager Timesheets tab). This is
   the source of truth for the Supabase project config (`SUPABASE_URL` /
   `SUPABASE_ANON_KEY`) and for how courses are registered.
+  - **Certificate printing**: both "My Completions" (staff) and "All Staff
+    Completions" (manager) have a "Print" action per row that generates an
+    ACP-branded certificate on the fly (`buildCourseCertificateHTML`, A4
+    landscape, brand palette/logo/border) from that completion's data —
+    distinct from the pre-existing "View" link, which only appears when a
+    manager has manually uploaded an actual certificate file
+    (`certificate_path`), and opens that file instead. Design is lifted
+    from the per-course generators in `courses/pca_orientation.html` and
+    `courses/Physio_Competency.html` (kept as-is there; not worth
+    centralizing further since they're only two files). Opens in a new tab
+    with its own print button (`openOrDownloadCertificate` falls back to a
+    file download if the popup is blocked) — no new table, no server
+    round-trip beyond the completions query the tables already make.
 - `courses/*.html` — individual, self-contained training modules. Each one
   embeds its own copy of the Supabase client and reports completion back to
   the `completions` table under a specific `COURSE_ID`. Every scored module
