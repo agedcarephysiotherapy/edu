@@ -386,12 +386,18 @@
     background:var(--paper); text-align:center;
   }
   .auth-logo{height:64px;width:auto;margin-bottom:22px;}
-  .auth-heading{font-size:32px;font-weight:700;letter-spacing:-0.6px;margin:0 0 8px;color:var(--ink);}
-  .auth-sub{font-size:16px;color:var(--muted);max-width:420px;margin:0 auto 32px;line-height:1.5;}
+  .auth-heading{font-size:32px;font-weight:700;letter-spacing:-0.6px;margin:0 0 24px;color:var(--ink);}
   .auth-hero-photo{width:100%;max-width:640px;height:240px;object-fit:cover;border-radius:20px;margin:0 auto 28px;display:block;}
   #loginScreen .card, #pendingScreen .card, #nameScreen .card{
     max-width:380px;width:100%;text-align:left;box-shadow:0 20px 50px -20px rgba(0,0,0,0.15);
   }
+  .auth-howto{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);}
+  .auth-howto h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--blue-dark);margin:0 0 8px;}
+  .auth-howto h3:not(:first-child){margin-top:16px;}
+  .auth-howto ol{margin:0;padding-left:18px;font-size:13px;color:var(--muted);line-height:1.5;}
+  .auth-howto li{margin-bottom:4px;}
+  .auth-howto li:last-child{margin-bottom:0;}
+  .auth-howto b{color:var(--ink);}
   .approval-tag{display:inline-block;padding:4px 11px;border-radius:980px;font-size:11px;font-weight:700;text-transform:uppercase;}
   .approval-tag.pending{background:var(--brand-light);color:var(--brand-dark);}
   .approval-tag.approved{background:#E3F1E8;color:var(--success);}
@@ -405,7 +411,6 @@
     .card-banner{width:calc(100% + 36px);margin:-18px -18px 18px;height:140px;border-radius:16px 16px 0 0;}
     .card h2{font-size:17px;}
     .auth-heading{font-size:24px;}
-    .auth-sub{font-size:14px;}
     .auth-hero-photo{height:160px;border-radius:16px;}
     .row{grid-template-columns:1fr;}
     .tabs{padding:3px;gap:3px;}
@@ -486,7 +491,6 @@
 <div id="loginScreen">
   <img class="auth-logo" src="https://forms.acphysio.com.au/acplogo" alt="Aged Care Physiotherapy">
   <h1 class="auth-heading">ACP Staff Hub</h1>
-  <p class="auth-sub">Sign in with your email to access your training, compliance, and timesheet records.</p>
   <img class="auth-hero-photo" src="https://filedn.com/lxdUsd2fuiqh1gicF9WU3Sp/Untitled.png" alt="A carer supporting an elderly client">
   <div class="card">
     <label for="emailInput">Work Email</label>
@@ -495,6 +499,13 @@
     <button class="btn" id="magicLinkBtn" style="width:100%;">Email Me a Sign-In Link</button>
     <div id="loginFlash"></div>
     <div class="status-line" id="loginStatus"></div>
+    <div class="auth-howto">
+      <h3>How to sign in</h3>
+      <ol>
+        <li>Enter your email, then check it for a sign-in link — no password needed.</li>
+        <li><b>First time?</b> Add your name and role, then wait for manager approval.</li>
+      </ol>
+    </div>
   </div>
 </div>
 
