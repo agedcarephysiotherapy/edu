@@ -30,6 +30,7 @@
 // with a matching key for upsert), never the actual paid hours: raw_hours
 // and payable_hours on the entry itself remain fully server-computed and
 // authoritative regardless of what period info the client sends.
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { appendTimesheetRow, upsertFortnightSummary } from "../_shared/googleSheets.ts";
 import { withTimestamp, wrapHtml, wrapText } from "../_shared/emailTemplate.ts";
@@ -296,8 +297,13 @@ Deno.serve(async (req: Request) => {
       }
 
       // Fire-and-forget Google Sheets sync — never blocks or fails the
-      // sign-out response.
-      (async () => {
+      // sign-out response. Registered with EdgeRuntime.waitUntil() so the
+      // isolate is kept alive until this finishes: without it, Supabase's
+      // edge runtime is free to tear the isolate down as soon as the
+      // Response below is returned, silently killing this work mid-flight
+      // (it would appear to "just stop working" with no error logged,
+      // since the kill happens before any catch block below can run).
+      EdgeRuntime.waitUntil((async () => {
         try {
           const { data: entryRow } = await adminClient
             .from("timesheet_entries")
@@ -346,7 +352,7 @@ Deno.serve(async (req: Request) => {
         } catch (err) {
           console.error("sign_out: Fortnight summary sync failed (non-blocking):", err);
         }
-      })();
+      })());
 
       return json({
         success: true,
